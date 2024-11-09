@@ -36,12 +36,12 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
       default:
         return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
     }
-
   }
 
   private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
     let parsingSyncValidators: IAttributeValidator[] = [];
     let parsingAsyncValidators: IAttributeValidator[] = [];
+    
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
       parsingAsyncValidators = this.getParserAsyncValidators(attributeName);

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IQueryNode } from '../../models/abstract/i-query-node';
 import { NodeFactoryService } from '../nodes-factory.service';
-import { IAttributeTypeValidation, QueryNodeBuilderValidatorService } from './query-node-builder-validator.service';
+import { QueryNodeBuilderValidatorService } from './query-node-builder-validator.service';
 
 export interface IQueryNodeBuildResult {
   isBuildSuccess: boolean;
@@ -65,7 +65,7 @@ export class QueryNodeBuilderService {
     this.attribute = null;
   }
 
-  buildQueryNode(): IQueryNodeBuildResult {       
+  buildQueryNode(): IQueryNodeBuildResult {
 
     if(!this.nodeBuilderValidator.validateTag(this.tag, this.errors)){
       return { isBuildSuccess: false, queryNode: null, errors: this.errors };

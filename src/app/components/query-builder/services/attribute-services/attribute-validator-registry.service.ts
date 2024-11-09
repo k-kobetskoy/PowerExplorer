@@ -19,7 +19,7 @@ export class AttributeValidatorRegistryService {
 
   constructor(private entityServiceFactory: EntityServiceFactoryService) { }
 
-  type(type: string): IAttributeValidator {    
+  type(type: string): IAttributeValidator {
     return this._typeValidators.has(type) ? this._typeValidators.get(type) : this.registerTypeValidator(type);    
   }
 

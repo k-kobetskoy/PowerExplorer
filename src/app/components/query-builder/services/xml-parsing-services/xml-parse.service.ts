@@ -3,12 +3,11 @@ import { Injectable } from '@angular/core';
 import { SyntaxNodeRef } from '@lezer/common';
 import { Diagnostic } from "@codemirror/lint";
 import { QueryNodeTree } from '../../models/query-node-tree';
-import { IQueryNode } from '../../models/abstract/i-query-node';
 import { NodeFactoryService } from '../nodes-factory.service';
 import { EditorView } from 'codemirror';
 import { QueryNodeBuilderService } from './query-node-builder.service';
 
-export const TAG_NODE_NAMES = {
+export const PARSER_NODE_NAMES = {
   openTag: 'OpenTag',
   closeTag: 'CloseTag',
   startTag: 'StartTag',
@@ -34,44 +33,41 @@ export class XmlParseService {
   from: number;
   to: number;
 
-  constructor(private parsingHelper: ParsingHelperService, private nodeFactoryService: NodeFactoryService, private tagBuilder: QueryNodeBuilderService) { }
+  constructor(private parsingHelper: ParsingHelperService, private nodeFactoryService: NodeFactoryService, private nodeBuilder: QueryNodeBuilderService) { }
 
   parseNode(iteratingNode: SyntaxNodeRef, view: EditorView, xmlParseErrors: Diagnostic[]) {
     console.log(iteratingNode.name);
-    if(iteratingNode.name === TAG_NODE_NAMES.element){
+    if(iteratingNode.name === PARSER_NODE_NAMES.element){
       console.log(iteratingNode.from, iteratingNode.to);
     }
 
     switch (iteratingNode.name) {
-      case TAG_NODE_NAMES.openTag:
+      case PARSER_NODE_NAMES.openTag:
         this.isExpanded = true;
-        this.nodeLevel++;        
+        this.nodeLevel++;
         break;
-      case TAG_NODE_NAMES.selfClosingTag:
+      case PARSER_NODE_NAMES.selfClosingTag:
         this.isExpanded = false;
         break;
-      case TAG_NODE_NAMES.closeTag:
+      case PARSER_NODE_NAMES.closeTag:
         this.nodeLevel--;
         break;
-      case TAG_NODE_NAMES.tagName:
-        this.tagBuilder.createQueryNode(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), this.isExpanded, this.nodeLevel);
+      case PARSER_NODE_NAMES.tagName:
+        this.nodeBuilder.createQueryNode(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), this.isExpanded, this.nodeLevel);
         break;
-      case TAG_NODE_NAMES.attributeName:
-        this.tagBuilder.setAttributeName(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), iteratingNode.from, iteratingNode.to);
+      case PARSER_NODE_NAMES.attributeName:
+        this.nodeBuilder.setAttributeName(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), iteratingNode.from, iteratingNode.to);
         break;
-      case TAG_NODE_NAMES.attributeValue:
-        this.tagBuilder.setAttributeValue(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), iteratingNode.from, iteratingNode.to);
+      case PARSER_NODE_NAMES.attributeValue:
+        this.nodeBuilder.setAttributeValue(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), iteratingNode.from, iteratingNode.to);
         break;
-      case TAG_NODE_NAMES.endTag:
+      case PARSER_NODE_NAMES.endTag:
         this.addNodeToTree();
         break;
     }
   }
 
-
   addNodeToTree() {
-    const node = this.tagBuilder.buildQueryNode();
-        
+    const node = this.nodeBuilder.buildQueryNode();        
   }
-
 }
