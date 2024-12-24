@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
-import { IQueryNode } from "../../../models/abstract/i-query-node";
-import { NodeFactoryService } from "../../nodes-factory.service";
+import { IQueryNode } from "../../../models/abstract/OBSOLETE i-query-node";
+import { NodeFactoryService } from "../../OBSOLETE nodes-factory.service";
 import { INodeAdder } from "./i-node-adder";
 
 @Injectable({ providedIn: 'root' })
@@ -9,7 +9,7 @@ export abstract class BaseNodeAdder implements INodeAdder {
     constructor(protected nodeFactory: NodeFactoryService) {}
 
     protected add(newNodeType: string, parentNode: IQueryNode): IQueryNode {
-        let newNode = this.nodeFactory.getNode(newNodeType);
+        let newNode = this.nodeFactory.createNode(newNodeType);
 
         let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
         let bottomNode = nodeAbove.next;

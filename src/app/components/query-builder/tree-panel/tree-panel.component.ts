@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IQueryNode } from '../models/abstract/i-query-node';
+import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { QueryNodeTree } from 'src/app/components/query-builder/models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';

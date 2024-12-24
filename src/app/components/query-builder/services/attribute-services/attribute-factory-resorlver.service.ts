@@ -7,7 +7,7 @@ import { AttributeAttributesFactoryService } from './attribute-factories/attribu
 import { FilterAttributesFactoryService } from './attribute-factories/filter-attributes-factory.service';
 import { LinkAttributesFactoryService } from './attribute-factories/link-attributes-factory.service';
 import { OrderAttributesFactoryService } from './attribute-factories/order-attributes-factory.service';
-import { QueryNodeType } from '../../models/constants/query-node-type';
+import { QueryNodeType } from '../../models/constants/OBSOLETE query-node-type';
 
 @Injectable({ providedIn: 'root' })
 
@@ -23,7 +23,7 @@ export class AttributeFactoryResorlverService {
     private orderFactory: OrderAttributesFactoryService,
   ) { }
 
-  getValidatorsFactory(tagName: string): IAttributeFactory {
+  getAttributesFactory(tagName: string): IAttributeFactory {
     switch (tagName) {
       case QueryNodeType.CONDITION:
         return this.conditionFactory
@@ -40,7 +40,7 @@ export class AttributeFactoryResorlverService {
       case QueryNodeType.ROOT:
         return this.rootFactory
       default:
-        return null;
+        return null; //TODO: add default Node & default attributes factory
     }
   }
 }

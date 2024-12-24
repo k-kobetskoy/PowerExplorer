@@ -3,7 +3,7 @@ import { FormControl } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, takeUntil } from 'rxjs';
 import { UiInputProperty } from 'src/app/components/query-builder/models/abstract/ui-input-property';
 import { FilterStaticData } from 'src/app/components/query-builder/models/constants/ui/filter-static-data';
-import { NodeCondition } from 'src/app/components/query-builder/models/nodes/node-condition';
+import { NodeCondition } from 'src/app/components/query-builder/models/OBSOLETE nodes/node-condition';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { PicklistModel } from 'src/app/models/incoming/picklist/picklist-model';
 import { PicklistEntityService } from 'src/app/components/query-builder/services/entity-services/picklist-entity.service';

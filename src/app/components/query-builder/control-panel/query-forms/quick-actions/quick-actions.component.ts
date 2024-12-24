@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IQueryNode } from '../../../models/abstract/i-query-node';
+import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeTreeProcessorService } from '../../../services/node-tree-processor.service';
 
 @Component({

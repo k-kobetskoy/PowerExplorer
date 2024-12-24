@@ -1,74 +1,89 @@
-import { ITagProperties } from "./abstract/i-tag-properties";
-import { IQueryNode } from "./abstract/i-query-node";
 import { BehaviorSubject, Observable } from "rxjs";
-import { QueryNodeType } from "./constants/query-node-type";
-import { IPropertyDisplay } from "./abstract/i-node-property-display";
-import { EntityServiceFactoryService } from "../services/entity-service-factory.service";
 import { NodeAttribute } from "./node-attribute";
+import { INodeData, QueryNodeData } from "./constants/query-node-data";
 
-export abstract class QueryNode implements IQueryNode {
+export class QueryNode {
     defaultNodeDisplayValue: string;
     order: number;
-    attributes: NodeAttribute[] = [];
+    attributes: NodeAttribute[];
     expandable: boolean;
     name: string;
     id?: string;
     actions?: string[];
     level?: number;
     isExpanded?: boolean;
-    next?: IQueryNode | null;
-    parent?: IQueryNode | null;
+    next?: QueryNode | null;
+    parent?: QueryNode | null;
     visible: boolean;
-    tagProperties: ITagProperties;
     validationErrors$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     entitySetName$: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     relationship$?: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     showOnlyLookups$?: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     validationPassed$: Observable<boolean>;
-    entityServiceFactory: EntityServiceFactoryService;
 
-
-    constructor(tagProperties: ITagProperties, entityServiceFactory: EntityServiceFactoryService) {
+    constructor(nodeName: string) {
         this.expandable = false;
         this.level = 0;
         this.visible = true;
         this.isExpanded = true;
         this.next = null;
-        this.tagProperties = tagProperties;
-        this.entityServiceFactory = entityServiceFactory;
+
+        const nodeData: INodeData = QueryNodeData[nodeName]
+        this.defaultNodeDisplayValue = nodeData.Name;
+        this.name = nodeData.Name;
+        this.order = nodeData.Order;
+        this.actions = nodeData.Actions;
+        this.attributes = new Array<NodeAttribute>(nodeData.AttributesArrayCapacity);
     }
 
-    validateNode(): Observable<boolean>{
+    validateNode(): Observable<boolean> {
         return new Observable<boolean>(observer => {
             observer.next(true);
-    })};
+        })
+    };
 
-    get displayValue$(): Observable<IPropertyDisplay> {
-        return new Observable<IPropertyDisplay>(observer => {
-            observer.next({ nodePropertyDisplay: this.defaultNodeDisplayValue, tagPropertyDisplay: this.tagProperties.tagName });
-        });
-    }
+    // get displayValue$(): Observable<IPropertyDisplay> {
+    //     return new Observable<IPropertyDisplay>(observer => {
+    //         observer.next({ nodePropertyDisplay: this.defaultNodeDisplayValue, tagPropertyDisplay: this.tagProperties.tagName });
+    //     });
+    // }
 
-    getParentEntity(node: IQueryNode = this): IQueryNode {
+    getParentEntity(node: QueryNode = this): QueryNode {
 
-        if (node.name === QueryNodeType.ROOT) return null;
+        if (node.name === QueryNodeData.Root.Name) return null;
 
         const parent = node.parent;
 
         if (!parent) throw new Error('Parent not found');
 
-        if (parent?.name === QueryNodeType.ENTITY || parent?.name === QueryNodeType.LINK) {
+        if (parent?.name === QueryNodeData.Entity.Name || parent?.name === QueryNodeData.Link.Name) {
             return parent;
         } else {
             return this.getParentEntity(parent);
         }
     }
 
-    getParentEntityName(node: IQueryNode = this): BehaviorSubject<string> {
+    getParentEntityName(node: QueryNode = this): BehaviorSubject<string> {
         const parent = this.getParentEntity(node);
 
-        if (!parent) return  new BehaviorSubject<string>('');
-  
+        if (!parent) return new BehaviorSubject<string>('');
+
         return parent.tagProperties.entityName?.constructorValue$ ?? parent.tagProperties.linkEntity.constructorValue$;
+    }
+
+    addAttribute(attribute: NodeAttribute): void {
+        let low = 0;
+        let high = this.attributes.length;
+
+        while (low < high) {
+            const mid = (low + high) >>> 1;
+            if (this.attributes[mid].order < attribute.order) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+
+        this.attributes.splice(low, 0, attribute);
     }
 }

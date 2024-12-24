@@ -1,8 +1,8 @@
 import { NodeTreeProcessorService } from './../services/node-tree-processor.service';
 import { Component, OnInit } from '@angular/core';
-import { IQueryNode } from '../models/abstract/i-query-node';
+import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { Observable } from 'rxjs';
-import { QueryNodeType } from '../models/constants/query-node-type';
+import { QueryNodeType } from '../models/constants/OBSOLETE query-node-type';
 
 @Component({
   selector: 'app-control-panel',

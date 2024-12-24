@@ -6,7 +6,7 @@ import { BehaviorSubject, Observable, Subject, combineLatest, distinctUntilChang
 import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { NodeOrder } from '../../../models/nodes/node-order';
+import { NodeOrder } from '../../../models/OBSOLETE nodes/node-order';
 
 @Component({
   selector: 'app-order-form',

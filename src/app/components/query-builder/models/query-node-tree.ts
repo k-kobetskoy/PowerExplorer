@@ -1,9 +1,19 @@
-import { IQueryNode } from "./abstract/i-query-node";
+import { QueryNode } from "./query-node";
 
-export class QueryNodeTree implements Iterable<IQueryNode> {
-    root: IQueryNode
+export class QueryNodeTree implements Iterable<QueryNode> {
+    root: QueryNode
+    current: QueryNode
 
-    [Symbol.iterator](): Iterator<IQueryNode, any, undefined> {
+    addNode(node: QueryNode) {
+        if (!this.root) {
+            this.root = node;
+            this.current = node;
+        } else {
+            this.current.next = node
+        }
+    }
+
+    [Symbol.iterator](): Iterator<QueryNode, any, undefined> {
 
         let current = this.root
 

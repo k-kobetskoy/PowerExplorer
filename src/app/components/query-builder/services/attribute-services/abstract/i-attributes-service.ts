@@ -1,4 +1,4 @@
-import { IQueryNode } from "../../../models/abstract/i-query-node";
+import { IQueryNode } from "../../../models/abstract/OBSOLETE i-query-node";
 import { NodeAttribute } from "../../../models/node-attribute";
 
 export interface IAttributesService {

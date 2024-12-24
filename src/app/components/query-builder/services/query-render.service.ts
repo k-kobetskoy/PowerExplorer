@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy} from '@angular/core';
 import { BehaviorSubject, Observable, Subject, combineLatest, distinctUntilChanged, map, of, switchMap, takeUntil } from 'rxjs';
-import { IQueryNode } from '../models/abstract/i-query-node';
+import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { NodeTreeProcessorService } from './node-tree-processor.service';

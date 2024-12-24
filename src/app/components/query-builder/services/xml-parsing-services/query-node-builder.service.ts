@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { IQueryNode } from '../../models/abstract/i-query-node';
-import { NodeFactoryService } from '../nodes-factory.service';
-import { QueryNodeBuilderValidatorService } from './query-node-builder-validator.service';
+import { AttributeFactoryResorlverService } from '../attribute-services/attribute-factory-resorlver.service';
+import { IAttributeFactory } from '../attribute-services/abstract/i-attribute-validators-factory';
+import { QueryNode } from '../../models/query-node';
 
 export interface IQueryNodeBuildResult {
   isBuildSuccess: boolean;
-  queryNode: IQueryNode;
+  queryNode: QueryNode;
   errors: IBuildQueryError[];
 }
 
@@ -18,13 +18,13 @@ export interface ITagBuildEntityAttribute {
   valueTo?: number;
 }
 
-export interface IBuildQueryError{
-  errorMessage: string;
+export interface IBuildQueryError {
+  message: string;
   from?: number;
   to?: number;
 }
 
-export interface ITagBuildEntity{
+export interface ITagBuildEntity {
   tagName: string;
   isExpanded: boolean;
   nodeLevel: number;
@@ -32,11 +32,16 @@ export interface ITagBuildEntity{
   to: number;
 }
 
+export const UNEXPECTED_ERROR_TEXT = 'Unexpected error. Please check you XML';
+
+const queryNodeTypeValues = new Set(Object.values(QueryNodeType));
+
+
 @Injectable({ providedIn: 'root' })
 
 export class QueryNodeBuilderService {
 
-  constructor(private nodeFactory: NodeFactoryService, private nodeBuilderValidator: QueryNodeBuilderValidatorService) { }
+  constructor(private attributeFactoryResolver: AttributeFactoryResorlverService) { }
 
   tag: ITagBuildEntity;
   attribute: ITagBuildEntityAttribute;
@@ -53,7 +58,7 @@ export class QueryNodeBuilderService {
   }
 
   setAttributeValue(attributeValue: string, from: number, to: number) {
-    if(!this.attribute){      
+    if (!this.attribute) {
       return;
     }
 
@@ -67,44 +72,29 @@ export class QueryNodeBuilderService {
 
   buildQueryNode(): IQueryNodeBuildResult {
 
-    if(!this.nodeBuilderValidator.validateTag(this.tag, this.errors)){
+    if (!this.validateTagName(this.tag, this.errors)) {
       return { isBuildSuccess: false, queryNode: null, errors: this.errors };
     }
-    
-    let queryNode = this.nodeFactory.getNode(this.tag.tagName);
 
-    if(this.attributes.length > 0){
+    let queryNode = new QueryNode(this.tag.tagName);
+
+    if (this.attributes.length > 0) {
+      const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(this.tag.tagName);
       for (let attribute of this.attributes) {
-
-        const attributeNameValidationSuccess = this.nodeBuilderValidator.validateAttributeName(attribute, queryNode, this.errors);
-        
-        if(attributeNameValidationSuccess){
-          
-          const attributeTypeValidation = this.nodeBuilderValidator.validateAttributeValueType(attribute, queryNode, this.errors);          
-
-          this.addAttributeValueToNode(attribute, queryNode, attributeTypeValidation);
-        }
-      }
+        this.addAttributeValueToNode(attribute, queryNode, attributeFactory);
+      }      
     }
 
-    let buildResult = { isBuildSuccess: false, queryNode: null, errors: this.errors };
-    
-    buildResult.isBuildSuccess = this.errors.length === 0;
+    let buildResult = { isBuildSuccess: this.errors.length === 0, queryNode: queryNode, errors: this.errors };
+
     return buildResult;
   }
 
-  addAttributeValueToNode(attribute: ITagBuildEntityAttribute, queryNode: IQueryNode, attributeTypeValidation: IAttributeTypeValidation) {
-    
-    let tagProperty = queryNode.tagProperties.getTagPropertyByName(attribute.name);
+  addAttributeValueToNode(attribute: ITagBuildEntityAttribute, queryNode: QueryNode, attributeFactory: IAttributeFactory) {
 
-    if(attributeTypeValidation){
-      tagProperty.constructorValue$.next(attribute.value);
-    }
-    else{
-      tagProperty.parsedValue$.next(attribute.value);
-      tagProperty.typeValidationPassed$.next(false);
-      tagProperty.tagPropertyErrorMessage.next(attributeTypeValidation.errorMessage);
-    }
+    let nodeAttribute = attributeFactory.createAttribute(attribute.name, queryNode, true, attribute.value);
+
+    queryNode.addAttribute(nodeAttribute);
   }
 
   resetNodeData() {
@@ -112,5 +102,33 @@ export class QueryNodeBuilderService {
     this.attribute = null;
     this.attributes = [];
     this.errors = [];
+  }
+
+  validateTagName(tag: ITagBuildEntity, errors: IBuildQueryError[]): boolean {
+
+    if (!tag) {
+      errors.push({ message: UNEXPECTED_ERROR_TEXT });
+      return false;
+    }
+
+    if (!tag.tagName) {
+      errors.push({ message: this.getTagNameErrorMessage(tag.tagName), from: tag.from, to: tag.to });
+      return false;
+    }
+
+    if (!this.isValidQueryNodeType(tag.tagName)) {
+      errors.push({ message: this.getTagNameErrorMessage(tag.tagName), from: tag.from, to: tag.to });
+      return false;
+    }
+
+    return true;
+  }
+
+  private isValidQueryNodeType(tagName: string): tagName is QueryNodeType {
+    return queryNodeTypeValues.has(tagName as QueryNodeType);
+  }
+
+  private getTagNameErrorMessage(tagName: string): string {
+    return `Tag name '${tagName}' is not valid`;
   }
 }

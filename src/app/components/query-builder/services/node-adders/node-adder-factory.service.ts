@@ -3,8 +3,8 @@ import { INodeAdder } from './abstract/i-node-adder';
 import { RootNodeAdder } from './root-node-adder';
 import { FilterNodeAdder } from './filter-node-adder';
 import { DefaultNodeAdder } from './default-node-adder';
-import { NodeFactoryService } from '../nodes-factory.service';
-import { QueryNodeType } from '../../models/constants/query-node-type';
+import { NodeFactoryService } from '../OBSOLETE nodes-factory.service';
+import { QueryNodeType } from '../../models/constants/OBSOLETE query-node-type';
 
 @Injectable({ providedIn: 'root' })
 export class NodeAdderFactoryService {  

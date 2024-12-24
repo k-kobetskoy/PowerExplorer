@@ -4,7 +4,7 @@ import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
-import { IQueryNode } from '../../../models/abstract/i-query-node';
+import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
@@ -15,7 +15,7 @@ export class ConditionAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  getAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
     switch (attributeName) {

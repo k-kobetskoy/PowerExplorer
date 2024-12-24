@@ -6,7 +6,7 @@ import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { NodeAttribute } from '../../../models/node-attribute';
-import { IQueryNode } from '../../../models/abstract/i-query-node';
+import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
 
 @Injectable({ providedIn: 'root' })
@@ -15,7 +15,7 @@ export class RootAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  getAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 

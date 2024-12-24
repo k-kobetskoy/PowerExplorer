@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { NodeEntityAttribute } from '../../../models/nodes/node-entity-attribute';
+import { NodeEntityAttribute } from '../../../models/OBSOLETE nodes/node-entity-attribute';
 import { FormControl } from '@angular/forms';
 import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';

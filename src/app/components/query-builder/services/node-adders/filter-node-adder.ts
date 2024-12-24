@@ -1,11 +1,11 @@
-import { IQueryNode } from "../../models/abstract/i-query-node";
-import { QueryNodeType } from "../../models/constants/query-node-type";
+import { IQueryNode } from "../../models/abstract/OBSOLETE i-query-node";
+import { QueryNodeType } from "../../models/constants/OBSOLETE query-node-type";
 import { BaseNodeAdder } from "./abstract/base-node-adder";
 
 export class FilterNodeAdder extends BaseNodeAdder {
 
     override addNode(newNodeType: string, parentNode: IQueryNode): IQueryNode {
-        let newNode = this.nodeFactory.getNode(newNodeType)
+        let newNode = this.nodeFactory.createNode(newNodeType)
 
         let nodeAbove = this.getNodeAbove(newNode.order, parentNode)
 

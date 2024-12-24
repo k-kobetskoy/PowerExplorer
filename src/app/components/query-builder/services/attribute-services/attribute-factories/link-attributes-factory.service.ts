@@ -4,7 +4,7 @@ import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValidationTypes } from '../constants/attribute-validation-types';
-import { IQueryNode } from '../../../models/abstract/i-query-node';
+import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
@@ -15,7 +15,7 @@ export class LinkAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  getAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 

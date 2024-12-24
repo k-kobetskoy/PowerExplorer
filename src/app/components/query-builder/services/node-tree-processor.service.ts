@@ -2,9 +2,9 @@ import { NodeAdderFactoryService } from './node-adders/node-adder-factory.servic
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
-import { IQueryNode } from '../models/abstract/i-query-node';
+import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
-import { QueryNodeType } from '../models/constants/query-node-type';
+import { QueryNodeType } from '../models/constants/OBSOLETE query-node-type';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 
 @Injectable({ providedIn: 'root' })

@@ -3,7 +3,6 @@ import { Injectable } from '@angular/core';
 import { SyntaxNodeRef } from '@lezer/common';
 import { Diagnostic } from "@codemirror/lint";
 import { QueryNodeTree } from '../../models/query-node-tree';
-import { NodeFactoryService } from '../nodes-factory.service';
 import { EditorView } from 'codemirror';
 import { QueryNodeBuilderService } from './query-node-builder.service';
 
@@ -33,11 +32,11 @@ export class XmlParseService {
   from: number;
   to: number;
 
-  constructor(private parsingHelper: ParsingHelperService, private nodeFactoryService: NodeFactoryService, private nodeBuilder: QueryNodeBuilderService) { }
+  constructor(private parsingHelper: ParsingHelperService, private nodeBuilder: QueryNodeBuilderService) { }
 
   parseNode(iteratingNode: SyntaxNodeRef, view: EditorView, xmlParseErrors: Diagnostic[]) {
     console.log(iteratingNode.name);
-    if(iteratingNode.name === PARSER_NODE_NAMES.element){
+    if (iteratingNode.name === PARSER_NODE_NAMES.element) {
       console.log(iteratingNode.from, iteratingNode.to);
     }
 
@@ -62,12 +61,24 @@ export class XmlParseService {
         this.nodeBuilder.setAttributeValue(this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to), iteratingNode.from, iteratingNode.to);
         break;
       case PARSER_NODE_NAMES.endTag:
-        this.addNodeToTree();
+        this.addNodeToTree(xmlParseErrors);
         break;
     }
   }
 
-  addNodeToTree() {
-    const node = this.nodeBuilder.buildQueryNode();        
+  addNodeToTree(xmlParseErrors: Diagnostic[]) {
+    let buildResult = this.nodeBuilder.buildQueryNode();
+    if (buildResult.isBuildSuccess) {
+      this.nodeTree.addNode(buildResult.queryNode);
+    } else {
+      for (let error of buildResult.errors) {
+        xmlParseErrors.push({
+          from: error.from,
+          to: error.to,
+          message: error.message,
+          severity: 'error'
+        });
+      }
+    }
   }
 }

@@ -5,10 +5,10 @@ import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValueTypes } from '../../../models/constants/attribute-value-types';
-import { IQueryNode } from '../../../models/abstract/i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
 import { AttributeValidators } from '../../../models/attribute-validators';
+import { QueryNode } from '../../../models/query-node';
 
 @Injectable({ providedIn: 'root' })
 
@@ -16,7 +16,7 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
   
-  getAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
@@ -32,7 +32,7 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
       case AttributeNames.attributeDistinct:
       case AttributeNames.attributeUserTimeZone:
       case AttributeNames.attributeDateGrouping:
-        return new NodeAttribute(node, attributeName, validators, null, null, value);      
+        return new NodeAttribute(node, attributeName, validators, null, null, value);
       default:
         return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
     }

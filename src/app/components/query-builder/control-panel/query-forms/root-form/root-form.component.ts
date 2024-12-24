@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NodeRoot } from '../../../models/nodes/node-root';
+import { NodeRoot } from '../../../models/OBSOLETE nodes/node-root';
 
 @Component({
   selector: 'app-root-form',

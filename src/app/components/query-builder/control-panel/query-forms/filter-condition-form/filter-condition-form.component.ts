@@ -5,7 +5,7 @@ import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-mode
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
 import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
 import { FilterOperatorTypes } from '../../../models/constants/ui/option-set-types';
-import { NodeCondition } from '../../../models/nodes/node-condition';
+import { NodeCondition } from '../../../models/OBSOLETE nodes/node-condition';
 
 @Component({
   selector: 'app-filter-condition-form',

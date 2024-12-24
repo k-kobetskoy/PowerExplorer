@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NodeFilter } from '../../../models/nodes/node-filter';
+import { NodeFilter } from '../../../models/OBSOLETE nodes/node-filter';
 import { FilterStaticData } from '../../../models/constants/ui/filter-static-data';
 
 @Component({
