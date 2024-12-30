@@ -6,42 +6,46 @@ import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValueTypes } from '../../../models/constants/attribute-value-types';
 import { NodeAttribute } from '../../../models/node-attribute';
-import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 
 export class AttributeAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
-  
+
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
-    
+
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
+    const attribute = AttributeData.Attribute;
+
     switch (attributeName) {
-      case AttributeNames.attributeName:
-        return new NodeAttribute(node, attributeName, validators, 'AttributeName', AttributeTreeViewDisplayStyle.onlyValue, value);
-      case AttributeNames.attributeAlias:
-        return new NodeAttribute(node, attributeName, validators, 'Alias', AttributeTreeViewDisplayStyle.alias, value);
-      case AttributeNames.attributeAggregate:
-        return new NodeAttribute(node, attributeName, validators, 'Agg', AttributeTreeViewDisplayStyle.nameWithValue, value);
-      case AttributeNames.attributeGroupBy:
-        return new NodeAttribute(node, attributeName, validators, 'GrpBy', AttributeTreeViewDisplayStyle.onlyName, value);
-      case AttributeNames.attributeDistinct:
-      case AttributeNames.attributeUserTimeZone:
-      case AttributeNames.attributeDateGrouping:
-        return new NodeAttribute(node, attributeName, validators, null, null, value);
+      case attribute.Name.EditorName:
+        return new NodeAttribute(node, validators, attribute.Name, value);
+      case attribute.Alias.EditorName:
+        return new NodeAttribute(node, validators, attribute.Alias, value);
+      case attribute.Aggregate.EditorName:
+        return new NodeAttribute(node, validators, attribute.Aggregate, value);
+      case attribute.GroupBy.EditorName:
+        return new NodeAttribute(node, validators, attribute.GroupBy, value);
+      case attribute.Distinct.EditorName:
+        return new NodeAttribute(node, validators, attribute.Distinct, value);
+      case attribute.UserTimeZone.EditorName:
+        return new NodeAttribute(node, validators, attribute.UserTimeZone, value);
+      case attribute.DateGrouping.EditorName:
+        return new NodeAttribute(node, validators, attribute.DateGrouping, value);
       default:
-        return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
     }
   }
 
   private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
     let parsingSyncValidators: IAttributeValidator[] = [];
     let parsingAsyncValidators: IAttributeValidator[] = [];
-    
+
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
       parsingAsyncValidators = this.getParserAsyncValidators(attributeName);

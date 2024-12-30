@@ -1,10 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { NodeEntityAttribute } from '../../../models/OBSOLETE nodes/node-entity-attribute';
 import { FormControl } from '@angular/forms';
-import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
 import { IFormPropertyModel } from '../../../models/abstract/i-form-property-model';
+import { QueryNode } from '../../../models/query-node';
 
 @Component({
   selector: 'app-attribute-form',
@@ -13,7 +13,7 @@ import { IFormPropertyModel } from '../../../models/abstract/i-form-property-mod
 })
 export class AttributeFormComponent implements OnInit, OnDestroy, OnChanges {
 
-  @Input() selectedNode: NodeEntityAttribute;
+  @Input() selectedNode: QueryNode;
 
   private _destroy$ = new Subject<void>();
 
@@ -37,7 +37,7 @@ export class AttributeFormComponent implements OnInit, OnDestroy, OnChanges {
     this.attributeFormModel = {
       formControl: new FormControl<string>(null),
       filteredValues$: null,
-      storedInputValue$: this.selectedNode.tagProperties.attributeName.constructorValue$,
+      storedInputValue$: new BehaviorSubject<string>(''),
       filterFunc: (value: AttributeModel, filterValue: string) => {
         return value.logicalName.toLowerCase().includes(filterValue.toLowerCase()) || value.displayName.toLowerCase().includes(filterValue.toLowerCase())
       }
@@ -48,14 +48,14 @@ export class AttributeFormComponent implements OnInit, OnDestroy, OnChanges {
 
     this.aliasFormModel = {
       formControl: new FormControl<string>(null),
-      storedInputValue$: this.selectedNode.tagProperties.attributeAlias.constructorValue$,
+      storedInputValue$: new BehaviorSubject<string>(''),
     };
     this.setControlInitialValues(this.aliasFormModel);
     this.subscribeOnInputChanges(this.aliasFormModel);
   }
 
   setParentEntity() {
-    console.warn('setParentEntity');
+    console.warn('setParentEntity'); //TODO: remove
     this.selectedNode.getParentEntityName()
       .pipe(distinctUntilChanged(), takeUntil(this._destroy$))
       .subscribe(entityName => {

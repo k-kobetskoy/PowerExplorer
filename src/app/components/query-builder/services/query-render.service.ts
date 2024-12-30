@@ -1,9 +1,9 @@
-import { Injectable, OnDestroy} from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, combineLatest, distinctUntilChanged, map, of, switchMap, takeUntil } from 'rxjs';
-import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
-import { NodeTreeProcessorService } from './node-tree-processor.service';
+import { NodeTreeService } from './node-tree.service';
+import { QueryNode } from '../models/query-node';
 
 export class ClosingTagsStack {
   private store: string[] = [];
@@ -26,10 +26,10 @@ export class QueryRenderService implements OnDestroy {
   private _destroy$ = new Subject<void>();
   private _previousNodeLevel: number = -1;
   private _closingTagsStack = new ClosingTagsStack();
-  private _currentNode: IQueryNode;
+  private _currentNode: QueryNode;
   private _previousNodeIsExpandable: boolean = false;
 
-  constructor(private nodeTreeProcessor: NodeTreeProcessorService, private eventBus: EventBusService) { 
+  constructor(private nodeTreeProcessor: NodeTreeService, private eventBus: EventBusService) {
     this.eventBus.on(AppEvents.NODE_ADDED, () => this.renderXmlRequest());
     this.eventBus.on(AppEvents.NODE_REMOVED, () => this.renderXmlRequest());
   }
@@ -50,13 +50,13 @@ export class QueryRenderService implements OnDestroy {
 
     dynamicObservables$.pipe(
       switchMap(obsList => combineLatest(obsList)),
-      map(values => values.join('\n')),      
+      map(values => values.join('\n')),
       distinctUntilChanged(),
       takeUntil(this._destroy$))
       .subscribe(value => this.nodeTreeProcessor.xmlRequest$.next(value));
   }
 
-  processNode(node: IQueryNode): Observable<string> {
+  processNode(node: QueryNode): Observable<string> {
     if (this._currentNode === null) {
       return of(this._closingTagsStack.pop());
     }
@@ -73,14 +73,20 @@ export class QueryRenderService implements OnDestroy {
     return observable;
   }
 
-  getNodeTag(node: IQueryNode): Observable<string> {
+  getNodeTag(node: QueryNode): Observable<string> {
     if (node.expandable) {
-      this._closingTagsStack.push(`${this.getIndent(node.level)}</${node.tagProperties.tagName}>`);
+      this._closingTagsStack.push(`${this.getIndent(node.level)}</${node.tagName}>`);
     }
 
-    return node.displayValue$.pipe(map(displayValue =>
-      node.expandable ? `${this.getIndent(node.level)}<${displayValue.tagPropertyDisplay}>` : `${this.getIndent(node.level)}<${displayValue.tagPropertyDisplay} />`
-    ));
+    return node.attributes$.pipe(map(attributes => {
+      const attributesString = attributes.map(attribute => {
+        return `${attribute.attributeDisplayValues.editorViewDisplayValue$}`;
+      }).join(' ');
+
+      return node.expandable
+          ? `${this.getIndent(node.level)}<${node.tagName} ${attributesString}>`
+          : `${this.getIndent(node.level)}<${node.tagName} ${attributesString} />`;
+    }));
   }
 
   private getIndent(level: number): string {

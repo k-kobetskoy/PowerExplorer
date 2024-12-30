@@ -2,16 +2,6 @@ import { QueryNode } from "./query-node";
 
 export class QueryNodeTree implements Iterable<QueryNode> {
     root: QueryNode
-    current: QueryNode
-
-    addNode(node: QueryNode) {
-        if (!this.root) {
-            this.root = node;
-            this.current = node;
-        } else {
-            this.current.next = node
-        }
-    }
 
     [Symbol.iterator](): Iterator<QueryNode, any, undefined> {
 

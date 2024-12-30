@@ -1,42 +1,39 @@
 import { BehaviorSubject } from 'rxjs';
-import { IQueryNode } from './abstract/OBSOLETE i-query-node';
 import { AttributeValidators } from './attribute-validators';
-import { AttributeDisplayProperties } from './attribute-display-properties';
-import { AttributeTreeViewDisplayStyle } from './constants/attribute-tree-view-display-style';
+import { AttributeDisplayValues as AttributeDisplayValues } from './attribute-display-values';
+import { QueryNode } from './query-node';
+import { IAttributeData } from './constants/attribute-data';
 
 export class NodeAttribute {
-    parentNode: IQueryNode;
-    name: string;
+    parentNode: QueryNode;
+    editorName: string;
     order: number;
     isValidName: boolean;
     value$ = new BehaviorSubject<string>('');
     validators: AttributeValidators;
-    attributeDisplayProperties: AttributeDisplayProperties;
+    attributeDisplayValues: AttributeDisplayValues;
 
     constructor(
-        node: IQueryNode,
-        name: string,
+        node: QueryNode,
         validators: AttributeValidators,
-        treeViewDisplayName?: string,
-        treeViewDisplayStyle: string = AttributeTreeViewDisplayStyle.none,
+        attributeData: IAttributeData,
         value?: string,
-        order = 99,
-        isValidName: boolean = true) {
+    ) {
         this.parentNode = node;
-        this.name = name;
+        this.editorName = attributeData.EditorName;
         this.validators = validators;
-        this.order = order;
-        this.isValidName = isValidName;
+        this.order = attributeData.Order;
+        this.isValidName = attributeData.IsValidName;
 
         if (value) {
             this.value$.next(value);
         }
 
-        this.attributeDisplayProperties = new AttributeDisplayProperties(
+        this.attributeDisplayValues = new AttributeDisplayValues(
             this.value$,
-            name,
-            treeViewDisplayName,
-            treeViewDisplayStyle
+            attributeData.EditorName,
+            attributeData.TreeViewName,
+            attributeData.TreeViewDisplayStyle,
         );
     }
 }

@@ -3,7 +3,6 @@ import { FormControl } from '@angular/forms';
 import { Subject, distinctUntilChanged, takeUntil } from 'rxjs';
 import { UiInputProperty } from 'src/app/components/query-builder/models/abstract/ui-input-property';
 import { FilterStaticData } from 'src/app/components/query-builder/models/constants/ui/filter-static-data';
-import { NodeCondition } from 'src/app/components/query-builder/models/OBSOLETE nodes/node-condition';
 
 @Component({
   selector: 'app-string-form',

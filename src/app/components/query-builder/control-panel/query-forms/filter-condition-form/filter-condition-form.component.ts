@@ -5,7 +5,8 @@ import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-mode
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
 import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
 import { FilterOperatorTypes } from '../../../models/constants/ui/option-set-types';
-import { NodeCondition } from '../../../models/OBSOLETE nodes/node-condition';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Component({
   selector: 'app-filter-condition-form',
@@ -16,7 +17,11 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
 
   private _destroy$ = new Subject<void>();
 
-  @Input() selectedNode: NodeCondition;
+  private readonly conditionAttribute = AttributeData.Condition.Attribute;
+  private readonly conditionOperator = AttributeData.Condition.Operator;
+  private readonly conditionValue = AttributeData.Condition.Value;
+
+  @Input() selectedNode: QueryNode;
 
   attributesFormControl = new FormControl<string>(null);
 
@@ -31,7 +36,8 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
 
   previousAttribute: AttributeModel;
 
-  constructor(private _attributeEntityService: AttributeEntityService) { }
+  constructor(
+    private _attributeEntityService: AttributeEntityService) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.selectedNode) {
@@ -48,16 +54,16 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   bindDataToControls() {
     this.attributesFormControl.valueChanges
       .pipe(distinctUntilChanged(), takeUntil(this._destroy$))
-      .subscribe(value => this.selectedNode.tagProperties.conditionAttribute.constructorValue$.next(value));
+      .subscribe(value => this.selectedNode.setAttribute(this.conditionAttribute, value));
   }
 
   setControlsInitialValues() {
-    const attributeInitialValue = this.selectedNode.tagProperties.conditionAttribute.constructorValue$.getValue();
+    const attributeInitialValue = this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1]?.value$.getValue();
 
-    this.attributesFormControl.setValue(attributeInitialValue);
+    this.attributesFormControl.setValue(attributeInitialValue ?? '');
   }
 
-  getInitialData() {   
+  getInitialData() {
     this.entityName$ = this.selectedNode.getParentEntityName();
 
     this.attributes$ = this.entityName$
@@ -73,7 +79,7 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
 
   addFilterToInput() {
     this.filteredAttributes$ = this.attributesFormControl.valueChanges.pipe(
-      startWith(this.selectedNode.tagProperties.conditionAttribute.constructorValue$.getValue() ?? ''),
+      startWith(this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1].value$.getValue() ?? ''),
       switchMap(value => value ? this._filter(value) : this.attributes$),
     );
   }
@@ -95,24 +101,24 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
             entity.displayName.toLowerCase().includes(filterValue)
           )
         }),
-      tap(_ => this.selectedNode.tagProperties.conditionAttribute.constructorValue$.next(filterValue)));
+      tap(_ => this.selectedNode.setAttribute(this.conditionAttribute, filterValue)));
   }
 
   onKeyPressed($event: KeyboardEvent) {
     if ($event.key === 'Delete' || $event.key === 'Backspace') {
       if (this.attributesFormControl.value === '') {
-        this.selectedNode.tagProperties.conditionAttribute.constructorValue$.next(null);
+        this.selectedNode.setAttribute(this.conditionAttribute, null);
       }
     }
   }
 
-  handleAttributeChange(attribute: AttributeModel): void {  
-    if (!this.previousAttribute || attribute.logicalName === this.previousAttribute?.logicalName) return;    
-    this.selectedNode.tagProperties.conditionOperator.constructorValue$.next(null);
-    this.selectedNode.tagProperties.conditionValue.constructorValue$.next(null);
+  handleAttributeChange(attribute: AttributeModel): void {
+    if (!this.previousAttribute || attribute.logicalName === this.previousAttribute?.logicalName) return;
+    this.selectedNode.setAttribute(this.conditionOperator, null);
+    this.selectedNode.setAttribute(this.conditionValue, null);
   }
 
-  getFilterOperatorType(attribute: AttributeModel) {    
+  getFilterOperatorType(attribute: AttributeModel) {
     switch (attribute.attributeType) {
       case AttributeTypes.INTEGER:
       case AttributeTypes.DECIMAL:

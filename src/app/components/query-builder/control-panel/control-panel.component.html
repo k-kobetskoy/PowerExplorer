@@ -1,13 +1,13 @@
 <ng-container *ngIf="selectedNode$ | async as selected; else elseBlock">
     
-    <ng-container [ngSwitch]="selected.type">
-        <app-entity-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.ENTITY'></app-entity-form>
-        <app-root-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.ROOT' ></app-root-form>
-        <app-attribute-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.ATTRIBUTE'></app-attribute-form>
-        <app-filter-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.FILTER'></app-filter-form>
-        <app-filter-condition-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.CONDITION'></app-filter-condition-form>
-        <app-link-entity-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.LINK'></app-link-entity-form>        
-        <app-order-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.ORDER'></app-order-form>
+    <ng-container [ngSwitch]="selected.name">
+        <app-entity-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Entity.Name'></app-entity-form>
+        <app-root-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Root.Name' ></app-root-form>
+        <app-attribute-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Attribute.Name'></app-attribute-form>
+        <app-filter-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Filter.Name'></app-filter-form>
+        <app-filter-condition-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.Condition.Name'></app-filter-condition-form>
+        <app-link-entity-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.Link.Name'></app-link-entity-form>
+        <app-order-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.Order.Name'></app-order-form>
     </ng-container>
 
 </ng-container>

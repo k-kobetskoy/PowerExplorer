@@ -1,10 +1,10 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, tap } from 'rxjs';
-import { NodeEntity } from '../../../models/OBSOLETE nodes/node-entity';
+import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, tap } from 'rxjs';
 import { EntityEntityService } from 'src/app/components/query-builder/services/entity-services/entity-entity.service';
 import { IFormPropertyModel } from '../../../models/abstract/i-form-property-model';
+import { QueryNode } from '../../../models/query-node';
 
 @Component({
   selector: 'app-entity-form',
@@ -13,7 +13,7 @@ import { IFormPropertyModel } from '../../../models/abstract/i-form-property-mod
 })
 export class EntityFormComponent implements OnInit, OnDestroy {
 
-  @Input() selectedNode: NodeEntity;
+  @Input() selectedNode: QueryNode;
 
   private _destroy$ = new Subject<void>();
 
@@ -31,7 +31,7 @@ export class EntityFormComponent implements OnInit, OnDestroy {
       formControl: new FormControl<string>(null),
       valuesObservable$: this._entityEntityService.getEntities(),
       filteredValues$: null,
-      storedInputValue$: this.selectedNode.tagProperties.entityName.constructorValue$,
+      storedInputValue$: new BehaviorSubject<string>(''),
       filterFunc: (value: EntityModel, filterValue: string) => {
         return value.logicalName.toLowerCase().includes(filterValue.toLowerCase()) || value.displayName.toLowerCase().includes(filterValue.toLowerCase())
       }
@@ -41,7 +41,7 @@ export class EntityFormComponent implements OnInit, OnDestroy {
 
     this.aliasFormModel = {
       formControl: new FormControl<string>(null),
-      storedInputValue$: this.selectedNode.tagProperties.entityAlias.constructorValue$,
+      storedInputValue$: new BehaviorSubject<string>(''),
     };
     this.setControlInitialValues(this.aliasFormModel);
     this.subscribeOnInputChanges(this.aliasFormModel);

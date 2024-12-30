@@ -1,13 +1,19 @@
 import { BehaviorSubject, Observable } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
+import { IAttributeData } from "./constants/attribute-data";
+import { Inject } from '@angular/core';
+import { AttributeFactoryResorlverService } from "../services/attribute-services/attribute-factory-resorlver.service";
+import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
 
 export class QueryNode {
     defaultNodeDisplayValue: string;
     order: number;
-    attributes: NodeAttribute[];
+    attributes$: BehaviorSubject<NodeAttribute[]>;
+    attributesCount: number;
     expandable: boolean;
-    name: string;
+    nodeName: string;
+    tagName: string;
     id?: string;
     actions?: string[];
     level?: number;
@@ -20,6 +26,11 @@ export class QueryNode {
     relationship$?: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     showOnlyLookups$?: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     validationPassed$: Observable<boolean>;
+    tagDisplayValue$: Observable<string>;
+    nodeDisplayValue$: Observable<string>;
+    attributeFactory: IAttributeFactory;
+
+    @Inject(AttributeFactoryResorlverService) private static attributeFactoryResolver: AttributeFactoryResorlverService;
 
     constructor(nodeName: string) {
         this.expandable = false;
@@ -30,10 +41,16 @@ export class QueryNode {
 
         const nodeData: INodeData = QueryNodeData[nodeName]
         this.defaultNodeDisplayValue = nodeData.Name;
-        this.name = nodeData.Name;
+        this.nodeName = nodeData.Name;
+        this.tagName = nodeData.TagName;
         this.order = nodeData.Order;
         this.actions = nodeData.Actions;
-        this.attributes = new Array<NodeAttribute>(nodeData.AttributesArrayCapacity);
+        this.attributesCount = nodeData.AttributesCount;
+        this.attributes$ = new BehaviorSubject<NodeAttribute[]>([]);
+
+        this.tagDisplayValue$ = new BehaviorSubject<string>(this.defaultNodeDisplayValue);
+
+        this.attributeFactory = QueryNode.attributeFactoryResolver.getAttributesFactory(nodeName);
     }
 
     validateNode(): Observable<boolean> {
@@ -42,24 +59,29 @@ export class QueryNode {
         })
     };
 
-    // get displayValue$(): Observable<IPropertyDisplay> {
-    //     return new Observable<IPropertyDisplay>(observer => {
-    //         observer.next({ nodePropertyDisplay: this.defaultNodeDisplayValue, tagPropertyDisplay: this.tagProperties.tagName });
-    //     });
-    // }
-
     getParentEntity(node: QueryNode = this): QueryNode {
-
-        if (node.name === QueryNodeData.Root.Name) return null;
+        if (node.nodeName === QueryNodeData.Root.Name) return null;
 
         const parent = node.parent;
 
         if (!parent) throw new Error('Parent not found');
 
-        if (parent?.name === QueryNodeData.Entity.Name || parent?.name === QueryNodeData.Link.Name) {
+        if (parent?.nodeName === QueryNodeData.Entity.Name || parent?.nodeName === QueryNodeData.Link.Name) {
             return parent;
         } else {
             return this.getParentEntity(parent);
+        }
+    }
+
+    setAttribute(attributeData: IAttributeData, value: string): void {
+        let attribute = this.attributes$.value[attributeData.Order - 1];
+
+        if (attribute) {
+            attribute.value$.next(value);
+        }
+        else {
+            attribute = this.attributeFactory.createAttribute(attributeData.EditorName, this, false, value);
+            this.addAttribute(attribute);
         }
     }
 
@@ -68,22 +90,32 @@ export class QueryNode {
 
         if (!parent) return new BehaviorSubject<string>('');
 
-        return parent.tagProperties.entityName?.constructorValue$ ?? parent.tagProperties.linkEntity.constructorValue$;
+        return parent.attributes$.value.find(a => a.editorName === 'name').value$;
     }
 
     addAttribute(attribute: NodeAttribute): void {
-        let low = 0;
-        let high = this.attributes.length;
+        let attributes = this.attributes$.value;
 
-        while (low < high) {
-            const mid = (low + high) >>> 1;
-            if (this.attributes[mid].order < attribute.order) {
-                low = mid + 1;
-            } else {
-                high = mid;
-            }
+        let isUndefinedAttribute = attribute.order > this.attributesCount;
+
+        if (isUndefinedAttribute) {
+            this.addToLastFreePosition(attribute, attributes);
+        }
+        else {
+            attributes.splice(attribute.order - 1, 0, attribute);
         }
 
-        this.attributes.splice(low, 0, attribute);
+        this.attributes$.next(attributes);
+    }
+
+    private addToLastFreePosition(attribute: NodeAttribute, attributes: NodeAttribute[]): void {
+        let indexToInsert = this.attributesCount - 1;
+
+        while (attributes[indexToInsert] !== undefined) {
+            indexToInsert++;
+        }
+
+        this.attributesCount = indexToInsert + 1;
+        attributes[indexToInsert] = attribute;
     }
 }

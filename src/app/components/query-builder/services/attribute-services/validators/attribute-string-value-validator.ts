@@ -27,7 +27,7 @@ export class AttributeStringValueValidator implements IAttributeValidator {
 
         return {
             isValid$: isValid,
-            errorMessage: `Value for '${attribute.name}' has incorrect format.`
+            errorMessage: `Value for '${attribute.editorName}' has incorrect format.`
         };
     }
 

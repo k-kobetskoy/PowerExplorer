@@ -1,33 +1,33 @@
-import { NodeAdderFactoryService } from './node-adders/node-adder-factory.service';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
-import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
-import { QueryNodeType } from '../models/constants/OBSOLETE query-node-type';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
+import { QueryNode } from '../models/query-node';
+import { QueryNodeData } from '../models/constants/query-node-data';
 
 @Injectable({ providedIn: 'root' })
 
-export class NodeTreeProcessorService {
+export class NodeTreeService {
 
   private _nodeTree$: BehaviorSubject<QueryNodeTree> = new BehaviorSubject<QueryNodeTree>(null);
 
   xmlRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
-  private _selectedNode$: BehaviorSubject<IQueryNode> = new BehaviorSubject<IQueryNode>(null);
+  private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
-  public get selectedNode$(): Observable<IQueryNode> {
+  public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
   }
 
-  public set selectedNode$(value: IQueryNode) {
+  public set selectedNode$(value: QueryNode) {
     if (value != this._selectedNode$.value) {
       this._selectedNode$.next(value);
     }
   }
 
-  constructor(private _nodeAdderFactory: NodeAdderFactoryService, private _eventBus: EventBusService) { 
+  constructor(private _eventBus: EventBusService) {
+    this.initializeNodeTree();
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree())
   }
 
@@ -44,32 +44,60 @@ export class NodeTreeProcessorService {
   initializeNodeTree() {
     const nodeTree = new QueryNodeTree();
 
-    const rootNodeAdder = this._nodeAdderFactory.getAdder(QueryNodeType.ROOT);
-    const rootNode = rootNodeAdder.addNode(QueryNodeType.ROOT, null);
+    const rootNode = new QueryNode(QueryNodeData.Root.Name);
 
     nodeTree.root = rootNode;
 
-    const entityNodeAdder = this._nodeAdderFactory.getAdder(QueryNodeType.ENTITY);
-    const entityNode = entityNodeAdder.addNode(QueryNodeType.ENTITY, rootNode);
-
-    this.expandNode(rootNode);
-    this.selectedNode$ = entityNode;
-        
     this._nodeTree$.next(nodeTree);
+
+    this._selectedNode$.next(rootNode);
+
+    this.addNode(QueryNodeData.Entity.Name);
   }
 
-  addNode(newNodeType: string): IQueryNode {
-    let nodeAdder = this._nodeAdderFactory.getAdder(newNodeType)
-    let newNodeToSelect = nodeAdder.addNode(newNodeType, this._selectedNode$.value)
-    if (this._selectedNode$.value) {
+  addNode(newNodeName: string): QueryNode {
+    let parentNode = this._selectedNode$.value;  
+
+    let newNode = new QueryNode(newNodeName);
+
+    let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
+    let bottomNode = nodeAbove.next;
+
+    nodeAbove.next = newNode;
+    newNode.next = bottomNode;
+
+    newNode.level = parentNode.level + 1;
+    newNode.parent = parentNode;
+
+    if (parentNode) {
       this.expandNode(this._selectedNode$.value)
     }
-    this.selectedNode$ = newNodeToSelect
+
+    this.selectedNode$ = newNode;
     this._eventBus.emit({ name: AppEvents.NODE_ADDED })
-    return newNodeToSelect
+
+    //TODO: Refactor this if possible
+    if(newNodeName === QueryNodeData.Filter.Name) {
+      this.addNode(QueryNodeData.Condition.Name)
+    }
+
+    return newNode
   }
 
-  removeNode(node: IQueryNode) {
+  getNodeAbove(newNodeOrder: number, parentNode: QueryNode): QueryNode {
+    let current = parentNode;
+    let newNodeLevel = current.level + 1;
+
+    while (current) {
+      if (!current.next) { break }
+      if (current.next.order > newNodeOrder && current.next.level === newNodeLevel) { break }
+      if (current.next.level <= parentNode.level) { break }
+      current = current.next;
+    }
+    return current;
+  }
+
+  removeNode(node: QueryNode) {
     if (!node.parent) {
       throw new Error('Node has no parent.');
     }
@@ -93,14 +121,14 @@ export class NodeTreeProcessorService {
     this._eventBus.emit({ name: AppEvents.NODE_REMOVED })
   }
 
-  expandNode(node: IQueryNode) {
+  expandNode(node: QueryNode) {
     node.expandable = true
     if (!node.isExpanded) {
       this.toggleNode(node)
     }
   }
 
-  toggleNode(node: IQueryNode) {
+  toggleNode(node: QueryNode) {
     if (!node.expandable) { return; }
 
     node.isExpanded = !node.isExpanded;
@@ -122,7 +150,7 @@ export class NodeTreeProcessorService {
     }
   }
 
-  private getNextNodeWithTheSameLevel(node: IQueryNode): IQueryNode {
+  private getNextNodeWithTheSameLevel(node: QueryNode): QueryNode {
     let nextNode = node.next;
 
     while (nextNode && nextNode.level > node.level) {
@@ -132,7 +160,7 @@ export class NodeTreeProcessorService {
     return nextNode;
   }
 
-  private getPreviousNode(node: IQueryNode): IQueryNode {
+  private getPreviousNode(node: QueryNode): QueryNode {
     const parent = node.parent;
 
     let previousNode = parent;

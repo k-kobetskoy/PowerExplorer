@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
-import { NodeTreeProcessorService } from '../../../services/node-tree-processor.service';
+import { NodeTreeService } from '../../../services/node-tree.service';
+import { QueryNode } from '../../../models/query-node';
 
 @Component({
   selector: 'app-quick-actions',
@@ -9,9 +9,9 @@ import { NodeTreeProcessorService } from '../../../services/node-tree-processor.
 })
 export class QuickActionsComponent implements OnInit {
 
-  @Input() selectedNode: IQueryNode
+  @Input() selectedNode: QueryNode
 
-  constructor(private nodeTreeProcessor: NodeTreeProcessorService) { }
+  constructor(private nodeTreeProcessor: NodeTreeService) { }
 
   ngOnInit() { }
 

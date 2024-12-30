@@ -6,8 +6,8 @@ import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { NodeAttribute } from '../../../models/node-attribute';
-import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
-import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,30 +15,35 @@ export class RootAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
+    const attribute = AttributeData.Root;
+
     switch (attributeName) {
-      case AttributeNames.rootTop:
-        return new NodeAttribute(node, attributeName, validators, 'Top', AttributeTreeViewDisplayStyle.nameWithValue, value, 1);
-      case AttributeNames.rootDistinct:
-        return new NodeAttribute(node, attributeName, validators, 'Dst', AttributeTreeViewDisplayStyle.onlyName, value, 5);
-      case AttributeNames.rootAggregate:
-        return new NodeAttribute(node, attributeName, validators, 'Agg', AttributeTreeViewDisplayStyle.onlyName, value, 4);
-      case AttributeNames.rootTotalRecordsCount:
-        return new NodeAttribute(node, attributeName, validators, 'Trc', AttributeTreeViewDisplayStyle.onlyName, value, 3);
-      case AttributeNames.rootRecordsPerPage:
-        return new NodeAttribute(node, attributeName, validators, 'Cnt', AttributeTreeViewDisplayStyle.nameWithValue, value, 2);
-      case AttributeNames.rootPage:
-        return new NodeAttribute(node, attributeName, validators, 'Pg', AttributeTreeViewDisplayStyle.nameWithValue, value, 6);
-      case AttributeNames.rootPagingCookie:
-      case AttributeNames.rootLateMaterialize:
-      case AttributeNames.rootDataSource:
-      case AttributeNames.rootOptions:
-        return new NodeAttribute(node, attributeName, validators, null, null, value);
+      case attribute.Top.EditorName:
+        return new NodeAttribute(node, validators, attribute.Top, value);
+      case attribute.Distinct.EditorName:
+        return new NodeAttribute(node, validators, attribute.Distinct, value);
+      case attribute.Aggregate.EditorName:
+        return new NodeAttribute(node, validators, attribute.Aggregate, value);
+      case attribute.TotalRecordsCount.EditorName:
+        return new NodeAttribute(node, validators, attribute.TotalRecordsCount, value);
+      case attribute.RecordsPerPage.EditorName:
+        return new NodeAttribute(node, validators, attribute.RecordsPerPage, value);
+      case attribute.Page.EditorName:
+        return new NodeAttribute(node, validators, attribute.Page, value);
+      case attribute.PagingCookie.EditorName:
+        return new NodeAttribute(node, validators, attribute.PagingCookie, value);
+      case attribute.LateMaterialize.EditorName:
+        return new NodeAttribute(node, validators, attribute.LateMaterialize, value);
+      case attribute.DataSource.EditorName:
+        return new NodeAttribute(node, validators, attribute.DataSource, value);
+      case attribute.Options.EditorName:
+        return new NodeAttribute(node, validators, attribute.Options, value);
       default:
-        return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
     }
   }
 

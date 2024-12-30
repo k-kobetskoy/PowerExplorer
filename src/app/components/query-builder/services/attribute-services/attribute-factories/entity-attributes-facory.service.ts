@@ -5,10 +5,10 @@ import { AttributeNames } from '../../../models/constants/attribute-names';
 import { DataverseEntityTypeNames } from '../../../models/constants/dataverse-entity-type-names';
 import { AttributeValidationTypes } from '../constants/attribute-validation-types';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
-import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
-import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 
@@ -16,17 +16,19 @@ export class EntityAttributesFacoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
+    const attribute = AttributeData.Entity;
+
     switch (attributeName) {
-      case AttributeNames.entityName:
-        return new NodeAttribute(node, attributeName, validators, 'Entity', AttributeTreeViewDisplayStyle.onlyValue, value, 1);
-      case AttributeNames.entityAlias:
-        return new NodeAttribute(node, attributeName, validators, 'Alias', AttributeTreeViewDisplayStyle.alias, value, 2);
+      case attribute.Name.EditorName:
+        return new NodeAttribute(node, validators, attribute.Name, value);
+      case attribute.Alias.EditorName:
+        return new NodeAttribute(node, validators, attribute.Alias, value);
       default:
-        return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
     }
   }
 

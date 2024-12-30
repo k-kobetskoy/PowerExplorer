@@ -4,10 +4,10 @@ import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValidationTypes } from '../constants/attribute-validation-types';
-import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
-import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,19 +15,23 @@ export class FilterAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
+    const attribute = AttributeData.Filter;
+
     switch (attributeName) {
-      case AttributeNames.filterType:
-        return new NodeAttribute(node, attributeName, validators,  'FilterType', AttributeTreeViewDisplayStyle.onlyValue, value);
+      case attribute.Type.EditorName:
+        return new NodeAttribute(node, validators,  attribute.Type, value);
       case AttributeNames.filterIsQuickFind:
+        return new NodeAttribute(node, validators,  attribute.IsQuickFind, value);
       case AttributeNames.filterBypassQuickFind:
+        return new NodeAttribute(node, validators,  attribute.BypassQuickFind, value);
       case AttributeNames.filterOverrideRecordLimit:
-        return new NodeAttribute(node, attributeName, validators, null, null, value);
+        return new NodeAttribute(node, validators,  attribute.OverrideRecordLimit, value);
       default:
-        return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
     }
   }
 

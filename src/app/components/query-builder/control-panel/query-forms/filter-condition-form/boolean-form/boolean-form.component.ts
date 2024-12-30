@@ -3,9 +3,9 @@ import { FormControl } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, takeUntil } from 'rxjs';
 import { UiInputProperty } from 'src/app/components/query-builder/models/abstract/ui-input-property';
 import { FilterStaticData } from 'src/app/components/query-builder/models/constants/ui/filter-static-data';
-import { NodeCondition } from 'src/app/components/query-builder/models/OBSOLETE nodes/node-condition';
 import { BooleanModel } from 'src/app/models/incoming/boolean/boolean-model';
 import { BooleanEntityService } from 'src/app/components/query-builder/services/entity-services/boolean-entity.service';
+import { QueryNode } from 'src/app/components/query-builder/models/query-node';
 
 @Component({
   selector: 'app-boolean-form',
@@ -16,7 +16,7 @@ export class BooleanFormComponent implements OnChanges, OnDestroy {
 
   private _destroy$ = new Subject<void>();
 
-  @Input() selectedNode: NodeCondition;
+  @Input() selectedNode: QueryNode;
   @Input() attributeValue: string;
 
   filterOperators: UiInputProperty[] = FilterStaticData.FilterBooleanOperators;

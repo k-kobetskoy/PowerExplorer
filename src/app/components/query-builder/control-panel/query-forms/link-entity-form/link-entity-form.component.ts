@@ -3,12 +3,12 @@ import { FormControl } from '@angular/forms';
 import { Subject, Observable, distinctUntilChanged, takeUntil, startWith, switchMap, map, BehaviorSubject, of, combineLatest } from 'rxjs';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { EntityEntityService } from 'src/app/components/query-builder/services/entity-services/entity-entity.service';
-import { NodeLink } from '../../../models/OBSOLETE nodes/node-link';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
 import { LinkTypeOptions } from '../../../models/constants/ui/link-type-options';
 import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
 import { IFormPropertyModel } from '../../../models/abstract/i-form-property-model';
+import { QueryNode } from '../../../models/query-node';
 
 @Component({
   selector: 'app-link-entity-form',
@@ -17,7 +17,7 @@ import { IFormPropertyModel } from '../../../models/abstract/i-form-property-mod
 })
 export class LinkEntityFormComponent implements OnChanges, OnDestroy {
 
-  @Input() selectedNode: NodeLink;
+  @Input() selectedNode: QueryNode;
 
   private _destroy$ = new Subject<void>();
 

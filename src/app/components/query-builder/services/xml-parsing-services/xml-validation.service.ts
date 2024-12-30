@@ -133,7 +133,6 @@ export class XmlValidationService {
   }
 
   validateStartNode(iteratingNode: SyntaxNodeRef, sequenceValidationStack: string[], diagnostics: Diagnostic[]): boolean {
-
     if (sequenceValidationStack.length === 0) {
       this.addValidationError(PARSING_ERRORS.unexpectedParsingError, iteratingNode.from, iteratingNode.to, diagnostics);
       return false;
@@ -177,7 +176,6 @@ export class XmlValidationService {
   }
 
   validateElementNodes(tagsValidationStack: { mandatoryNodes: string[]; from: number; to: number; }[], diagnostics: Diagnostic[]) {
-
     if (tagsValidationStack.length === 0) {
       this.addValidationError(PARSING_ERRORS.unexpectedParsingError, 0, 0, diagnostics);
       return;

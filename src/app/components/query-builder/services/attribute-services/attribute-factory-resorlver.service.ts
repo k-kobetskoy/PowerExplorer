@@ -7,7 +7,7 @@ import { AttributeAttributesFactoryService } from './attribute-factories/attribu
 import { FilterAttributesFactoryService } from './attribute-factories/filter-attributes-factory.service';
 import { LinkAttributesFactoryService } from './attribute-factories/link-attributes-factory.service';
 import { OrderAttributesFactoryService } from './attribute-factories/order-attributes-factory.service';
-import { QueryNodeType } from '../../models/constants/OBSOLETE query-node-type';
+import { QueryNodeData } from '../../models/constants/query-node-data';
 
 @Injectable({ providedIn: 'root' })
 
@@ -25,19 +25,19 @@ export class AttributeFactoryResorlverService {
 
   getAttributesFactory(tagName: string): IAttributeFactory {
     switch (tagName) {
-      case QueryNodeType.CONDITION:
+      case QueryNodeData.Condition.Name:
         return this.conditionFactory
-      case QueryNodeType.ATTRIBUTE:
+      case QueryNodeData.Attribute.Name:
         return this.attributeFactory
-      case QueryNodeType.FILTER:
+      case QueryNodeData.Filter.Name:
         return this.filterFactory
-      case QueryNodeType.ENTITY:
+      case QueryNodeData.Entity.Name:
         return this.entityFactory
-      case QueryNodeType.LINK:
+      case QueryNodeData.Link.Name:
         return this.linkFactory
-      case QueryNodeType.ORDER:
+      case QueryNodeData.Order.Name:
         return this.orderFactory
-      case QueryNodeType.ROOT:
+      case QueryNodeData.Root.Name:
         return this.rootFactory
       default:
         return null; //TODO: add default Node & default attributes factory

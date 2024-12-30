@@ -69,7 +69,7 @@ export class XmlParseService {
   addNodeToTree(xmlParseErrors: Diagnostic[]) {
     let buildResult = this.nodeBuilder.buildQueryNode();
     if (buildResult.isBuildSuccess) {
-      this.nodeTree.addNode(buildResult.queryNode);
+      this.nodeTree.addNode(buildResult.queryNode); //TODO: use nodetree service instead of nodeTree
     } else {
       for (let error of buildResult.errors) {
         xmlParseErrors.push({

@@ -4,10 +4,11 @@ import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValidationTypes } from '../constants/attribute-validation-types';
-import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,26 +16,32 @@ export class LinkAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
+    const attribute = AttributeData.Link;
+
+
     switch (attributeName) {
-      case AttributeNames.linkEntity:
-        return new NodeAttribute(node, attributeName, validators, 'LinkEntity', AttributeTreeViewDisplayStyle.onlyValue, value, 1);
-      case AttributeNames.linkAlias:
-        return new NodeAttribute(node, attributeName, validators, 'LinkAlias', AttributeTreeViewDisplayStyle.alias, value, 2);
-      case AttributeNames.linkIntersect:
-        return new NodeAttribute(node, attributeName, validators, 'M:M', AttributeTreeViewDisplayStyle.onlyName, value, 4);
-      case AttributeNames.linkType:
-        return new NodeAttribute(node, attributeName, validators, 'LinkType', AttributeTreeViewDisplayStyle.onlyValue, value, 3);
-      case AttributeNames.linkFromAttribute:
-      case AttributeNames.linkToAttribute:
-      case AttributeNames.linkVisible:
-      case AttributeNames.linkShowOnlyLoolups:
-        return new NodeAttribute(node, attributeName, validators, null, null, value);
+      case attribute.Entity.EditorName:
+        return new NodeAttribute(node, validators, attribute.Entity, value);
+      case attribute.Alias.EditorName:
+        return new NodeAttribute(node, validators, attribute.Alias, value);
+      case attribute.Type.EditorName:
+        return new NodeAttribute(node, validators, attribute.Type, value);
+      case attribute.Intersect.EditorName:
+        return new NodeAttribute(node, validators, attribute.Intersect, value);
+      case attribute.From.EditorName:
+        return new NodeAttribute(node, validators, attribute.From, value);
+      case attribute.To.EditorName:
+        return new NodeAttribute(node, validators, attribute.To, value);
+      case attribute.Visible.EditorName:
+        return new NodeAttribute(node, validators, attribute.Visible, value);
+      case attribute.ShowOnlyLookups.EditorName:
+        return new NodeAttribute(node, validators, attribute.ShowOnlyLookups, value);
       default:
-        return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
     }
   }
 

@@ -4,10 +4,10 @@ import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
-import { IQueryNode } from '../../../models/abstract/OBSOLETE i-query-node';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
-import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,22 +15,24 @@ export class ConditionAttributesFactoryService implements IAttributeFactory {
 
   constructor(private validators: AttributeValidatorRegistryService) { }
 
-  createAttribute(attributeName: string, node: IQueryNode, parserValidation: boolean, value?: string): NodeAttribute {
+  createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
+    const attribute = AttributeData.Condition;
+
     switch (attributeName) {
-      case AttributeNames.conditionEntity:
-        return new NodeAttribute(node, attributeName, validators, 'Entity', AttributeTreeViewDisplayStyle.onlyValue, value, 1);      
-      case AttributeNames.conditionAttribute:
-        return new NodeAttribute(node, attributeName, validators, 'Attribute', AttributeTreeViewDisplayStyle.onlyValue, value, 2);      
-      case AttributeNames.conditionOperator:
-        return new NodeAttribute(node, attributeName, validators, 'Operator', AttributeTreeViewDisplayStyle.onlyValue, value, 3);      
-      case AttributeNames.conditionValue:
-        return new NodeAttribute(node, attributeName, validators, 'Value', AttributeTreeViewDisplayStyle.onlyValue, value, 4);      
-      case AttributeNames.conditionValueOf:
-        return new NodeAttribute(node, attributeName, validators, 'ValueOf', AttributeTreeViewDisplayStyle.onlyValue, value, 5);
+      case attribute.Entity.EditorName:
+        return new NodeAttribute(node, validators, attribute.Entity, value);
+      case attribute.Attribute.EditorName:
+        return new NodeAttribute(node, validators, attribute.Attribute, value);
+      case attribute.Operator.EditorName:
+        return new NodeAttribute(node, validators, attribute.Operator, value);
+      case attribute.Value.EditorName:
+        return new NodeAttribute(node, validators, attribute.Value, value);
+      case attribute.ValueOf.EditorName:
+        return new NodeAttribute(node, validators, attribute.ValueOf, value);
       default:
-        return new NodeAttribute(node, attributeName, validators, null, null, value, null, false);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
     }
   }
 

@@ -29,7 +29,7 @@ export class AttributeTypeValidator implements IAttributeValidator {
 
         return {
             isValid$: isValid,
-            errorMessage: `The value for attribute '${attribute.name}' must be a boolean.`
+            errorMessage: `The value for attribute '${attribute.editorName}' must be a boolean.`
         };
     }
 
@@ -42,7 +42,7 @@ export class AttributeTypeValidator implements IAttributeValidator {
 
         return {
             isValid$: isValid,
-            errorMessage: `The value for attribute '${attribute.name}' must be a number.`
+            errorMessage: `The value for attribute '${attribute.editorName}' must be a number.`
         };
     }
 

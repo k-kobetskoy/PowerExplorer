@@ -4,7 +4,7 @@ import { IQueryNode } from '../models/abstract/OBSOLETE i-query-node';
 import { QueryNodeTree } from 'src/app/components/query-builder/models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
-import { NodeTreeProcessorService } from '../services/node-tree-processor.service';
+import { NodeTreeService } from '../services/node-tree.service';
 
 @Component({
   selector: 'app-tree-panel',
@@ -19,7 +19,7 @@ export class TreePanelComponent implements OnInit {
 
   constructor(
     private eventBus: EventBusService,
-    private nodeTreeProcessor: NodeTreeProcessorService) { }
+    private nodeTreeProcessor: NodeTreeService) { }
 
   ngOnInit() {
     this.dataSource$ = this.nodeTreeProcessor.getNodeTree()

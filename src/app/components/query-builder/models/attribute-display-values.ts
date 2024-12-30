@@ -1,7 +1,7 @@
 import { BehaviorSubject, distinctUntilChanged, map, Observable } from "rxjs";
 import { AttributeTreeViewDisplayStyle } from "./constants/attribute-tree-view-display-style";
 
-export class AttributeDisplayProperties {
+export class AttributeDisplayValues {
     displayOnTreeView: boolean;
     treeViewDisplayValue$: Observable<string>;
     editorViewDisplayValue$: Observable<string>;

@@ -1,4 +1,4 @@
-import { NodeTreeProcessorService } from './../services/node-tree-processor.service';
+import { NodeTreeService } from '../services/node-tree.service';
 import { LinterProviderService } from '../services/xml-parsing-services/linter-provider.service';
 import { ChangeDetectionStrategy, Component, ElementRef, Inject, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -32,7 +32,7 @@ export class CodeEditorComponent implements OnInit {
   xmlSyntaxErrors: any;
 
   constructor(
-    private nodeTreeProcessor: NodeTreeProcessorService,
+    private nodeTreeProcessor: NodeTreeService,
     private linterProviderService: LinterProviderService,
     private queryRendererService: QueryRenderService,
     @Inject(DOCUMENT) private document: Document

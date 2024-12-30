@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { AttributeFactoryResorlverService } from '../attribute-services/attribute-factory-resorlver.service';
 import { IAttributeFactory } from '../attribute-services/abstract/i-attribute-validators-factory';
 import { QueryNode } from '../../models/query-node';
+import { QueryNodeData } from '../../models/constants/query-node-data';
 
 export interface IQueryNodeBuildResult {
   isBuildSuccess: boolean;
@@ -34,13 +35,10 @@ export interface ITagBuildEntity {
 
 export const UNEXPECTED_ERROR_TEXT = 'Unexpected error. Please check you XML';
 
-const queryNodeTypeValues = new Set(Object.values(QueryNodeType));
-
 
 @Injectable({ providedIn: 'root' })
 
 export class QueryNodeBuilderService {
-
   constructor(private attributeFactoryResolver: AttributeFactoryResorlverService) { }
 
   tag: ITagBuildEntity;
@@ -54,7 +52,7 @@ export class QueryNodeBuilderService {
   }
 
   setAttributeName(attributeName: string, from: number, to: number) {
-    this.attribute = { name: attributeName, nameFrom: from, nameTo: to };
+    this.attribute = { name: attributeName.toLowerCase(), nameFrom: from, nameTo: to };
   }
 
   setAttributeValue(attributeValue: string, from: number, to: number) {
@@ -71,7 +69,6 @@ export class QueryNodeBuilderService {
   }
 
   buildQueryNode(): IQueryNodeBuildResult {
-
     if (!this.validateTagName(this.tag, this.errors)) {
       return { isBuildSuccess: false, queryNode: null, errors: this.errors };
     }
@@ -91,7 +88,6 @@ export class QueryNodeBuilderService {
   }
 
   addAttributeValueToNode(attribute: ITagBuildEntityAttribute, queryNode: QueryNode, attributeFactory: IAttributeFactory) {
-
     let nodeAttribute = attributeFactory.createAttribute(attribute.name, queryNode, true, attribute.value);
 
     queryNode.addAttribute(nodeAttribute);
@@ -105,7 +101,6 @@ export class QueryNodeBuilderService {
   }
 
   validateTagName(tag: ITagBuildEntity, errors: IBuildQueryError[]): boolean {
-
     if (!tag) {
       errors.push({ message: UNEXPECTED_ERROR_TEXT });
       return false;
@@ -124,8 +119,8 @@ export class QueryNodeBuilderService {
     return true;
   }
 
-  private isValidQueryNodeType(tagName: string): tagName is QueryNodeType {
-    return queryNodeTypeValues.has(tagName as QueryNodeType);
+  private isValidQueryNodeType(tagName: string): boolean {
+    return QueryNodeData.NodesNames.includes(tagName);
   }
 
   private getTagNameErrorMessage(tagName: string): string {
