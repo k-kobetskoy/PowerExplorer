@@ -1,8 +1,7 @@
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
 import { IAttributeData } from "./constants/attribute-data";
-import { Inject } from '@angular/core';
 import { AttributeFactoryResorlverService } from "../services/attribute-services/attribute-factory-resorlver.service";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
 
@@ -30,9 +29,10 @@ export class QueryNode {
     nodeDisplayValue$: Observable<string>;
     attributeFactory: IAttributeFactory;
 
-    @Inject(AttributeFactoryResorlverService) private static attributeFactoryResolver: AttributeFactoryResorlverService;
-
-    constructor(nodeName: string) {
+    constructor(
+        nodeName: string,
+        private attributeFactoryResolver: AttributeFactoryResorlverService
+    ) {
         this.expandable = false;
         this.level = 0;
         this.visible = true;
@@ -49,15 +49,49 @@ export class QueryNode {
         this.attributes$ = new BehaviorSubject<NodeAttribute[]>([]);
 
         this.tagDisplayValue$ = new BehaviorSubject<string>(this.defaultNodeDisplayValue);
+        this.nodeDisplayValue$ = this.createNodeDisplayValueObservable();
 
-        this.attributeFactory = QueryNode.attributeFactoryResolver.getAttributesFactory(nodeName);
+        this.attributeFactory = this.attributeFactoryResolver.getAttributesFactory(nodeName);
+        this.validationPassed$ = this.validateNode();
+    }
+
+    private createNodeDisplayValueObservable(): Observable<string> {
+        return this.attributes$.pipe(
+            map(attributes => attributes.map(attr => attr.attributeDisplayValues.treeViewDisplayValue$)),
+            map(observables => combineLatest(observables)),
+            map(observables$ => observables$.pipe(
+                map(values => values.join(' ')),
+                distinctUntilChanged()
+            )),
+            switchMap(observable => observable),
+            debounceTime(200)
+        );
     }
 
     validateNode(): Observable<boolean> {
-        return new Observable<boolean>(observer => {
-            observer.next(true);
-        })
-    };
+        return this.attributes$.pipe(
+            switchMap(attributes => 
+                combineLatest(
+                    attributes.map(attr => attr.getValidationState().pipe(
+                        switchMap(result => combineLatest([
+                            result.isValid$,
+                            of(result.errorMessage)
+                        ]))
+                    ))
+                ).pipe(
+                    map(results => {
+                        const errors = results
+                            .filter(([isValid, error]) => !isValid)
+                            .map(([_, error]) => error)
+                            .filter(error => error != null);
+                        
+                        this.validationErrors$.next(errors);
+                        return errors.length === 0;
+                    })
+                )
+            )
+        );
+    }
 
     getParentEntity(node: QueryNode = this): QueryNode {
         if (node.nodeName === QueryNodeData.Root.Name) return null;

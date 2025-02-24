@@ -79,18 +79,28 @@ export class QueryRenderService implements OnDestroy {
     }
 
     return node.attributes$.pipe(map(attributes => {
-      const attributesString = attributes.map(attribute => {
-        return `${attribute.attributeDisplayValues.editorViewDisplayValue$}`;
-      }).join(' ');
+      const attributesString = attributes
+        .filter(attribute => attribute.value$.value !== '') // Skip empty attributes
+        .map(attribute => attribute.attributeDisplayValues.editorViewDisplayValue$)
+        .join(' ');
 
-      return node.expandable
-          ? `${this.getIndent(node.level)}<${node.tagName} ${attributesString}>`
-          : `${this.getIndent(node.level)}<${node.tagName} ${attributesString} />`;
+      const hasAttributes = attributesString.trim().length > 0;
+      const indentation = this.getIndent(node.level);
+
+      if (node.expandable) {
+        return hasAttributes 
+          ? `${indentation}<${node.tagName} ${attributesString}>`
+          : `${indentation}<${node.tagName}>`;
+      } else {
+        return hasAttributes
+          ? `${indentation}<${node.tagName} ${attributesString} />`
+          : `${indentation}<${node.tagName} />`;
+      }
     }));
   }
 
   private getIndent(level: number): string {
-    return ' '.repeat(level * 4);
+    return '  '.repeat(level); // Use 2 spaces for indentation
   }
 
   ngOnDestroy(): void {

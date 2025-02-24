@@ -14,9 +14,9 @@
             [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}">
             <mat-icon class="tree-element-icon">
             </mat-icon>
-            <p class="small prevent-select"> {{(node.displayValue$ | async).nodePropertyDisplay}} </p>
-      
-              <span *ngIf="(node.validationPassed$|async)===false" class="validationError" >!</span>
+            <p class="small prevent-select"> {{node.nodeDisplayValue$|async}}>
+
+              <span *ngIf="(node.validationPassed$|async)===false" class="validationError">!</span>
           </div>
         </div>
       </div>
@@ -28,10 +28,10 @@
             [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}">
             <mat-icon class="tree-element-icon">
             </mat-icon>
-            <p class="small prevent-select">{{(node.displayValue$ | async).nodePropertyDisplay}}
+            <p class="small prevent-select">{{node.nodeDisplayValue$|async}}
               <ng-container *ngIf="node.validationPassed$">
-                <span *ngIf="(node.validationPassed$|async)===false" class="validationError" >!</span>
-              </ng-container>  
+                <span *ngIf="(node.validationPassed$|async)===false" class="validationError">!</span>
+              </ng-container>
             </p>
           </div>
         </div>

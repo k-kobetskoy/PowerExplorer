@@ -1,10 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
+import { AttributeFactoryResorlverService } from './attribute-services/attribute-factory-resorlver.service';
 
 @Injectable({ providedIn: 'root' })
 
@@ -26,7 +27,10 @@ export class NodeTreeService {
     }
   }
 
-  constructor(private _eventBus: EventBusService) {
+  constructor(
+    private _eventBus: EventBusService,
+    private attributeFactoryResolver: AttributeFactoryResorlverService
+  ) {
     this.initializeNodeTree();
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree())
   }
@@ -44,7 +48,7 @@ export class NodeTreeService {
   initializeNodeTree() {
     const nodeTree = new QueryNodeTree();
 
-    const rootNode = new QueryNode(QueryNodeData.Root.Name);
+    const rootNode = new QueryNode(QueryNodeData.Root.Name, this.attributeFactoryResolver);
 
     nodeTree.root = rootNode;
 
@@ -58,7 +62,7 @@ export class NodeTreeService {
   addNode(newNodeName: string): QueryNode {
     let parentNode = this._selectedNode$.value;  
 
-    let newNode = new QueryNode(newNodeName);
+    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;
@@ -74,14 +78,16 @@ export class NodeTreeService {
     }
 
     this.selectedNode$ = newNode;
-    this._eventBus.emit({ name: AppEvents.NODE_ADDED })
+    this._eventBus.emit({ name: AppEvents.NODE_ADDED });
 
-    //TODO: Refactor this if possible
+    // Handle special node types that require additional nodes
     if(newNodeName === QueryNodeData.Filter.Name) {
-      this.addNode(QueryNodeData.Condition.Name)
+      // Add a condition node and make it the selected node
+      const conditionNode = this.addNode(QueryNodeData.Condition.Name);
+      this.selectedNode$ = conditionNode;
     }
 
-    return newNode
+    return newNode;
   }
 
   getNodeAbove(newNodeOrder: number, parentNode: QueryNode): QueryNode {

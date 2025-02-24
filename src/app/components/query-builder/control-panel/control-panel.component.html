@@ -1,6 +1,6 @@
 <ng-container *ngIf="selectedNode$ | async as selected; else elseBlock">
     
-    <ng-container [ngSwitch]="selected.name">
+    <ng-container [ngSwitch]="selected.nodeName">
         <app-entity-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Entity.Name'></app-entity-form>
         <app-root-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Root.Name' ></app-root-form>
         <app-attribute-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Attribute.Name'></app-attribute-form>
