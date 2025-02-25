@@ -1,97 +1,88 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { BaseFormComponent } from '../base-form.component';
 import { FormControl } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, tap } from 'rxjs';
-import { EntityEntityService } from 'src/app/components/query-builder/services/entity-services/entity-entity.service';
-import { IFormPropertyModel } from '../../../models/abstract/i-form-property-model';
-import { QueryNode } from '../../../models/query-node';
+import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, startWith, takeUntil } from 'rxjs/operators';
+import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 
 @Component({
-  selector: 'app-entity-form',
-  templateUrl: './entity-form.component.html',
-  styleUrls: ['./entity-form.component.css']
+    selector: 'app-entity-form',
+    templateUrl: './entity-form.component.html',
+    styleUrls: ['./entity-form.component.css']
 })
-export class EntityFormComponent implements OnInit, OnDestroy {
+export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
+    private destroy$ = new Subject<void>();
+    private storedValues = new Map<string, string>();
+    entityFormControl = new FormControl('');
+    filteredEntities$: Observable<EntityModel[]>;
+    loading$ = new BehaviorSubject<boolean>(false);
 
-  @Input() selectedNode: QueryNode;
-
-  private _destroy$ = new Subject<void>();
-
-  entityFormModel: IFormPropertyModel<EntityModel, string>;
-  aliasFormModel: IFormPropertyModel<string, string>;
-
-  constructor(private _entityEntityService: EntityEntityService) {   }
-
-  ngOnInit() {
-    this.initializeFormControls();
-  }
-
-  initializeFormControls() {
-    this.entityFormModel = {
-      formControl: new FormControl<string>(null),
-      valuesObservable$: this._entityEntityService.getEntities(),
-      filteredValues$: null,
-      storedInputValue$: new BehaviorSubject<string>(''),
-      filterFunc: (value: EntityModel, filterValue: string) => {
-        return value.logicalName.toLowerCase().includes(filterValue.toLowerCase()) || value.displayName.toLowerCase().includes(filterValue.toLowerCase())
-      }
-    };
-    this.setControlInitialValues(this.entityFormModel);
-    this.addFilterToInput(this.entityFormModel);
-
-    this.aliasFormModel = {
-      formControl: new FormControl<string>(null),
-      storedInputValue$: new BehaviorSubject<string>(''),
-    };
-    this.setControlInitialValues(this.aliasFormModel);
-    this.subscribeOnInputChanges(this.aliasFormModel);
-  }
-
-  setControlInitialValues<TProperty, TForm>(propertyForm: IFormPropertyModel<TProperty, TForm>) {
-    propertyForm.formControl.setValue(propertyForm.storedInputValue$.value);
-  }
-
-  subscribeOnInputChanges<TProperty, TForm>(propertyForm: IFormPropertyModel<TProperty, TForm>) {
-    propertyForm.formControl.valueChanges
-      .pipe(distinctUntilChanged(), takeUntil(this._destroy$))
-      .subscribe(value => propertyForm.storedInputValue$.next(value));
-  }
-
-  addFilterToInput<TProperty extends EntityModel>(propertyForm: IFormPropertyModel<TProperty, string>) {
-    propertyForm.filteredValues$ = propertyForm.formControl.valueChanges.pipe(
-      startWith(propertyForm.storedInputValue$.value ?? ''),
-      switchMap(value => value ? this._filter<TProperty>(value, propertyForm) : propertyForm.valuesObservable$)
-    );
-  }
-
-  private _filter<TProperty extends EntityModel>(value: string, propertyForm: IFormPropertyModel<TProperty, string>): Observable<TProperty[]> {
-    const filterValue = value.toLowerCase();
-
-    return propertyForm.valuesObservable$.pipe(
-      map(
-        properties => {
-          propertyForm.storedInputValue$.next(filterValue);
-          return properties.filter((property) => propertyForm.filterFunc(property, filterValue))
-        }),
-        debounceTime(300),
-        tap(properties=>{
-          const property = properties.find(p => p.logicalName === value);
-          if (property) {
-            this.selectedNode.entitySetName$.next(property.entitySetName);
-          }
-        })
-    );
-  }
-
-  onInputChanged<TProperty, TForm>(event: Event, propertyForm: IFormPropertyModel<TProperty, TForm>) {
-    if (event.target['value'].trim() === '') {
-      propertyForm.storedInputValue$.next(null);
-      this.selectedNode.entitySetName$.next(null);
+    constructor(private entityService: EntityEntityService) {
+        super();
     }
-  }
 
-  ngOnDestroy(): void {
-    this._destroy$.next();
-    this._destroy$.complete();
-  }
+    ngOnInit() {
+        this.setupEntityAutocomplete();
+        this.setupNodeValueHandling();
+    }
+
+    private setupNodeValueHandling() {
+        // When node changes, load its stored value or attribute value
+        const nodeId = this.selectedNode.id;
+        if (this.storedValues.has(nodeId)) {
+            this.entityFormControl.setValue(this.storedValues.get(nodeId), { emitEvent: false });
+        } else {
+            const entityName = this.getAttributeValue(this.AttributeData.Entity.Name);
+            if (entityName) {
+                this.entityFormControl.setValue(entityName, { emitEvent: false });
+                this.storedValues.set(nodeId, entityName);
+            }
+        }
+
+        // Subscribe to form control changes
+        this.entityFormControl.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(value => {
+                // Store value for this node
+                this.storedValues.set(this.selectedNode.id, value);
+                
+                this.updateAttribute(this.AttributeData.Entity.Name, value);
+                // Update entitySetName if entity exists
+                this.entityService.getEntities()
+                    .pipe(
+                        map(entities => entities.find(e => e.logicalName === value)),
+                        takeUntil(this.destroy$)
+                    )
+                    .subscribe(entity => {
+                        if (entity) {
+                            this.selectedNode.entitySetName$.next(entity.entitySetName);
+                        }
+                    });
+            });
+    }
+
+    private setupEntityAutocomplete() {
+        this.filteredEntities$ = combineLatest([
+            this.entityFormControl.valueChanges.pipe(startWith('')),
+            this.entityService.getEntities()
+        ]).pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            map(([value, entities]) => this.filterEntities(value, entities))
+        );
+    }
+
+    private filterEntities(value: string, entities: EntityModel[]): EntityModel[] {
+        const filterValue = value?.toLowerCase() || '';
+        return entities.filter(entity => 
+            entity.logicalName.toLowerCase().includes(filterValue) ||
+            entity.displayName.toLowerCase().includes(filterValue)
+        );
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
 }

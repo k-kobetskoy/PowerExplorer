@@ -27,7 +27,7 @@ export class QueryNode {
     validationPassed$: Observable<boolean>;
     tagDisplayValue$: Observable<string>;
     nodeDisplayValue$: Observable<string>;
-    attributeFactory: IAttributeFactory;
+    private readonly attributeFactory: IAttributeFactory;
 
     constructor(
         nodeName: string,
@@ -108,15 +108,25 @@ export class QueryNode {
     }
 
     setAttribute(attributeData: IAttributeData, value: string): void {
-        let attribute = this.attributes$.value[attributeData.Order - 1];
+        let attribute = this.findOrCreateAttribute(attributeData);
+        attribute.value$.next(value);
+    }
 
-        if (attribute) {
-            attribute.value$.next(value);
-        }
-        else {
-            attribute = this.attributeFactory.createAttribute(attributeData.EditorName, this, false, value);
+    private findOrCreateAttribute(attributeData: IAttributeData): NodeAttribute {
+        let attribute = this.findAttribute(attributeData.EditorName);
+        if (!attribute) {
+            attribute = this.attributeFactory.createAttribute(attributeData.EditorName, this, false);
             this.addAttribute(attribute);
         }
+        return attribute;
+    }
+
+    findAttribute(attributeName: string): NodeAttribute | undefined {
+        return this.attributes$.value.find(a => a.editorName === attributeName);
+    }
+
+    getOrCreateAttribute(attributeName: string): NodeAttribute | undefined {
+        return this.findAttribute(attributeName);
     }
 
     getParentEntityName(node: QueryNode = this): BehaviorSubject<string> {
@@ -152,4 +162,12 @@ export class QueryNode {
         this.attributesCount = indexToInsert + 1;
         attributes[indexToInsert] = attribute;
     }
+
+    handleAttributeValidationChange(change: {attributeName: string, errors: string[]}) {
+        const currentErrors = this.validationErrors$.value;
+        const otherErrors = currentErrors.filter(err => !err.startsWith(`${change.attributeName}:`));
+        const newErrors = change.errors.map(err => `${change.attributeName}: ${err}`);
+        this.validationErrors$.next([...otherErrors, ...newErrors]);
+    }
 }
+

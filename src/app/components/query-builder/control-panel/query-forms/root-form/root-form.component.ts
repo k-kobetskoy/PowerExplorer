@@ -1,16 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { NodeRoot } from '../../../models/OBSOLETE nodes/node-root';
+import { Component } from '@angular/core';
+import { BaseFormComponent } from '../base-form.component';
 
 @Component({
-  selector: 'app-root-form',
-  templateUrl: './root-form.component.html',
-  styleUrls: ['./root-form.component.css']
+    selector: 'app-root-form',
+    templateUrl: './root-form.component.html',
+    styleUrls: ['./root-form.component.css']
 })
-export class RootFormComponent implements OnInit {
-
-  @Input() selectedNode: NodeRoot
-
-  constructor() { }
-
-  ngOnInit() { }
-}
+export class RootFormComponent extends BaseFormComponent {}

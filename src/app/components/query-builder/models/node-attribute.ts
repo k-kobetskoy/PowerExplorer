@@ -13,7 +13,11 @@ export class NodeAttribute {
     value$ = new BehaviorSubject<string>('');
     validators: AttributeValidators;
     attributeDisplayValues: AttributeDisplayValues;
-    private readonly validationState$: Observable<IAttributeValidationResult>;
+    private validationState$: Observable<IAttributeValidationResult>;
+    private validationStateChange$ = new BehaviorSubject<{attributeName: string, errors: string[]}>({
+        attributeName: '',
+        errors: []
+    });
 
     constructor(
         node: QueryNode,
@@ -38,20 +42,41 @@ export class NodeAttribute {
             attributeData.TreeViewDisplayStyle,
         );
 
+        this.setupValidation();
+
+        if (this.parentNode) {
+            this.validationStateChange$.subscribe(change => {
+                this.parentNode.handleAttributeValidationChange(change);
+            });
+        }
+    }
+
+    private setupValidation() {
         this.validationState$ = combineLatest([
             ...this.validators.defaultAsyncValidators || [],
             ...this.validators.parsingSynchronousValidators || [],
             ...this.validators.parsingAsyncValidators || []
-        ].map(validator => validator.getValidator(this)().isValid$)).pipe(    
-            map(results => ({
-                isValid$: of(results.every(v => v)),
-                errorMessage: results.some(isValid => !isValid) ? 
-                    `Validation failed for ${this.editorName}` : ''
-            })),
+        ].map(validator => validator.getValidator(this)())).pipe(    
+            map(results => {
+                const errors = results
+                    .filter(result => !result.isValid$)
+                    .map(result => result.errorMessage)
+                    .filter(msg => msg);
+                
+                this.validationStateChange$.next({
+                    attributeName: this.editorName,
+                    errors: errors
+                });
+
+                return {
+                    isValid$: of(errors.length === 0),
+                    errorMessage: errors.length > 0 ? 
+                        `Validation failed for ${this.editorName}: ${errors.join(', ')}` : ''
+                };
+            }),
             shareReplay(1)
         );
     }
-
 
     getValidationState(): Observable<IAttributeValidationResult> {
         return this.validationState$;
