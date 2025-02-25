@@ -1,21 +1,31 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<app-loading-indicator [diameter]="50"></app-loading-indicator>
-<mat-form-field>
-  <mat-label>Attrubute</mat-label>
-  <input type="text" matInput [formControl]="attributeFormModel.formControl" [matAutocomplete]="auto"
-    (keyup)="onInputChanged($event, attributeFormModel)">
+<div class="form-container">
+    <mat-form-field class="form-field">
+        <mat-label>Attribute</mat-label>
+        <input type="text" matInput
+            [formControl]="attributeFormControl"
+            [matAutocomplete]="auto"
+            placeholder="Select an attribute">
+        <mat-autocomplete #auto="matAutocomplete">
+            <mat-option *ngFor="let attr of filteredAttributes$ | async" [value]="attr.logicalName">
+                <div class="option-content">
+                    <span class="logical-name">{{attr.logicalName}}</span>
+                    <span class="display-name">{{attr.displayName}}</span>
+                </div>
+            </mat-option>
+        </mat-autocomplete>
+        <mat-progress-spinner *ngIf="loading$ | async"
+            matSuffix
+            [diameter]="20"
+            mode="indeterminate">
+        </mat-progress-spinner>
+    </mat-form-field>
 
-  <mat-autocomplete #auto="matAutocomplete">
-    <mat-option *ngFor="let option of attributeFormModel.filteredValues$| async" [value]="option.logicalName">
-      {{option.logicalName + ' ' + option.displayName}}
-
-    </mat-option>
-
-  </mat-autocomplete>
-</mat-form-field>
-
-<mat-form-field>
-  <mat-label>Alias</mat-label>
-  <input type="text" matInput [formControl]="aliasFormModel.formControl">
-</mat-form-field>
+    <mat-form-field class="form-field">
+        <mat-label>Alias</mat-label>
+        <input type="text" matInput
+            [formControl]="aliasFormControl"
+            placeholder="Enter an alias">
+    </mat-form-field>
+</div>

@@ -5,6 +5,7 @@ import { Diagnostic } from "@codemirror/lint";
 import { QueryNodeTree } from '../../models/query-node-tree';
 import { EditorView } from 'codemirror';
 import { QueryNodeBuilderService } from './query-node-builder.service';
+import { NodeTreeService } from '../node-tree.service';
 
 export const PARSER_NODE_NAMES = {
   openTag: 'OpenTag',
@@ -32,7 +33,7 @@ export class XmlParseService {
   from: number;
   to: number;
 
-  constructor(private parsingHelper: ParsingHelperService, private nodeBuilder: QueryNodeBuilderService) { }
+  constructor(private parsingHelper: ParsingHelperService, private nodeBuilder: QueryNodeBuilderService, private nodeTreeService: NodeTreeService) { }
 
   parseNode(iteratingNode: SyntaxNodeRef, view: EditorView, xmlParseErrors: Diagnostic[]) {
     console.log(iteratingNode.name);
@@ -69,7 +70,7 @@ export class XmlParseService {
   addNodeToTree(xmlParseErrors: Diagnostic[]) {
     let buildResult = this.nodeBuilder.buildQueryNode();
     if (buildResult.isBuildSuccess) {
-      this.nodeTree.addNode(buildResult.queryNode); //TODO: use nodetree service instead of nodeTree
+      this.nodeTreeService.addNode(buildResult.queryNode.nodeName);
     } else {
       for (let error of buildResult.errors) {
         xmlParseErrors.push({

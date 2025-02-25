@@ -1,111 +1,148 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { BaseFormComponent } from '../base-form.component';
 import { FormControl } from '@angular/forms';
+import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
-import { IFormPropertyModel } from '../../../models/abstract/i-form-property-model';
-import { BehaviorSubject, Observable, Subject, combineLatest, distinctUntilChanged, map, of, startWith, switchMap, takeUntil } from 'rxjs';
-import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
-import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
-import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { NodeOrder } from '../../../models/OBSOLETE nodes/node-order';
+import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
+import { QueryNode } from '../../../models/query-node';
 
 @Component({
   selector: 'app-order-form',
   templateUrl: './order-form.component.html',
-  styleUrls: ['./order-form.component.css']
+  styles: [`
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-field {
+      width: 100%;
+    }
+
+    .option-content {
+      display: flex;
+      flex-direction: column;
+      padding: 4px 0;
+    }
+
+    .logical-name {
+      font-weight: 500;
+    }
+
+    .display-name {
+      font-size: 0.85em;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  `]
 })
-export class OrderFormComponent implements OnChanges {
+export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
+  private destroy$ = new Subject<void>();
+  private storedValues = new Map<string, { attribute: string, isDescending: boolean }>();
 
-  private _destroy$ = new Subject<void>();
+  attributeFormControl = new FormControl('');
+  isDescendingControl = new FormControl(false);
+  filteredAttributes$: Observable<AttributeModel[]>;
+  loading$ = new BehaviorSubject<boolean>(false);
 
-  @Input() selectedNode: NodeOrder;
+  @Input() override selectedNode: QueryNode;
 
-  attributeForm: IFormPropertyModel<AttributeModel, string>;
+  constructor(private attributeService: AttributeEntityService) {
+    super();
+  }
 
-  attributePreviousValue$?: BehaviorSubject<string> = new BehaviorSubject<string>(null);
+  ngOnInit() {
+    this.initializeForm();
+  }
 
-  constructor(private _attributeService: AttributeEntityService) { }
-
-  ngOnChanges(simpleChanges: SimpleChanges) {
-    if (simpleChanges.selectedNode) {
-      this._destroy$.next();
-      this.initializeFormControls();
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.selectedNode) {
+      // Clean up existing subscriptions
+      this.destroy$.next();
+      
+      // Reinitialize the form
+      this.initializeForm();
     }
   }
 
-  initializeFormControls() {   
-    this.attributeForm = {
-      formControl: new FormControl<string>(null),
-      valuesObservable$: combineLatest([
-        this.selectedNode.getParentEntityName().pipe(
-          switchMap(entityName => entityName === null ? of([]) : this._attributeService.getAttributes(entityName))
-        ),
-        this.selectedNode.showOnlyLookups$
-      ]).pipe(
-        map(([attributes, showOnlyLookups]) => {
-          return attributes.filter(attribute => !(showOnlyLookups && attribute.attributeType !== AttributeTypes.LOOKUP));
-        })
-      ),
-      previousValue$: this.attributePreviousValue$,
-      filteredValues$: null,
-      storedInputValue$: this.selectedNode.tagProperties.orderAttribute.constructorValue$,
-      filterFunc: (value: AttributeModel, filterValue: string) => {
-        return value.logicalName.toLowerCase().includes(filterValue.toLowerCase())
-          || value.displayName.toLowerCase().includes(filterValue.toLowerCase())
-      }
-    };
+  private initializeForm() {
+    this.setupAttributeAutocomplete();
+    this.setupNodeValueHandling();
+  }
 
-    this.selectedNode.getParentEntityName().pipe(
-      distinctUntilChanged(),
-      takeUntil(this._destroy$))
-      .subscribe(entityName => {
-        if (!entityName) {
-          this.attributeForm.formControl.disable();
-        } else {
-          this.attributeForm.formControl.enable();
+  private setupNodeValueHandling() {
+    // When node changes, load its stored value or attribute value
+    const nodeId = this.selectedNode.id;
+    if (this.storedValues.has(nodeId)) {
+      const values = this.storedValues.get(nodeId);
+      this.attributeFormControl.setValue(values.attribute, { emitEvent: false });
+      this.isDescendingControl.setValue(values.isDescending, { emitEvent: false });
+    } else {
+      const attributeName = this.getAttributeValue(this.AttributeData.Order.Attribute);
+      const isDescending = this.getAttributeValue(this.AttributeData.Order.Desc) === 'true';
+      
+      if (attributeName) {
+        this.attributeFormControl.setValue(attributeName, { emitEvent: false });
+      }
+      this.isDescendingControl.setValue(isDescending, { emitEvent: false });
+      
+      this.storedValues.set(nodeId, { 
+        attribute: attributeName || '', 
+        isDescending: isDescending 
+      });
+    }
+
+    // Subscribe to form control changes
+    this.attributeFormControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        if (typeof value === 'string') {
+          this.storedValues.set(this.selectedNode.id, {
+            ...this.storedValues.get(this.selectedNode.id),
+            attribute: value
+          });
+          this.updateAttribute(this.AttributeData.Order.Attribute, value);
         }
       });
-      this.setControlInitialValues(this.attributeForm);
-      this.addFilterToInput(this.attributeForm);
+
+    this.isDescendingControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.storedValues.set(this.selectedNode.id, {
+          ...this.storedValues.get(this.selectedNode.id),
+          isDescending: value
+        });
+        this.updateAttribute(this.AttributeData.Order.Desc, value.toString());
+      });
   }
 
-  setControlInitialValues<TProperty, TForm>(formPropertyModel: IFormPropertyModel<TProperty, TForm>) {
-    formPropertyModel.storedInputValue$
-      .pipe(distinctUntilChanged(), takeUntil(this._destroy$))
-      .subscribe(value => formPropertyModel.formControl.setValue(value));
-  }
-  
-  addFilterToInput<TProperty extends EntityModel | AttributeModel>(formPropertyModel: IFormPropertyModel<TProperty, string>) {
-    formPropertyModel.filteredValues$ = formPropertyModel.formControl.valueChanges.pipe(
-      startWith(formPropertyModel.storedInputValue$.value ?? ''),
-      switchMap(value => value ? this._filter<TProperty>(value, formPropertyModel) : formPropertyModel.valuesObservable$)
+  private setupAttributeAutocomplete() {
+    const parentEntityName$ = this.selectedNode.getParentEntityName()
+      .pipe(distinctUntilChanged());
+
+    this.filteredAttributes$ = combineLatest([
+      this.attributeFormControl.valueChanges.pipe(startWith('')),
+      parentEntityName$.pipe(
+        switchMap(entityName => this.attributeService.getAttributes(entityName))
+      )
+    ]).pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      map(([value, attributes]) => this.filterAttributes(value || '', attributes))
     );
   }
 
-  private _filter<TProperty extends EntityModel | AttributeModel>(value: string, formPropertyModel: IFormPropertyModel<TProperty, string>): Observable<TProperty[]> {
+  private filterAttributes(value: string, attributes: AttributeModel[]): AttributeModel[] {
     const filterValue = value.toLowerCase();
-
-    return formPropertyModel.valuesObservable$.pipe(
-      map(
-        properties => {
-          const property = properties.find(prop => prop.logicalName.toLowerCase() === filterValue);
-          if (property) {
-            formPropertyModel.handlePropertyChangeFunc?.(property);
-            formPropertyModel.storedInputValue$.next(filterValue);
-            formPropertyModel.previousValue$?.next(filterValue);
-
-          };
-          return properties.filter((property) => formPropertyModel.filterFunc(property, filterValue))
-        }));
+    return attributes.filter(attr => 
+      attr.logicalName.toLowerCase().includes(filterValue) ||
+      attr.displayName.toLowerCase().includes(filterValue)
+    );
   }
 
-  onInputChanged<TProperty, TForm>(event: Event, formPropertyModel: IFormPropertyModel<TProperty, TForm>) {
-    if (event.target['value'].trim() === '') {
-      formPropertyModel.storedInputValue$.next(null);
-    }
-  }
-
-  ngOnDestroy(): void {
-    this._destroy$.next();
-    this._destroy$.complete();
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

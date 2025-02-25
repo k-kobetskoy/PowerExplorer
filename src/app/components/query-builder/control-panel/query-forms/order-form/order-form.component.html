@@ -1,20 +1,29 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
+<div class="form-container">
+  <mat-progress-spinner *ngIf="loading$ | async"
+    diameter="50"
+    mode="indeterminate">
+  </mat-progress-spinner>
 
-<ng-container *ngIf="{name: (selectedNode.getParentEntity().tagProperties.entityName.constructorValue$|async)} as entity">
-  <mat-form-field>
-
-    <mat-label>Attribute name</mat-label>
-    <input type="text" matInput [formControl]="attributeForm.formControl" [matAutocomplete]="attributeAutoComplete"
-      (input)="onInputChanged($event, attributeForm)">
+  <mat-form-field class="form-field">
+    <mat-label>Attribute</mat-label>
+    <input type="text"
+           matInput
+           [formControl]="attributeFormControl"
+           [matAutocomplete]="attributeAutoComplete">
 
     <mat-autocomplete #attributeAutoComplete="matAutocomplete">
-      <mat-option *ngFor="let option of attributeForm.filteredValues$ | async" [value]="option.logicalName">
-        {{option.logicalName+ ' ' + option.displayName}}
+      <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
+        <div class="option-content">
+          <span class="logical-name">{{option.logicalName}}</span>
+          <span class="display-name">{{option.displayName}}</span>
+        </div>
       </mat-option>
     </mat-autocomplete>
   </mat-form-field>
-</ng-container>
 
-<mat-checkbox [ngModel]="selectedNode.tagProperties.orderDescending.constructorValue$| async"
-  (ngModelChange)="selectedNode.tagProperties.orderDescending.constructorValue$.next($event)">Descencing</mat-checkbox>
+  <mat-checkbox [formControl]="isDescendingControl">
+    Descending Order
+  </mat-checkbox>
+</div>

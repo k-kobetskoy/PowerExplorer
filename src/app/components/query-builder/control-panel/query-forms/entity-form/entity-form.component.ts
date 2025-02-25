@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormControl } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
@@ -11,7 +11,7 @@ import { EntityEntityService } from '../../../services/entity-services/entity-en
     templateUrl: './entity-form.component.html',
     styleUrls: ['./entity-form.component.css']
 })
-export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy {
+export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
     private destroy$ = new Subject<void>();
     private storedValues = new Map<string, string>();
     entityFormControl = new FormControl('');
@@ -23,6 +23,20 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
     }
 
     ngOnInit() {
+        this.initializeForm();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.selectedNode) {
+            // Clean up existing subscriptions
+            this.destroy$.next();
+            
+            // Reinitialize the form
+            this.initializeForm();
+        }
+    }
+
+    private initializeForm() {
         this.setupEntityAutocomplete();
         this.setupNodeValueHandling();
     }

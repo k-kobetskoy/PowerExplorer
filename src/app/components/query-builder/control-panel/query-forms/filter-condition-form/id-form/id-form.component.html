@@ -1,13 +1,25 @@
-<mat-form-field>
-  <mat-label>Operator</mat-label>
-  <mat-select [formControl]="filterOperatorFormControl">
-    <mat-option *ngFor="let option of filterOperators" [value]="option.value">
-      {{option.name}}
-    </mat-option>
-  </mat-select>
-</mat-form-field>
+<div class="form-container">
+  <mat-progress-spinner *ngIf="loading$ | async"
+    diameter="50"
+    mode="indeterminate">
+  </mat-progress-spinner>
 
-<mat-form-field>
-  <mat-label>Value</mat-label>
-  <input type="text" matInput [formControl]="filterValueFormControl">
-</mat-form-field>
+  <mat-form-field class="form-field">
+    <mat-label>Operator</mat-label>
+    <mat-select [formControl]="operatorFormControl">
+      <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+        <div class="option-content">
+          <span>{{option.name}}</span>
+        </div>
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="form-field">
+    <mat-label>Value</mat-label>
+    <input matInput
+           type="text"
+           [formControl]="valueFormControl"
+           placeholder="Enter GUID or ID value">
+  </mat-form-field>
+</div>
