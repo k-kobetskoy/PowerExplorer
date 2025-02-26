@@ -5,6 +5,7 @@ import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { NodeTreeService } from './node-tree.service';
 import { QueryNode } from '../models/query-node';
 import { NodeAttribute } from '../models/node-attribute';
+import { XmlParseService } from './xml-parsing-services/xml-parse.service';
 
 @Injectable({ providedIn: 'root' })
 export class QueryRenderService implements OnDestroy {
@@ -15,7 +16,8 @@ export class QueryRenderService implements OnDestroy {
 
   constructor(
     private nodeTreeService: NodeTreeService, 
-    private eventBus: EventBusService
+    private eventBus: EventBusService,
+    private xmlParseService: XmlParseService
   ) {
     this.setupEventListeners();
   }
@@ -28,11 +30,23 @@ export class QueryRenderService implements OnDestroy {
   }
 
   renderXmlRequest(): void {
-    this.resetState();
-    this.currentNode = this.nodeTreeService.getNodeTree().value.root;
+    try {
+      // Set flag to indicate programmatic update is in progress
+      // This prevents node creation during XML parsing
+      this.xmlParseService.setIsProgrammaticUpdate(true);
+      
+      this.resetState();
+      this.currentNode = this.nodeTreeService.getNodeTree().value.root;
 
-    const observables$ = this.generateNodeObservables();
-    this.processObservables(observables$);
+      const observables$ = this.generateNodeObservables();
+      this.processObservables(observables$);
+    } finally {
+      // Always reset the flag when done, even if an error occurs
+      // Use timeout to ensure rendering completes before allowing parsing again
+      setTimeout(() => {
+        this.xmlParseService.setIsProgrammaticUpdate(false);
+      }, 100);
+    }
   }
 
   private resetState(): void {
