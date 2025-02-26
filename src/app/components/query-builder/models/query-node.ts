@@ -80,7 +80,7 @@ export class QueryNode {
                 );
             }),
             distinctUntilChanged(),
-            debounceTime(200)
+            debounceTime(150)
         );
     }
 

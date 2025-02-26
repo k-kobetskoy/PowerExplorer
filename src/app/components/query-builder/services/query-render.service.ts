@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, combineLatest, distinctUntilChanged, map, of, switchMap, takeUntil, catchError } from 'rxjs';
+import { Observable, Subject, combineLatest, distinctUntilChanged, map, of, switchMap, takeUntil, catchError, debounceTime } from 'rxjs';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { NodeTreeService } from './node-tree.service';
@@ -59,7 +59,8 @@ export class QueryRenderService implements OnDestroy {
         console.error('Error rendering XML:', error);
         return of('');
       }),
-      takeUntil(this.destroy$)
+      takeUntil(this.destroy$),
+      debounceTime(150)
     ).subscribe(xml => {
       this.nodeTreeService.xmlRequest$.next(xml);
     });

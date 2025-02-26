@@ -134,4 +134,15 @@ export class QueryNodeData {
         'Entity',
         'Root'
     ];
+
+    static readonly TagNames: string[] = [
+        'value',
+        'order',
+        'attribute',
+        'condition',
+        'filter',
+        'link-entity',
+        'entity',
+        'fetch'
+    ];
 }

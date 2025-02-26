@@ -120,7 +120,7 @@ export class QueryNodeBuilderService {
   }
 
   private isValidQueryNodeType(tagName: string): boolean {
-    return QueryNodeData.NodesNames.includes(tagName);
+    return QueryNodeData.TagNames.includes(tagName);
   }
 
   private getTagNameErrorMessage(tagName: string): string {
