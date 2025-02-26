@@ -52,11 +52,15 @@ export class NodeAttribute {
     }
 
     private setupValidation() {
-        this.validationState$ = combineLatest([
-            ...this.validators.defaultAsyncValidators || [],
-            ...this.validators.parsingSynchronousValidators || [],
-            ...this.validators.parsingAsyncValidators || []
-        ].map(validator => validator.getValidator(this)())).pipe(    
+        const validators = [
+            ...(this.validators.defaultAsyncValidators || []),
+            ...(this.validators.parsingSynchronousValidators || []),
+            ...(this.validators.parsingAsyncValidators || [])
+        ];
+
+        this.validationState$ = validators.length === 0 ? 
+            of({ isValid$: of(true), errorMessage: '' }) :
+            combineLatest(validators.map(validator => validator.getValidator(this)())).pipe(
             map(results => {
                 const errors = results
                     .filter(result => !result.isValid$)

@@ -1,11 +1,12 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NodeTreeService } from '../../../services/node-tree.service';
 import { QueryNode } from '../../../models/query-node';
 
 @Component({
   selector: 'app-quick-actions',
   templateUrl: './quick-actions.component.html',
-  styleUrls: ['./quick-actions.component.css']
+  styleUrls: ['./quick-actions.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class QuickActionsComponent implements OnInit {
 

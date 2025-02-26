@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { BooleanModel } from 'src/app/models/incoming/boolean/boolean-model';
@@ -33,8 +33,7 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
   private destroy$ = new Subject<void>();
   private storedValues = new Map<string, { operator: string, value: string }>();
 
-  operatorFormControl = new FormControl('');
-  valueFormControl = new FormControl('');
+  booleanForm: FormGroup;
   booleanOptions$: Observable<BooleanModel>;
   loading$ = new BehaviorSubject<boolean>(false);
 
@@ -42,7 +41,10 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
 
   @Input() attributeValue: string;
 
-  constructor(private booleanService: BooleanEntityService) {
+  constructor(
+    private booleanService: BooleanEntityService,
+    private fb: FormBuilder
+  ) {
     super();
   }
 
@@ -61,8 +63,16 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
   }
 
   private initializeForm() {
+    this.createFormGroup();
     this.setupBooleanOptions();
     this.setupNodeValueHandling();
+  }
+
+  private createFormGroup() {
+    this.booleanForm = this.fb.group({
+      operator: [''],
+      value: ['']
+    });
   }
 
   private setupBooleanOptions() {
@@ -80,18 +90,18 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
     const nodeId = this.selectedNode.id;
     if (this.storedValues.has(nodeId)) {
       const values = this.storedValues.get(nodeId);
-      this.operatorFormControl.setValue(values.operator, { emitEvent: false });
-      this.valueFormControl.setValue(values.value, { emitEvent: false });
+      this.booleanForm.patchValue({
+        operator: values.operator,
+        value: values.value
+      }, { emitEvent: false });
     } else {
       const operator = this.getAttributeValue(AttributeData.Condition.Operator);
       const value = this.getAttributeValue(AttributeData.Condition.Value);
       
-      if (operator) {
-        this.operatorFormControl.setValue(operator, { emitEvent: false });
-      }
-      if (value) {
-        this.valueFormControl.setValue(value, { emitEvent: false });
-      }
+      this.booleanForm.patchValue({
+        operator: operator || '',
+        value: value || ''
+      }, { emitEvent: false });
       
       this.storedValues.set(nodeId, { 
         operator: operator || '', 
@@ -100,7 +110,7 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
     }
 
     // Subscribe to form control changes
-    this.operatorFormControl.valueChanges
+    this.booleanForm.get('operator').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         if (typeof value === 'string') {
@@ -112,7 +122,7 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
         }
       });
 
-    this.valueFormControl.valueChanges
+    this.booleanForm.get('value').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         if (typeof value === 'string') {

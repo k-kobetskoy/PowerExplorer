@@ -50,9 +50,9 @@ export class AttributeAttriubuteData {
     static readonly GroupBy: IAttributeData =
         new BaseAttributeData('groupby', AttributeTreeViewDisplayStyle.onlyName, 4, 'GrpBy');
 
-    static readonly Distinct: IAttributeData = new BaseAttributeData('distinct');
-    static readonly UserTimeZone: IAttributeData = new BaseAttributeData('usertimezone');
-    static readonly DateGrouping: IAttributeData = new BaseAttributeData('dategrouping');
+    static readonly Distinct: IAttributeData = new BaseAttributeData('distinct', AttributeTreeViewDisplayStyle.onlyName, 5, 'Dst');
+    static readonly UserTimeZone: IAttributeData = new BaseAttributeData('usertimezone', AttributeTreeViewDisplayStyle.none, 6, '');
+    static readonly DateGrouping: IAttributeData = new BaseAttributeData('dategrouping', AttributeTreeViewDisplayStyle.none, 7, '');
 }
 
 export class ConditionAttributeData {
@@ -76,11 +76,9 @@ export class FilterAttributeData {
     static readonly Type: IAttributeData =
         new BaseAttributeData('type', AttributeTreeViewDisplayStyle.onlyValue, 1, 'FilterType');
 
-    static readonly IsQuickFind: IAttributeData = new BaseAttributeData('isquickfindfields');
-
-    static readonly OverrideRecordLimit: IAttributeData = new BaseAttributeData('overridequickfindrecordlimitenabled');
-
-    static readonly BypassQuickFind: IAttributeData = new BaseAttributeData('overridequickfindrecordlimitdisabled');
+    static readonly IsQuickFind: IAttributeData = new BaseAttributeData('isquickfindfields', AttributeTreeViewDisplayStyle.none, 2, '');
+    static readonly OverrideRecordLimit: IAttributeData = new BaseAttributeData('overridequickfindrecordlimitenabled', AttributeTreeViewDisplayStyle.none, 3, '');
+    static readonly BypassQuickFind: IAttributeData = new BaseAttributeData('overridequickfindrecordlimitdisabled', AttributeTreeViewDisplayStyle.none, 4, '');
 }
 
 export class LinkAttributeData {
@@ -96,10 +94,10 @@ export class LinkAttributeData {
     static readonly Type: IAttributeData =
         new BaseAttributeData('link-type', AttributeTreeViewDisplayStyle.onlyValue, 3, 'LinkType');
 
-    static readonly From: IAttributeData = new BaseAttributeData('from');
-    static readonly To: IAttributeData = new BaseAttributeData('to');
-    static readonly Visible: IAttributeData = new BaseAttributeData('visible');
-    static readonly ShowOnlyLookups: IAttributeData = new BaseAttributeData('showonlylookups');
+    static readonly From: IAttributeData = new BaseAttributeData('from', AttributeTreeViewDisplayStyle.none, 5, '');
+    static readonly To: IAttributeData = new BaseAttributeData('to', AttributeTreeViewDisplayStyle.none, 6, '');
+    static readonly Visible: IAttributeData = new BaseAttributeData('visible', AttributeTreeViewDisplayStyle.none, 7, '');
+    static readonly ShowOnlyLookups: IAttributeData = new BaseAttributeData('showonlylookups', AttributeTreeViewDisplayStyle.none, 8, '');
 }
 
 export class OrderAttributeData {
@@ -132,10 +130,12 @@ export class RootAttributeData {
     static readonly Page: IAttributeData =
         new BaseAttributeData('page', AttributeTreeViewDisplayStyle.nameWithValue, 6, 'Pg');
 
-    static readonly LateMaterialize: IAttributeData = new BaseAttributeData('latematerialize');
-    static readonly PagingCookie: IAttributeData = new BaseAttributeData('paging-cookie');
-    static readonly DataSource: IAttributeData = new BaseAttributeData('datasource');
-    static readonly Options: IAttributeData = new BaseAttributeData('options');
+    static readonly LateMaterialize: IAttributeData = 
+        new BaseAttributeData('latematerialize', AttributeTreeViewDisplayStyle.none, 7, '');
+    
+    static readonly PagingCookie: IAttributeData = new BaseAttributeData('paging-cookie', AttributeTreeViewDisplayStyle.none, 8, '');
+    static readonly DataSource: IAttributeData = new BaseAttributeData('datasource', AttributeTreeViewDisplayStyle.none, 9, '');
+    static readonly Options: IAttributeData = new BaseAttributeData('options', AttributeTreeViewDisplayStyle.none, 10, '');
 }
 
 

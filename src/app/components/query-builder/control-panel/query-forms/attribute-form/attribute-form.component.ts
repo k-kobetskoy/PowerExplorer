@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
@@ -40,18 +40,20 @@ import { BaseFormComponent } from '../base-form.component';
       height: auto;
       line-height: 1.2;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AttributeFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  private storedValues = new Map<string, { attribute: string, alias: string }>();
   
-  attributeFormControl = new FormControl('');
-  aliasFormControl = new FormControl('');
+  attributeForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
   loading$ = new BehaviorSubject<boolean>(false);
 
-  constructor(private attributeService: AttributeEntityService) {
+  constructor(
+    private attributeService: AttributeEntityService,
+    private fb: FormBuilder
+  ) {
     super();
   }
 
@@ -60,12 +62,9 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode) {
+    if (changes['selectedNode'] && this.selectedNode) {
       // Clean up existing subscriptions
       this.destroy$.next();
-      
-      // Clear stored values for the previous node
-      this.storedValues.clear();
       
       // Reinitialize the form
       this.initializeForm();
@@ -73,51 +72,35 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   }
 
   private initializeForm() {
+    // Create form group with controls for each attribute
+    this.attributeForm = this.fb.group({
+      name: [this.getAttributeValue(this.AttributeData.Attribute.Name)],
+      alias: [this.getAttributeValue(this.AttributeData.Attribute.Alias)]
+    });
+    
+    // Setup attribute autocomplete
     this.setupAttributeAutocomplete();
-    this.setupNodeValueHandling();
-  }
-
-  private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
-    const nodeId = this.selectedNode.id;
-    if (this.storedValues.has(nodeId)) {
-      const values = this.storedValues.get(nodeId);
-      this.attributeFormControl.setValue(values.attribute, { emitEvent: false });
-      this.aliasFormControl.setValue(values.alias, { emitEvent: false });
-    } else {
-      const attributeName = this.getAttributeValue(this.AttributeData.Attribute.Name);
-      const aliasName = this.getAttributeValue(this.AttributeData.Attribute.Alias);
-      if (attributeName) {
-        this.attributeFormControl.setValue(attributeName, { emitEvent: false });
-      }
-      if (aliasName) {
-        this.aliasFormControl.setValue(aliasName, { emitEvent: false });
-      }
-      this.storedValues.set(nodeId, { 
-        attribute: attributeName || '', 
-        alias: aliasName || '' 
-      });
-    }
-
-    // Subscribe to form control changes
-    this.attributeFormControl.valueChanges
+    
+    // Subscribe to form value changes
+    this.attributeForm.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.storedValues.set(this.selectedNode.id, {
-          ...this.storedValues.get(this.selectedNode.id),
-          attribute: value
+      .subscribe(formValues => {
+        // Process each form control value
+        Object.entries(formValues).forEach(([key, value]) => {
+          const stringValue = value !== null && value !== undefined ? String(value) : '';
+          
+          // Find the corresponding attribute
+          const attribute = Object.values(this.AttributeData.Attribute)
+            .find(attr => attr.EditorName === key);
+          
+          if (attribute) {
+            // Only update if the value has changed
+            const currentValue = this.getAttributeValue(attribute);
+            if (currentValue !== stringValue) {
+              this.updateAttribute(attribute, stringValue);
+            }
+          }
         });
-        this.updateAttribute(this.AttributeData.Attribute.Name, value);
-      });
-
-    this.aliasFormControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.storedValues.set(this.selectedNode.id, {
-          ...this.storedValues.get(this.selectedNode.id),
-          alias: value
-        });
-        this.updateAttribute(this.AttributeData.Attribute.Alias, value);
       });
   }
 
@@ -126,7 +109,9 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
       .pipe(distinctUntilChanged());
 
     this.filteredAttributes$ = combineLatest([
-      this.attributeFormControl.valueChanges.pipe(startWith('')),
+      this.attributeForm.get('name').valueChanges.pipe(
+        startWith(this.attributeForm.get('name').value || '')
+      ),
       parentEntityName$.pipe(
         switchMap(entityName => this.attributeService.getAttributes(entityName))
       )

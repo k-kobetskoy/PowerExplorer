@@ -57,13 +57,29 @@ export class QueryNode {
 
     private createNodeDisplayValueObservable(): Observable<string> {
         return this.attributes$.pipe(
-            map(attributes => attributes.map(attr => attr.attributeDisplayValues.treeViewDisplayValue$)),
-            map(observables => combineLatest(observables)),
-            map(observables$ => observables$.pipe(
-                map(values => values.join(' ')),
-                distinctUntilChanged()
-            )),
-            switchMap(observable => observable),
+            switchMap(attributes => {
+                if (attributes.length === 0) {
+                    return of(this.nodeName);
+                }
+                
+                // Only include attributes that should be displayed on the tree view
+                const displayableAttributes = attributes.filter(attr => 
+                    attr.attributeDisplayValues.displayOnTreeView
+                );
+                
+                if (displayableAttributes.length === 0) {
+                    return of(this.nodeName);
+                }
+                
+                const displayValues$ = displayableAttributes.map(attr => 
+                    attr.attributeDisplayValues.treeViewDisplayValue$
+                );
+                
+                return combineLatest(displayValues$).pipe(
+                    map(values => `${this.nodeName} ${values.join(' ')}`)
+                );
+            }),
+            distinctUntilChanged(),
             debounceTime(200)
         );
     }

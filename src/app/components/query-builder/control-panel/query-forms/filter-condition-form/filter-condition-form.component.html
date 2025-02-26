@@ -1,17 +1,19 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<mat-form-field>
-  <mat-label>Attrubute</mat-label>
-  <input type="text" matInput [formControl]="attributesFormControl" [matAutocomplete]="auto"
-    (keyup)="onKeyPressed($event)">
+<form [formGroup]="conditionForm">
+  <mat-form-field>
+    <mat-label>Attrubute</mat-label>
+    <input type="text" matInput formControlName="attribute" [matAutocomplete]="auto"
+      (keyup)="onKeyPressed($event)">
 
-  <mat-autocomplete #auto="matAutocomplete">
-    <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
-      {{option.logicalName + ' ' + option.displayName}}
+    <mat-autocomplete #auto="matAutocomplete">
+      <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
+        {{option.logicalName + ' ' + option.displayName}}
 
-    </mat-option>
-  </mat-autocomplete>
-</mat-form-field>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+</form>
 
 <ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
   <ng-container [ngSwitch]="getFilterOperatorType(attribute)">

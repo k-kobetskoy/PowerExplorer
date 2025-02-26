@@ -1,6 +1,6 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
@@ -45,20 +45,14 @@ import { AttributeTypes } from '../../../models/constants/dataverse/attribute-ty
       font-size: 0.85em;
       color: rgba(0, 0, 0, 0.6);
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LinkEntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
   
-  // Form controls
-  entityFormControl = new FormControl('');
-  fromAttributeFormControl = new FormControl({ value: '', disabled: true });
-  toAttributeFormControl = new FormControl({ value: '', disabled: true });
-  linkTypeFormControl = new FormControl('');
-  aliasFormControl = new FormControl('');
-  intersectControl = new FormControl(false);
-  visibleControl = new FormControl(false);
-  showOnlyLookupsControl = new FormControl(false);
+  // Form group
+  linkEntityForm: FormGroup;
 
   // Observables for autocomplete
   filteredEntities$: Observable<EntityModel[]>;
@@ -70,7 +64,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
   constructor(
     private entityService: EntityEntityService,
-    private attributeService: AttributeEntityService
+    private attributeService: AttributeEntityService,
+    private fb: FormBuilder
   ) {
     super();
   }
@@ -90,27 +85,43 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   }
 
   private initializeForm() {
+    this.createFormGroup();
     this.setupInitialValues();
     this.setupEntityAutocomplete();
     this.setupAttributeAutocomplete();
     this.setupFormSubscriptions();
   }
 
+  private createFormGroup() {
+    this.linkEntityForm = this.fb.group({
+      entity: [''],
+      fromAttribute: [{ value: '', disabled: true }],
+      toAttribute: [{ value: '', disabled: true }],
+      linkType: [''],
+      alias: [''],
+      intersect: [false],
+      visible: [false],
+      showOnlyLookups: [false]
+    });
+  }
+
   private setupInitialValues() {
     // Set initial values from node attributes
-    this.entityFormControl.setValue(this.getAttributeValue(this.AttributeData.Link.Entity));
-    this.fromAttributeFormControl.setValue(this.getAttributeValue(this.AttributeData.Link.From));
-    this.toAttributeFormControl.setValue(this.getAttributeValue(this.AttributeData.Link.To));
-    this.linkTypeFormControl.setValue(this.getAttributeValue(this.AttributeData.Link.Type));
-    this.aliasFormControl.setValue(this.getAttributeValue(this.AttributeData.Link.Alias));
-    this.intersectControl.setValue(this.getAttributeValue(this.AttributeData.Link.Intersect) === 'true');
-    this.visibleControl.setValue(this.getAttributeValue(this.AttributeData.Link.Visible) === 'true');
-    this.showOnlyLookupsControl.setValue(this.selectedNode.showOnlyLookups$.value);
+    this.linkEntityForm.patchValue({
+      entity: this.getAttributeValue(this.AttributeData.Link.Entity),
+      fromAttribute: this.getAttributeValue(this.AttributeData.Link.From),
+      toAttribute: this.getAttributeValue(this.AttributeData.Link.To),
+      linkType: this.getAttributeValue(this.AttributeData.Link.Type),
+      alias: this.getAttributeValue(this.AttributeData.Link.Alias),
+      intersect: this.getAttributeValue(this.AttributeData.Link.Intersect) === 'true',
+      visible: this.getAttributeValue(this.AttributeData.Link.Visible) === 'true',
+      showOnlyLookups: this.selectedNode.showOnlyLookups$.value
+    });
   }
 
   private setupEntityAutocomplete() {
     this.filteredEntities$ = combineLatest([
-      this.entityFormControl.valueChanges.pipe(startWith('')),
+      this.linkEntityForm.get('entity').valueChanges.pipe(startWith(this.linkEntityForm.get('entity').value || '')),
       this.entityService.getEntities()
     ]).pipe(
       debounceTime(300),
@@ -121,13 +132,13 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   private setupAttributeAutocomplete() {
     // From attributes
     this.filteredFromAttributes$ = combineLatest([
-      this.fromAttributeFormControl.valueChanges.pipe(startWith('')),
-      this.entityFormControl.valueChanges.pipe(
+      this.linkEntityForm.get('fromAttribute').valueChanges.pipe(startWith(this.linkEntityForm.get('fromAttribute').value || '')),
+      this.linkEntityForm.get('entity').valueChanges.pipe(
         switchMap(entityName => 
           entityName ? this.attributeService.getAttributes(entityName) : []
         )
       ),
-      this.showOnlyLookupsControl.valueChanges.pipe(startWith(false))
+      this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
     ]).pipe(
       map(([value, attributes, showOnlyLookups]) => 
         this.filterAttributes(value, attributes, showOnlyLookups)
@@ -136,13 +147,13 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
     // To attributes
     this.filteredToAttributes$ = combineLatest([
-      this.toAttributeFormControl.valueChanges.pipe(startWith('')),
+      this.linkEntityForm.get('toAttribute').valueChanges.pipe(startWith(this.linkEntityForm.get('toAttribute').value || '')),
       this.selectedNode.getParentEntityName().pipe(
         switchMap(entityName => 
           entityName ? this.attributeService.getAttributes(entityName) : []
         )
       ),
-      this.showOnlyLookupsControl.valueChanges.pipe(startWith(false))
+      this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
     ]).pipe(
       map(([value, attributes, showOnlyLookups]) => 
         this.filterAttributes(value, attributes, showOnlyLookups)
@@ -152,14 +163,14 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
   private setupFormSubscriptions() {
     // Enable/disable attribute controls based on entity selection
-    this.entityFormControl.valueChanges
+    this.linkEntityForm.get('entity').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         if (value) {
-          this.fromAttributeFormControl.enable();
+          this.linkEntityForm.get('fromAttribute').enable();
         } else {
-          this.fromAttributeFormControl.disable();
-          this.fromAttributeFormControl.setValue('');
+          this.linkEntityForm.get('fromAttribute').disable();
+          this.linkEntityForm.get('fromAttribute').setValue('');
         }
         this.updateAttribute(this.AttributeData.Link.Entity, value);
       });
@@ -169,39 +180,39 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
       .pipe(takeUntil(this.destroy$))
       .subscribe(entityName => {
         if (entityName) {
-          this.toAttributeFormControl.enable();
+          this.linkEntityForm.get('toAttribute').enable();
         } else {
-          this.toAttributeFormControl.disable();
-          this.toAttributeFormControl.setValue('');
+          this.linkEntityForm.get('toAttribute').disable();
+          this.linkEntityForm.get('toAttribute').setValue('');
         }
       });
 
-    // Subscribe to other form control changes
-    this.fromAttributeFormControl.valueChanges
+    // Subscribe to form value changes
+    this.linkEntityForm.get('fromAttribute').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.updateAttribute(this.AttributeData.Link.From, value));
 
-    this.toAttributeFormControl.valueChanges
+    this.linkEntityForm.get('toAttribute').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.updateAttribute(this.AttributeData.Link.To, value));
 
-    this.linkTypeFormControl.valueChanges
+    this.linkEntityForm.get('linkType').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.updateAttribute(this.AttributeData.Link.Type, value));
 
-    this.aliasFormControl.valueChanges
+    this.linkEntityForm.get('alias').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.updateAttribute(this.AttributeData.Link.Alias, value));
 
-    this.intersectControl.valueChanges
+    this.linkEntityForm.get('intersect').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.updateAttribute(this.AttributeData.Link.Intersect, value.toString()));
 
-    this.visibleControl.valueChanges
+    this.linkEntityForm.get('visible').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.updateAttribute(this.AttributeData.Link.Visible, value.toString()));
 
-    this.showOnlyLookupsControl.valueChanges
+    this.linkEntityForm.get('showOnlyLookups').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => this.selectedNode.showOnlyLookups$.next(value));
   }

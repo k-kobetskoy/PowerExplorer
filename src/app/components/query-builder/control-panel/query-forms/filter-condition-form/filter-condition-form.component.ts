@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil, tap } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
@@ -11,7 +11,8 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 @Component({
   selector: 'app-filter-condition-form',
   templateUrl: './filter-condition-form.component.html',
-  styleUrls: ['./filter-condition-form.component.css']
+  styleUrls: ['./filter-condition-form.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FilterConditionFormComponent implements OnChanges, OnDestroy {
 
@@ -23,7 +24,7 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
 
   @Input() selectedNode: QueryNode;
 
-  attributesFormControl = new FormControl<string>(null);
+  conditionForm: FormGroup;
 
   attributes$: Observable<AttributeModel[]>;
   filteredAttributes$: Observable<AttributeModel[]> = null;
@@ -37,13 +38,15 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   previousAttribute: AttributeModel;
 
   constructor(
-    private _attributeEntityService: AttributeEntityService) { }
+    private _attributeEntityService: AttributeEntityService,
+    private fb: FormBuilder) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.selectedNode) {
       this._destroy$.next();
 
       this.previousAttribute = null;
+      this.createFormGroup();
       this.getInitialData();
       this.addFilterToInput();
       this.setControlsInitialValues();
@@ -51,8 +54,14 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
     }
   }
 
+  private createFormGroup() {
+    this.conditionForm = this.fb.group({
+      attribute: ['']
+    });
+  }
+
   bindDataToControls() {
-    this.attributesFormControl.valueChanges
+    this.conditionForm.get('attribute').valueChanges
       .pipe(distinctUntilChanged(), takeUntil(this._destroy$))
       .subscribe(value => this.selectedNode.setAttribute(this.conditionAttribute, value));
   }
@@ -60,7 +69,9 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   setControlsInitialValues() {
     const attributeInitialValue = this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1]?.value$.getValue();
 
-    this.attributesFormControl.setValue(attributeInitialValue ?? '');
+    this.conditionForm.patchValue({
+      attribute: attributeInitialValue ?? ''
+    });
   }
 
   getInitialData() {
@@ -78,8 +89,10 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   }
 
   addFilterToInput() {
-    this.filteredAttributes$ = this.attributesFormControl.valueChanges.pipe(
-      startWith(this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1].value$.getValue() ?? ''),
+    const initialValue = this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1]?.value$.getValue() ?? '';
+    
+    this.filteredAttributes$ = this.conditionForm.get('attribute').valueChanges.pipe(
+      startWith(initialValue),
       switchMap(value => value ? this._filter(value) : this.attributes$),
     );
   }
@@ -106,7 +119,7 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
 
   onKeyPressed($event: KeyboardEvent) {
     if ($event.key === 'Delete' || $event.key === 'Backspace') {
-      if (this.attributesFormControl.value === '') {
+      if (this.conditionForm.get('attribute').value === '') {
         this.selectedNode.setAttribute(this.conditionAttribute, null);
       }
     }

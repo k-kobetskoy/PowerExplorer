@@ -1,25 +1,25 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<mat-form-field>
-    <mat-label>Name</mat-label>
-    <input type="text" matInput
-        [formControl]="entityFormControl"
-        [matAutocomplete]="auto">
-    <mat-autocomplete #auto="matAutocomplete">
-        <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
-            {{entity.logicalName}} {{entity.displayName}}
-        </mat-option>
-    </mat-autocomplete>
-    <mat-progress-spinner *ngIf="loading$ | async"
-        matSuffix
-        [diameter]="20"
-        mode="indeterminate">
-    </mat-progress-spinner>
-</mat-form-field>
+<form [formGroup]="entityForm">
+    <mat-form-field>
+        <mat-label>Name</mat-label>
+        <input type="text" matInput
+            formControlName="name"
+            [matAutocomplete]="auto">
+        <mat-autocomplete #auto="matAutocomplete">
+            <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
+                {{entity.logicalName}} {{entity.displayName}}
+            </mat-option>
+        </mat-autocomplete>
+        <mat-progress-spinner *ngIf="loading$ | async"
+            matSuffix
+            [diameter]="20"
+            mode="indeterminate">
+        </mat-progress-spinner>
+    </mat-form-field>
 
-<mat-form-field>
-    <mat-label>Alias</mat-label>
-    <input type="text" matInput
-        [ngModel]="getAttributeValue(AttributeData.Entity.Alias)"
-        (ngModelChange)="updateAttribute(AttributeData.Entity.Alias, $event)">
-</mat-form-field>
+    <mat-form-field>
+        <mat-label>Alias</mat-label>
+        <input type="text" matInput formControlName="alias">
+    </mat-form-field>
+</form>

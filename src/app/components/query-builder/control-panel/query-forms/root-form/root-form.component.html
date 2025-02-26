@@ -1,63 +1,47 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<mat-form-field>
-    <mat-label>Top</mat-label>
-    <input type="number" matInput
-        [ngModel]="getAttributeValue(AttributeData.Root.Top)"
-        (ngModelChange)="updateAttribute(AttributeData.Root.Top, $event)">
-</mat-form-field>
+<form [formGroup]="rootForm">
+    <mat-form-field>
+        <mat-label>Top</mat-label>
+        <input type="number" matInput formControlName="top">
+    </mat-form-field>
 
-<mat-checkbox 
-    [ngModel]="getAttributeValue(AttributeData.Root.Distinct) === 'true'"
-    (ngModelChange)="updateAttribute(AttributeData.Root.Distinct, $event.toString())">
-    Distinct
-</mat-checkbox>
+    <mat-checkbox formControlName="distinct">
+        Distinct
+    </mat-checkbox>
 
-<mat-checkbox 
-    [ngModel]="getAttributeValue(AttributeData.Root.Aggregate) === 'true'"
-    (ngModelChange)="updateAttribute(AttributeData.Root.Aggregate, $event.toString())">
-    Aggregate
-</mat-checkbox>
+    <mat-checkbox formControlName="aggregate">
+        Aggregate
+    </mat-checkbox>
 
-<mat-checkbox 
-    [ngModel]="getAttributeValue(AttributeData.Root.TotalRecordsCount) === 'true'"
-    (ngModelChange)="updateAttribute(AttributeData.Root.TotalRecordsCount, $event.toString())">
-    Total record count
-</mat-checkbox>
+    <mat-checkbox formControlName="returntotalrecordcount">
+        Total record count
+    </mat-checkbox>
 
-<mat-checkbox 
-    [ngModel]="getAttributeValue(AttributeData.Root.LateMaterialize) === 'true'"
-    (ngModelChange)="updateAttribute(AttributeData.Root.LateMaterialize, $event.toString())">
-    Late materialize
-</mat-checkbox>
+    <mat-checkbox formControlName="latematerialize">
+        Late materialize
+    </mat-checkbox>
 
-<mat-form-field>
-    <mat-label>Page size</mat-label>
-    <input type="number" matInput
-        [ngModel]="getAttributeValue(AttributeData.Root.RecordsPerPage)"
-        (ngModelChange)="updateAttribute(AttributeData.Root.RecordsPerPage, $event)">
-</mat-form-field>
+    <mat-form-field>
+        <mat-label>Page size</mat-label>
+        <input type="number" matInput formControlName="count">
+    </mat-form-field>
 
-<mat-form-field>
-    <mat-label>Page</mat-label>
-    <input type="number" matInput
-        [ngModel]="getAttributeValue(AttributeData.Root.Page)"
-        (ngModelChange)="updateAttribute(AttributeData.Root.Page, $event)">
-</mat-form-field>
+    <mat-form-field>
+        <mat-label>Page</mat-label>
+        <input type="number" matInput formControlName="page">
+    </mat-form-field>
 
-<mat-form-field>
-    <mat-label>Paging cookie</mat-label>
-    <input type="text" matInput
-        [ngModel]="getAttributeValue(AttributeData.Root.PagingCookie)"
-        (ngModelChange)="updateAttribute(AttributeData.Root.PagingCookie, $event)">
-</mat-form-field>
+    <mat-form-field>
+        <mat-label>Paging cookie</mat-label>
+        <input type="text" matInput formControlName="paging-cookie">
+    </mat-form-field>
 
-<mat-form-field>
-    <mat-label>Data source</mat-label>
-    <mat-select 
-        [ngModel]="getAttributeValue(AttributeData.Root.DataSource)"
-        (ngModelChange)="updateAttribute(AttributeData.Root.DataSource, $event)">
-        <mat-option></mat-option>
-        <mat-option value="archive">Archive</mat-option>
-    </mat-select>
-</mat-form-field>
+    <mat-form-field>
+        <mat-label>Data source</mat-label>
+        <mat-select formControlName="datasource">
+            <mat-option></mat-option>
+            <mat-option value="archive">Archive</mat-option>
+        </mat-select>
+    </mat-form-field>
+</form>

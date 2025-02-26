@@ -1,6 +1,6 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -35,20 +35,22 @@ import { QueryNode } from '../../../models/query-node';
       font-size: 0.85em;
       color: rgba(0, 0, 0, 0.6);
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  private storedValues = new Map<string, { attribute: string, isDescending: boolean }>();
-
-  attributeFormControl = new FormControl('');
-  isDescendingControl = new FormControl(false);
+  
+  orderForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
   loading$ = new BehaviorSubject<boolean>(false);
 
   @Input() override selectedNode: QueryNode;
 
-  constructor(private attributeService: AttributeEntityService) {
+  constructor(
+    private attributeService: AttributeEntityService,
+    private fb: FormBuilder
+  ) {
     super();
   }
 
@@ -57,7 +59,7 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode) {
+    if (changes['selectedNode'] && this.selectedNode) {
       // Clean up existing subscriptions
       this.destroy$.next();
       
@@ -67,53 +69,42 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   }
 
   private initializeForm() {
+    // Create form group with controls for each attribute
+    this.orderForm = this.fb.group({
+      attribute: [this.getAttributeValue(this.AttributeData.Order.Attribute)],
+      descending: [this.getAttributeValue(this.AttributeData.Order.Desc) === 'true']
+    });
+    
+    // Setup attribute autocomplete
     this.setupAttributeAutocomplete();
-    this.setupNodeValueHandling();
-  }
-
-  private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
-    const nodeId = this.selectedNode.id;
-    if (this.storedValues.has(nodeId)) {
-      const values = this.storedValues.get(nodeId);
-      this.attributeFormControl.setValue(values.attribute, { emitEvent: false });
-      this.isDescendingControl.setValue(values.isDescending, { emitEvent: false });
-    } else {
-      const attributeName = this.getAttributeValue(this.AttributeData.Order.Attribute);
-      const isDescending = this.getAttributeValue(this.AttributeData.Order.Desc) === 'true';
-      
-      if (attributeName) {
-        this.attributeFormControl.setValue(attributeName, { emitEvent: false });
-      }
-      this.isDescendingControl.setValue(isDescending, { emitEvent: false });
-      
-      this.storedValues.set(nodeId, { 
-        attribute: attributeName || '', 
-        isDescending: isDescending 
-      });
-    }
-
-    // Subscribe to form control changes
-    this.attributeFormControl.valueChanges
+    
+    // Subscribe to form value changes
+    this.orderForm.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            attribute: value
-          });
-          this.updateAttribute(this.AttributeData.Order.Attribute, value);
-        }
-      });
-
-    this.isDescendingControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.storedValues.set(this.selectedNode.id, {
-          ...this.storedValues.get(this.selectedNode.id),
-          isDescending: value
+      .subscribe(formValues => {
+        // Process each form control value
+        Object.entries(formValues).forEach(([key, value]) => {
+          // Convert boolean values to string
+          const stringValue = value !== null && value !== undefined 
+            ? (typeof value === 'boolean' ? value.toString() : String(value))
+            : '';
+          
+          // Find the corresponding attribute
+          let attribute;
+          if (key === 'attribute') {
+            attribute = this.AttributeData.Order.Attribute;
+          } else if (key === 'descending') {
+            attribute = this.AttributeData.Order.Desc;
+          }
+          
+          if (attribute) {
+            // Only update if the value has changed
+            const currentValue = this.getAttributeValue(attribute);
+            if (currentValue !== stringValue) {
+              this.updateAttribute(attribute, stringValue);
+            }
+          }
         });
-        this.updateAttribute(this.AttributeData.Order.Desc, value.toString());
       });
   }
 
@@ -122,7 +113,9 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
       .pipe(distinctUntilChanged());
 
     this.filteredAttributes$ = combineLatest([
-      this.attributeFormControl.valueChanges.pipe(startWith('')),
+      this.orderForm.get('attribute').valueChanges.pipe(
+        startWith(this.orderForm.get('attribute').value || '')
+      ),
       parentEntityName$.pipe(
         switchMap(entityName => this.attributeService.getAttributes(entityName))
       )

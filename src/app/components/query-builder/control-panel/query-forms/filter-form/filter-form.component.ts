@@ -1,6 +1,6 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../models/constants/ui/filter-static-data';
@@ -25,19 +25,16 @@ import { FilterStaticData } from '../../../models/constants/ui/filter-static-dat
       gap: 0.5rem;
       margin-top: 0.5rem;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FilterFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
+  filterForm: FormGroup;
   
-  filterTypeControl = new FormControl('');
-  isQuickFindControl = new FormControl(false);
-  overrideRecordLimitControl = new FormControl(false);
-  bypassQuickFindControl = new FormControl(false);
-
   readonly filterTypeOptions = FilterStaticData.FilterTypes;
 
-  constructor() {
+  constructor(private fb: FormBuilder) {
     super();
   }
 
@@ -46,7 +43,7 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode) {
+    if (changes['selectedNode'] && this.selectedNode) {
       // Clean up existing subscriptions
       this.destroy$.next();
       
@@ -56,30 +53,40 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
   }
 
   private initializeForm() {
-    // Initialize values from node attributes
-    this.filterTypeControl.setValue(this.getAttributeValue(this.AttributeData.Filter.Type));
-    this.isQuickFindControl.setValue(this.getAttributeValue(this.AttributeData.Filter.IsQuickFind) === 'true');
-    this.overrideRecordLimitControl.setValue(this.getAttributeValue(this.AttributeData.Filter.OverrideRecordLimit) === 'true');
-    this.bypassQuickFindControl.setValue(this.getAttributeValue(this.AttributeData.Filter.BypassQuickFind) === 'true');
-
-    // Subscribe to changes
-    this.filterTypeControl.valueChanges
+    // Create form group with controls for each attribute
+    this.filterForm = this.fb.group({
+      type: [this.getAttributeValue(this.AttributeData.Filter.Type)],
+      isquickfindfields: [this.getAttributeValue(this.AttributeData.Filter.IsQuickFind) === 'true'],
+      overridequickfindrecordlimitenabled: [this.getAttributeValue(this.AttributeData.Filter.OverrideRecordLimit) === 'true'],
+      overridequickfindrecordlimitdisabled: [this.getAttributeValue(this.AttributeData.Filter.BypassQuickFind) === 'true']
+    });
+    
+    // Subscribe to form value changes
+    this.filterForm.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Filter.Type, value));
-
-    this.isQuickFindControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Filter.IsQuickFind, value.toString()));
-
-    this.overrideRecordLimitControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Filter.OverrideRecordLimit, value.toString()));
-
-    this.bypassQuickFindControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Filter.BypassQuickFind, value.toString()));
+      .subscribe(formValues => {
+        // Only update attributes that have changed
+        Object.entries(formValues).forEach(([key, value]) => {
+          // Convert boolean values to string
+          const stringValue = value !== null && value !== undefined 
+            ? (typeof value === 'boolean' ? value.toString() : String(value))
+            : '';
+          
+          // Find the corresponding attribute
+          const attribute = Object.values(this.AttributeData.Filter)
+            .find(attr => attr.EditorName === key);
+          
+          if (attribute) {
+            // Only update if the value has changed
+            const currentValue = this.getAttributeValue(attribute);
+            if (currentValue !== stringValue) {
+              this.updateAttribute(attribute, stringValue);
+            }
+          }
+        });
+      });
   }
-
+  
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();

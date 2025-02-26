@@ -1,10 +1,10 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<div class="form-container">
+<form [formGroup]="linkEntityForm" class="form-container">
     <mat-form-field class="form-field">
         <mat-label>Entity</mat-label>
         <input type="text" matInput
-            [formControl]="entityFormControl"
+            formControlName="entity"
             [matAutocomplete]="entityAuto"
             placeholder="Select an entity">
         <mat-autocomplete #entityAuto="matAutocomplete">
@@ -20,7 +20,7 @@
     <mat-form-field class="form-field">
         <mat-label>From Attribute</mat-label>
         <input type="text" matInput
-            [formControl]="fromAttributeFormControl"
+            formControlName="fromAttribute"
             [matAutocomplete]="fromAttrAuto"
             placeholder="Select from attribute">
         <mat-autocomplete #fromAttrAuto="matAutocomplete">
@@ -36,7 +36,7 @@
     <mat-form-field class="form-field">
         <mat-label>To Attribute</mat-label>
         <input type="text" matInput
-            [formControl]="toAttributeFormControl"
+            formControlName="toAttribute"
             [matAutocomplete]="toAttrAuto"
             placeholder="Select to attribute">
         <mat-autocomplete #toAttrAuto="matAutocomplete">
@@ -51,7 +51,7 @@
 
     <mat-form-field class="form-field">
         <mat-label>Link Type</mat-label>
-        <mat-select [formControl]="linkTypeFormControl">
+        <mat-select formControlName="linkType">
             <mat-option>--</mat-option>
             <mat-option *ngFor="let type of linkTypes" [value]="type">
                 {{type}}
@@ -62,21 +62,21 @@
     <mat-form-field class="form-field">
         <mat-label>Alias</mat-label>
         <input type="text" matInput
-            [formControl]="aliasFormControl"
+            formControlName="alias"
             placeholder="Enter an alias">
     </mat-form-field>
 
     <div class="checkbox-group">
-        <mat-checkbox [formControl]="intersectControl">
+        <mat-checkbox formControlName="intersect">
             Intersect
         </mat-checkbox>
 
-        <mat-checkbox [formControl]="visibleControl">
+        <mat-checkbox formControlName="visible">
             Visible
         </mat-checkbox>
 
-        <mat-checkbox [formControl]="showOnlyLookupsControl">
+        <mat-checkbox formControlName="showOnlyLookups">
             Show Only Lookups/Id Attributes
         </mat-checkbox>
     </div>
-</div>
+</form>

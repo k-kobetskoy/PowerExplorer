@@ -4,32 +4,34 @@
     mode="indeterminate">
   </mat-progress-spinner>
 
-  <mat-form-field class="form-field">
-    <mat-label>Operator</mat-label>
-    <mat-select [formControl]="operatorFormControl">
-      <mat-option *ngFor="let option of filterOperators" [value]="option.value">
-        <div class="option-content">
-          <span>{{option.name}}</span>
-        </div>
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <form [formGroup]="booleanForm">
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select formControlName="operator">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <mat-form-field class="form-field">
-    <mat-label>Value</mat-label>
-    <mat-select [formControl]="valueFormControl">  
-      <ng-container *ngIf="booleanOptions$ | async as booleanOptions">
-        <mat-option [value]="booleanOptions.true.value">
-          <div class="option-content">
-            <span>{{booleanOptions.true.label}} ({{booleanOptions.true.value}})</span>
-          </div>
-        </mat-option>
-        <mat-option [value]="booleanOptions.false.value">
-          <div class="option-content">
-            <span>{{booleanOptions.false.label}} ({{booleanOptions.false.value}})</span>
-          </div>
-        </mat-option>
-      </ng-container>
-    </mat-select>
-  </mat-form-field>
+    <mat-form-field class="form-field">
+      <mat-label>Value</mat-label>
+      <mat-select formControlName="value">  
+        <ng-container *ngIf="booleanOptions$ | async as booleanOptions">
+          <mat-option [value]="booleanOptions.true.value">
+            <div class="option-content">
+              <span>{{booleanOptions.true.label}} ({{booleanOptions.true.value}})</span>
+            </div>
+          </mat-option>
+          <mat-option [value]="booleanOptions.false.value">
+            <div class="option-content">
+              <span>{{booleanOptions.false.label}} ({{booleanOptions.false.value}})</span>
+            </div>
+          </mat-option>
+        </ng-container>
+      </mat-select>
+    </mat-form-field>
+  </form>
 </div>

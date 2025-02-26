@@ -1,110 +1,158 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, combineLatest, distinctUntilChanged, map, of, switchMap, takeUntil } from 'rxjs';
+import { Observable, Subject, combineLatest, distinctUntilChanged, map, of, switchMap, takeUntil, catchError } from 'rxjs';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { NodeTreeService } from './node-tree.service';
 import { QueryNode } from '../models/query-node';
-
-export class ClosingTagsStack {
-  private store: string[] = [];
-
-  count: number = 0;
-
-  push(tagName: string): void {
-    this.count = this.store.unshift(tagName);
-  }
-
-  pop(): string {
-    const poppedValue = this.store.shift();
-    this.count--;
-    return poppedValue;
-  }
-}
+import { NodeAttribute } from '../models/node-attribute';
 
 @Injectable({ providedIn: 'root' })
 export class QueryRenderService implements OnDestroy {
-  private _destroy$ = new Subject<void>();
-  private _previousNodeLevel: number = -1;
-  private _closingTagsStack = new ClosingTagsStack();
-  private _currentNode: QueryNode;
-  private _previousNodeIsExpandable: boolean = false;
+  private destroy$ = new Subject<void>();
+  private previousNodeLevel = -1;
+  private closingTags: string[] = [];
+  private currentNode: QueryNode;
 
-  constructor(private nodeTreeProcessor: NodeTreeService, private eventBus: EventBusService) {
-    this.eventBus.on(AppEvents.NODE_ADDED, () => this.renderXmlRequest());
-    this.eventBus.on(AppEvents.NODE_REMOVED, () => this.renderXmlRequest());
+  constructor(
+    private nodeTreeService: NodeTreeService, 
+    private eventBus: EventBusService
+  ) {
+    this.setupEventListeners();
   }
 
-  renderXmlRequest() {
-    this._destroy$.next();
-    this._previousNodeLevel = -1;
-    this._currentNode = this.nodeTreeProcessor.getNodeTree().value.root;
+  private setupEventListeners(): void {
+    const events = [AppEvents.NODE_ADDED, AppEvents.NODE_REMOVED];
+    events.forEach(event => {
+      this.eventBus.on(event, () => this.renderXmlRequest());
+    });
+  }
 
-    const observables$: Observable<string>[] = [];
-    const dynamicObservables$: BehaviorSubject<Observable<string>[]> = new BehaviorSubject([]);
+  renderXmlRequest(): void {
+    this.resetState();
+    this.currentNode = this.nodeTreeService.getNodeTree().value.root;
 
-    while (this._currentNode != null || this._closingTagsStack.count != 0) {
-      observables$.push(this.processNode(this._currentNode));
+    const observables$ = this.generateNodeObservables();
+    this.processObservables(observables$);
+  }
+
+  private resetState(): void {
+    this.destroy$.next();
+    this.previousNodeLevel = -1;
+    this.closingTags = [];
+  }
+
+  private generateNodeObservables(): Observable<string>[] {
+    const observables: Observable<string>[] = [];
+    
+    while (this.currentNode != null || this.closingTags.length > 0) {
+      observables.push(this.processNode(this.currentNode));
     }
 
-    dynamicObservables$.next(observables$);
+    return observables;
+  }
 
-    dynamicObservables$.pipe(
-      switchMap(obsList => combineLatest(obsList)),
+  private processObservables(observables: Observable<string>[]): void {
+    combineLatest(observables).pipe(
       map(values => values.join('\n')),
       distinctUntilChanged(),
-      takeUntil(this._destroy$))
-      .subscribe(value => this.nodeTreeProcessor.xmlRequest$.next(value));
+      catchError(error => {
+        console.error('Error rendering XML:', error);
+        return of('');
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(xml => {
+      this.nodeTreeService.xmlRequest$.next(xml);
+    });
   }
 
-  processNode(node: QueryNode): Observable<string> {
-    if (this._currentNode === null) {
-      return of(this._closingTagsStack.pop());
+  private processNode(node: QueryNode): Observable<string> {
+    if (!node) {
+      return of(this.closingTags.shift() || '');
     }
 
-    if (this._previousNodeLevel > node.level) {
-      this._previousNodeLevel--;
-      return of(this._closingTagsStack.pop());
+    if (this.previousNodeLevel > node.level) {
+      this.previousNodeLevel--;
+      return of(this.closingTags.shift() || '');
     }
 
-    const observable = this.getNodeTag(node);
-    this._previousNodeLevel = node.level;
-    this._currentNode = node.next;
-    this._previousNodeIsExpandable = node.expandable;
+    const observable = this.renderNodeTag(node);
+    this.updateNodeState(node);
     return observable;
   }
 
-  getNodeTag(node: QueryNode): Observable<string> {
+  private renderNodeTag(node: QueryNode): Observable<string> {
     if (node.expandable) {
-      this._closingTagsStack.push(`${this.getIndent(node.level)}</${node.tagName}>`);
+      this.closingTags.unshift(this.createClosingTag(node));
     }
 
-    return node.attributes$.pipe(map(attributes => {
-      const attributesString = attributes
-        .filter(attribute => attribute.value$.value !== '') // Skip empty attributes
-        .map(attribute => attribute.attributeDisplayValues.editorViewDisplayValue$)
-        .join(' ');
+    return node.attributes$.pipe(
+      switchMap(attributes => this.formatAttributes(attributes).pipe(
+        map(attributesString => this.createNodeString(node, attributesString))
+      ))
+    );
+  }
 
-      const hasAttributes = attributesString.trim().length > 0;
-      const indentation = this.getIndent(node.level);
+  private createNodeString(node: QueryNode, attributesString: string): string {
+    const indent = this.getIndent(node.level);
+    
+    return node.expandable
+      ? this.createExpandableNodeString(node, attributesString, indent)
+      : this.createSelfClosingNodeString(node, attributesString, indent);
+  }
 
-      if (node.expandable) {
-        return hasAttributes 
-          ? `${indentation}<${node.tagName} ${attributesString}>`
-          : `${indentation}<${node.tagName}>`;
-      } else {
-        return hasAttributes
-          ? `${indentation}<${node.tagName} ${attributesString} />`
-          : `${indentation}<${node.tagName} />`;
-      }
-    }));
+  private formatAttributes(attributes: NodeAttribute[]): Observable<string> {
+    if (!attributes || attributes.length === 0) {
+      return of('');
+    }
+
+    const attributeObservables$ = attributes.map(attr => 
+      combineLatest([
+        attr.value$,
+        attr.attributeDisplayValues.editorViewDisplayValue$
+      ]).pipe(
+        map(([value, displayValue]) => {
+          // Skip default values
+          if (value === 'false' || value === '0') {
+            return '';
+          }
+          return value ? displayValue : '';
+        })
+      )
+    );
+
+    return combineLatest(attributeObservables$).pipe(
+      map(values => values.filter(v => v !== '').join(' ')),
+      catchError(() => of(''))
+    );
+  }
+
+  private createExpandableNodeString(node: QueryNode, attributes: string, indent: string): string {
+    return attributes.trim().length > 0
+      ? `${indent}<${node.tagName} ${attributes}>`
+      : `${indent}<${node.tagName}>`;
+  }
+
+  private createSelfClosingNodeString(node: QueryNode, attributes: string, indent: string): string {
+    return attributes.trim().length > 0
+      ? `${indent}<${node.tagName} ${attributes} />`
+      : `${indent}<${node.tagName} />`;
+  }
+
+  private createClosingTag(node: QueryNode): string {
+    return `${this.getIndent(node.level)}</${node.tagName}>`;
+  }
+
+  private updateNodeState(node: QueryNode): void {
+    this.previousNodeLevel = node.level;
+    this.currentNode = node.next;
   }
 
   private getIndent(level: number): string {
-    return '  '.repeat(level); // Use 2 spaces for indentation
+    return '  '.repeat(level);
   }
 
   ngOnDestroy(): void {
-    this._destroy$.next();
-    this._destroy$.complete();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
