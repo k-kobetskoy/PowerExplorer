@@ -4,22 +4,24 @@
     mode="indeterminate">
   </mat-progress-spinner>
 
-  <mat-form-field class="form-field">
-    <mat-label>Operator</mat-label>
-    <mat-select [formControl]="operatorFormControl">
-      <mat-option *ngFor="let option of filterOperators" [value]="option.value">
-        <div class="option-content">
-          <span>{{option.name}}</span>
-        </div>
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <form [formGroup]="dateTimeForm">
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select formControlName="operator">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <mat-form-field class="form-field">
-    <mat-label>Value</mat-label>
-    <input matInput
-           type="datetime-local"
-           [formControl]="valueFormControl"
-           placeholder="Choose a date and time">
-  </mat-form-field>
+    <mat-form-field class="form-field">
+      <mat-label>Value</mat-label>
+      <input matInput
+             type="datetime-local"
+             formControlName="value"
+             placeholder="Choose a date and time">
+    </mat-form-field>
+  </form>
 </div>

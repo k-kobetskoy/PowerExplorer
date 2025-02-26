@@ -4,25 +4,27 @@
     mode="indeterminate">
   </mat-progress-spinner>
 
-  <mat-form-field class="form-field">
-    <mat-label>Operator</mat-label>
-    <mat-select [formControl]="operatorFormControl">
-      <mat-option *ngFor="let option of filterOperators" [value]="option.value">
-        <div class="option-content">
-          <span>{{option.name}}</span>
-        </div>
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <form [formGroup]="numberForm">
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select formControlName="operator">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <mat-form-field class="form-field">
-    <mat-label>Value</mat-label>
-    <input matInput
-           type="number"
-           [formControl]="valueFormControl"
-           placeholder="Enter numeric value">
-    <mat-error *ngIf="errorMessage$ | async as error">
-      {{error}}
-    </mat-error>
-  </mat-form-field>
+    <mat-form-field class="form-field">
+      <mat-label>Value</mat-label>
+      <input matInput
+             type="number"
+             formControlName="value"
+             placeholder="Enter numeric value">
+      <mat-error *ngIf="errorMessage$ | async as error">
+        {{error}}
+      </mat-error>
+    </mat-form-field>
+  </form>
 </div>

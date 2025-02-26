@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
@@ -31,15 +31,14 @@ export class IdFormComponent extends BaseFormComponent implements OnInit, OnDest
   private destroy$ = new Subject<void>();
   private storedValues = new Map<string, { operator: string, value: string }>();
 
-  operatorFormControl = new FormControl('');
-  valueFormControl = new FormControl('');
+  idForm: FormGroup;
   loading$ = new BehaviorSubject<boolean>(false);
 
   readonly filterOperators = FilterStaticData.FilterIdOperators;
 
   @Input() attributeValue: string;
 
-  constructor() {
+  constructor(private fb: FormBuilder) {
     super();
   }
 
@@ -58,7 +57,15 @@ export class IdFormComponent extends BaseFormComponent implements OnInit, OnDest
   }
 
   private initializeForm() {
+    this.createFormGroup();
     this.setupNodeValueHandling();
+  }
+
+  private createFormGroup() {
+    this.idForm = this.fb.group({
+      operator: [''],
+      value: ['']
+    });
   }
 
   private setupNodeValueHandling() {
@@ -66,18 +73,18 @@ export class IdFormComponent extends BaseFormComponent implements OnInit, OnDest
     const nodeId = this.selectedNode.id;
     if (this.storedValues.has(nodeId)) {
       const values = this.storedValues.get(nodeId);
-      this.operatorFormControl.setValue(values.operator, { emitEvent: false });
-      this.valueFormControl.setValue(values.value, { emitEvent: false });
+      this.idForm.patchValue({
+        operator: values.operator,
+        value: values.value
+      }, { emitEvent: false });
     } else {
       const operator = this.getAttributeValue(AttributeData.Condition.Operator);
       const value = this.getAttributeValue(AttributeData.Condition.Value);
       
-      if (operator) {
-        this.operatorFormControl.setValue(operator, { emitEvent: false });
-      }
-      if (value) {
-        this.valueFormControl.setValue(value, { emitEvent: false });
-      }
+      this.idForm.patchValue({
+        operator: operator || '',
+        value: value || ''
+      }, { emitEvent: false });
       
       this.storedValues.set(nodeId, { 
         operator: operator || '', 
@@ -86,7 +93,7 @@ export class IdFormComponent extends BaseFormComponent implements OnInit, OnDest
     }
 
     // Subscribe to form control changes
-    this.operatorFormControl.valueChanges
+    this.idForm.get('operator').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         if (typeof value === 'string') {
@@ -98,7 +105,7 @@ export class IdFormComponent extends BaseFormComponent implements OnInit, OnDest
         }
       });
 
-    this.valueFormControl.valueChanges
+    this.idForm.get('value').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         if (typeof value === 'string') {

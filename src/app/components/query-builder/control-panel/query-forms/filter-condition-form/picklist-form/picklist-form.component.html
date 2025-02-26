@@ -4,29 +4,31 @@
     mode="indeterminate">
   </mat-progress-spinner>
 
-  <mat-form-field class="form-field">
-    <mat-label>Operator</mat-label>
-    <mat-select [formControl]="operatorFormControl">
-      <mat-option *ngFor="let option of filterOperators" [value]="option.value">
-        <div class="option-content">
-          <span>{{option.name}}</span>
-        </div>
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <form [formGroup]="picklistForm">
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select formControlName="operator">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
-  <mat-form-field class="form-field">
-    <mat-label>Value</mat-label>
-    <mat-select [formControl]="valueFormControl">
-      <mat-option *ngFor="let option of picklistOptions$ | async" [value]="option.value">
-        <div class="option-content">
-          <span class="option-label">{{option.label}}</span>
-          <span class="option-value">{{option.value}}</span>
-        </div>
-      </mat-option>
-    </mat-select>
-    <mat-error *ngIf="errorMessage$ | async as error">
-      {{error}}
-    </mat-error>
-  </mat-form-field>
+    <mat-form-field class="form-field">
+      <mat-label>Value</mat-label>
+      <mat-select formControlName="value">
+        <mat-option *ngFor="let option of picklistOptions$ | async" [value]="option.value">
+          <div class="option-content">
+            <span class="option-label">{{option.label}}</span>
+            <span class="option-value">{{option.value}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+      <mat-error *ngIf="errorMessage$ | async as error">
+        {{error}}
+      </mat-error>
+    </mat-form-field>
+  </form>
 </div>
