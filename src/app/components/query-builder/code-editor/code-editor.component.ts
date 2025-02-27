@@ -14,7 +14,6 @@ import {
   oneDark,
   oneDarkTheme,
 } from '@codemirror/theme-one-dark';
-import { XmlParseService } from '../services/xml-parsing-services/xml-parse.service';
 
 import { FormControl } from '@angular/forms';
 
@@ -31,13 +30,11 @@ export class CodeEditorComponent implements OnInit {
 
   xmlRequest$: Observable<string>;
   xmlSyntaxErrors: any;
-  editorView: EditorView;
 
   constructor(
     private nodeTreeProcessor: NodeTreeService,
     private linterProviderService: LinterProviderService,
     private queryRendererService: QueryRenderService,
-    private xmlParseService: XmlParseService,
     @Inject(DOCUMENT) private document: Document
   ) { }
 
@@ -67,7 +64,7 @@ export class CodeEditorComponent implements OnInit {
       extensions: editorExtensions
     });
 
-    this.editorView = new EditorView({
+    let editorView = new EditorView({
       state: initialState,
       parent: this.myEditor.nativeElement,
       extensions: [
@@ -78,27 +75,9 @@ export class CodeEditorComponent implements OnInit {
     });
 
     this.xmlRequest$.subscribe(xml => {
-      this.editorView.dispatch({
-        changes: { from: 0, to: this.editorView.state.doc.length, insert: xml }
+      editorView.dispatch({
+        changes: { from: 0, to: editorView.state.doc.length, insert: xml }
       });
     });
-  }
-
-  /**
-   * Manually parse the XML from the editor
-   * This will reset the node tree and parse the XML without
-   * triggering the circular dependency issues
-   */
-  parseXmlManually() {
-    if (this.editorView) {
-      const errors = this.xmlParseService.parseXmlManually(this.editorView);
-      
-      // Log any parsing errors
-      if (errors.length > 0) {
-        console.warn('XML Parsing Errors:', errors);
-      } else {
-        console.log('XML parsed successfully');
-      }
-    }
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
@@ -7,14 +7,8 @@ import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
 import { AttributeFactoryResorlverService } from './attribute-services/attribute-factory-resorlver.service';
 
-export const XML_EVENTS = {
-  ADD_XML_NODE: 'ADD_XML_NODE',
-  INITIALIZE_NODE_TREE: 'INITIALIZE_NODE_TREE',
-  CHECK_PROGRAMMATIC_UPDATE: 'CHECK_PROGRAMMATIC_UPDATE',
-  SET_PROGRAMMATIC_UPDATE: 'SET_PROGRAMMATIC_UPDATE'
-};
-
 @Injectable({ providedIn: 'root' })
+
 export class NodeTreeService {
 
   private _nodeTree$: BehaviorSubject<QueryNodeTree> = new BehaviorSubject<QueryNodeTree>(null);
@@ -22,9 +16,6 @@ export class NodeTreeService {
   xmlRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
-  
-  // Keep track of programmatic updates locally
-  private isProgrammaticUpdate: boolean = false;
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -41,32 +32,7 @@ export class NodeTreeService {
     private attributeFactoryResolver: AttributeFactoryResorlverService
   ) {
     this.initializeNodeTree();
-    
-    // Listen for XML parsing events
-    this._eventBus.on(XML_EVENTS.ADD_XML_NODE, (nodeName) => {
-      if (nodeName) {
-        this.addNode(nodeName);
-      }
-    });
-    
-    this._eventBus.on(XML_EVENTS.INITIALIZE_NODE_TREE, () => {
-      this.initializeNodeTree();
-    });
-    
-    // Listen for programmatic update state changes
-    this._eventBus.on(XML_EVENTS.SET_PROGRAMMATIC_UPDATE, (value) => {
-      this.isProgrammaticUpdate = !!value;
-    });
-    
-    // Respond to requests for programmatic update state
-    this._eventBus.on(XML_EVENTS.CHECK_PROGRAMMATIC_UPDATE, () => {
-      this._eventBus.emit({ 
-        name: XML_EVENTS.SET_PROGRAMMATIC_UPDATE,
-        value: this.isProgrammaticUpdate
-      });
-    });
-    
-    this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
+    this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree())
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -116,13 +82,9 @@ export class NodeTreeService {
 
     // Handle special node types that require additional nodes
     if(newNodeName === QueryNodeData.Filter.Name) {
-      // Only automatically add Condition node if not in a programmatic update
-      // This prevents chain reactions during XML parsing
-      if (!this.isProgrammaticUpdate) {
-        // Add a condition node and make it the selected node
-        const conditionNode = this.addNode(QueryNodeData.Condition.Name);
-        this.selectedNode$ = conditionNode;
-      }
+      // Add a condition node and make it the selected node
+      const conditionNode = this.addNode(QueryNodeData.Condition.Name);
+      this.selectedNode$ = conditionNode;
     }
 
     return newNode;

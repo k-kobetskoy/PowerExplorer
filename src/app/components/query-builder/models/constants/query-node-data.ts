@@ -145,27 +145,4 @@ export class QueryNodeData {
         'entity',
         'fetch'
     ];
-
-    static GetNodeName(tagName: string): string {
-        switch (tagName) {
-            case 'value':
-                return 'Value';
-            case 'order':
-                return 'Order';
-            case 'attribute':
-                return 'Attribute';
-            case 'condition':
-                return 'Condition';
-            case 'filter':
-                return 'Filter';
-            case 'link-entity':
-                return 'Link Entity';
-            case 'entity':
-                return 'Entity';
-            case 'fetch':
-                return 'Root';
-            default:
-                return tagName;
-        }
-    }
 }
