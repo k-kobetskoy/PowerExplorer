@@ -8,15 +8,14 @@ export class AttributeTypeValidator implements IAttributeValidator {
 
     constructor(private validationType: string) { }
 
-    getValidator(attribute: NodeAttribute): () => IAttributeValidationResult
-    {
+    getValidator(attribute: NodeAttribute): () => IAttributeValidationResult {
         switch (this.validationType) {
             case AttributeValidationTypes.typeNumber:
                 return () => this.validateNumber(attribute);
             case AttributeValidationTypes.typeBoolean:
                 return () => this.validateBoolean(attribute);
             default:
-                return () => { return { isValid$: of(true), errorMessage: '' } };
+                return () => ({ isValid$: of(true), errorMessage: '' });
         }
     }
 
@@ -24,7 +23,7 @@ export class AttributeTypeValidator implements IAttributeValidator {
         const isValid = attribute.value$.pipe(
             distinctUntilChanged(),
             debounceTime(300),
-            map(value => this.isBoolean(value))
+            map(value => this.isBoolean(String(value || '')))
         );
 
         return {
@@ -37,7 +36,7 @@ export class AttributeTypeValidator implements IAttributeValidator {
         const isValid = attribute.value$.pipe(
             distinctUntilChanged(),
             debounceTime(300),
-            map(value => this.isNumber(value))
+            map(value => this.isNumber(String(value || '')))
         );
 
         return {
@@ -47,15 +46,14 @@ export class AttributeTypeValidator implements IAttributeValidator {
     }
 
     private isNumber(value: string): boolean {
+        if (!value) return true;
         const trimmedValue = value.trim();
-
         return trimmedValue === '' || !isNaN(Number(trimmedValue));
     }
 
     private isBoolean(value: string): boolean {
-
+        if (!value) return true;
         const trimmedValue = value.trim().toLowerCase();
-
         return trimmedValue === '' || trimmedValue === 'true' || trimmedValue === 'false';
     }
 }

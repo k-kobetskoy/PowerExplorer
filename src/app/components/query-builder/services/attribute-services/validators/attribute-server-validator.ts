@@ -6,17 +6,20 @@ import { EntityServiceFactoryService } from "../../entity-service-factory.servic
 import { EntityEntityService } from "../../entity-services/entity-entity.service";
 import { IAttributeValidator } from "../abstract/i-attribute-validator";
 
+interface HasLogicalName {
+    logicalName: string;
+}
+
 export class AttributeServerValidator implements IAttributeValidator {
 
     constructor(private validationType: string, private entityServiceFactory: EntityServiceFactoryService) { }
 
     getValidator(attribute: NodeAttribute): () => IAttributeValidationResult {
-        switch (this.validationType) {
-            case AttributeValidationTypes.serverEntity:
-                return () => this.validateEntity(attribute);
-            default:
-                return () => { return { isValid$: of(true), errorMessage: '' } };
+        if (this.validationType === AttributeValidationTypes.serverEntity) {
+            return () => this.validateEntity(attribute);
         }
+        
+        return () => ({ isValid$: of(true), errorMessage: '' });
     }
 
     private validateEntity(attribute: NodeAttribute): IAttributeValidationResult {
@@ -28,13 +31,16 @@ export class AttributeServerValidator implements IAttributeValidator {
                 return attribute.value$.pipe(
                     distinctUntilChanged(),
                     debounceTime(500),
-                    map(entityName => {
-                        if (!entityName) {
-                            return true;
-                        } else {
-                            const entity = entities.find(e => e.logicalName === entityName);
-                            return !!entity;
-                        }
+                    map((value: string | HasLogicalName | any) => {
+                        if (!value) return true;
+                        
+                        // Extract logical name if it's an object with that property
+                        const logicalName = typeof value === 'object' && value && 'logicalName' in value
+                            ? (value as HasLogicalName).logicalName
+                            : value;
+                            
+                        // Find entity with matching logical name
+                        return !!entities.find(e => e.logicalName === logicalName);
                     })
                 );
             })

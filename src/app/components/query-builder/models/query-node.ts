@@ -1,4 +1,4 @@
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of } from "rxjs";
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
 import { IAttributeData } from "./constants/attribute-data";
@@ -86,26 +86,40 @@ export class QueryNode {
 
     validateNode(): Observable<boolean> {
         return this.attributes$.pipe(
-            switchMap(attributes => 
-                combineLatest(
-                    attributes.map(attr => attr.getValidationState().pipe(
-                        switchMap(result => combineLatest([
-                            result.isValid$,
-                            of(result.errorMessage)
-                        ]))
-                    ))
+            switchMap(attributes => {
+                if (attributes.length === 0) {
+                    return of(true);
+                }
+                
+                return combineLatest(
+                    attributes.map(attr => {
+                        return attr.getValidationState().pipe(
+                            switchMap(result => {
+                                return result.isValid$.pipe(
+                                    map(isValid => ({ isValid, errorMessage: result.errorMessage })),
+                                );
+                            })
+                        );
+                    })
                 ).pipe(
                     map(results => {
-                        const errors = results
-                            .filter(([isValid, error]) => !isValid)
-                            .map(([_, error]) => error)
-                            .filter(error => error != null);
-                        
-                        this.validationErrors$.next(errors);
-                        return errors.length === 0;
+                        try {
+                            const errors = results
+                                .filter(result => !result.isValid)
+                                .map(result => result.errorMessage)
+                                .filter(error => error != null && error !== '');
+                            
+                            console.log(`[QueryNode] Found ${errors.length} errors for node: ${this.nodeName}`);
+                            this.validationErrors$.next(errors);
+                            return errors.length === 0;
+                        } catch (error) {
+                            console.error(`[QueryNode] Error processing validation results for node: ${this.nodeName}`, error);
+                            this.validationErrors$.next([`Error processing validation: ${error.message}`]);
+                            return false;
+                        }
                     })
-                )
-            )
+                );
+            })
         );
     }
 
@@ -123,9 +137,19 @@ export class QueryNode {
         }
     }
 
-    setAttribute(attributeData: IAttributeData, value: string): void {
-        let attribute = this.findOrCreateAttribute(attributeData);
-        attribute.value$.next(value);
+    setAttribute(attributeData: IAttributeData, value: string | any): void {
+        try {
+            let attribute = this.findOrCreateAttribute(attributeData);
+            
+            // Handle objects with logicalName property
+            if (typeof value === 'object' && value && 'logicalName' in value) {
+                attribute.value$.next(value.logicalName);
+            } else {
+                attribute.value$.next(value);
+            }
+        } catch (error) {
+            console.error(`[QueryNode] Error in setAttribute: ${error}`);
+        }
     }
 
     private findOrCreateAttribute(attributeData: IAttributeData): NodeAttribute {
@@ -133,12 +157,13 @@ export class QueryNode {
         if (!attribute) {
             attribute = this.attributeFactory.createAttribute(attributeData.EditorName, this, false);
             this.addAttribute(attribute);
-        }
+        } 
         return attribute;
     }
 
     findAttribute(attributeName: string): NodeAttribute | undefined {
-        return this.attributes$.value.find(a => a.editorName === attributeName);
+        const attribute = this.attributes$.value.find(a => a.editorName === attributeName);
+        return attribute;
     }
 
     getOrCreateAttribute(attributeName: string): NodeAttribute | undefined {
@@ -148,9 +173,16 @@ export class QueryNode {
     getParentEntityName(node: QueryNode = this): BehaviorSubject<string> {
         const parent = this.getParentEntity(node);
 
-        if (!parent) return new BehaviorSubject<string>('');
+        if (!parent) {
+            return new BehaviorSubject<string>('');
+        }
 
-        return parent.attributes$.value.find(a => a.editorName === 'name').value$;
+        const nameAttribute = parent.attributes$.value.find(a => a.editorName === 'name');
+        if (!nameAttribute) {
+            return new BehaviorSubject<string>('');
+        }
+
+        return nameAttribute.value$;
     }
 
     addAttribute(attribute: NodeAttribute): void {

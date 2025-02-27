@@ -1,4 +1,4 @@
-import { BehaviorSubject, combineLatest, map, Observable, shareReplay, of } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable, shareReplay, of, tap, switchMap, catchError } from 'rxjs';
 import { AttributeValidators } from './attribute-validators';
 import { AttributeDisplayValues as AttributeDisplayValues } from './attribute-display-values';
 import { QueryNode } from './query-node';
@@ -57,15 +57,34 @@ export class NodeAttribute {
             ...(this.validators.parsingSynchronousValidators || []),
             ...(this.validators.parsingAsyncValidators || [])
         ];
+        
+        // If no validators, return a default valid state
+        if (validators.length === 0) {
+            this.validationState$ = of({ isValid$: of(true), errorMessage: '' });
+            return;
+        }
 
-        this.validationState$ = validators.length === 0 ? 
-            of({ isValid$: of(true), errorMessage: '' }) :
-            combineLatest(validators.map(validator => validator.getValidator(this)())).pipe(
+        // Get validator results
+        const validatorResults$ = validators.map(validator => {
+            try {
+                return validator.getValidator(this)();
+            } catch (error) {
+                return { isValid$: of(false), errorMessage: `Validator error: ${error.message}` };
+            }
+        });
+
+        this.validationState$ = combineLatest(
+            validatorResults$.map(result => 
+                result.isValid$.pipe(
+                    map(isValid => ({ isValid, errorMessage: result.errorMessage }))
+                )
+            )
+        ).pipe(
             map(results => {
                 const errors = results
-                    .filter(result => !result.isValid$)
+                    .filter(result => !result.isValid)
                     .map(result => result.errorMessage)
-                    .filter(msg => msg);
+                    .filter(Boolean);
                 
                 this.validationStateChange$.next({
                     attributeName: this.editorName,
@@ -74,10 +93,13 @@ export class NodeAttribute {
 
                 return {
                     isValid$: of(errors.length === 0),
-                    errorMessage: errors.length > 0 ? 
-                        `Validation failed for ${this.editorName}: ${errors.join(', ')}` : ''
+                    errorMessage: errors.length > 0 ? errors.join(', ') : ''
                 };
             }),
+            catchError(error => of({ 
+                isValid$: of(false), 
+                errorMessage: `Validation error: ${error.message}` 
+            })),
             shareReplay(1)
         );
     }

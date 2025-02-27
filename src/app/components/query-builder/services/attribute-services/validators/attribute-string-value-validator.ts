@@ -13,7 +13,7 @@ export class AttributeStringValueValidator implements IAttributeValidator {
             case AttributeValidationTypes.alias:
                 return () => this.validateAlias(attribute);
             default:
-                return () => { return { isValid$: of(true), errorMessage: '' } };
+                return () => ({ isValid$: of(true), errorMessage: '' });
         }
     }
 
@@ -21,7 +21,7 @@ export class AttributeStringValueValidator implements IAttributeValidator {
         const isValid = attribute.value$.pipe(
             distinctUntilChanged(),
             debounceTime(300),
-            map(value => this.isValidAlias(value))
+            map(value => this.isValidAlias(String(value || '')))
         );
 
         return {
@@ -31,11 +31,7 @@ export class AttributeStringValueValidator implements IAttributeValidator {
     }
 
     private isValidAlias(value: string): boolean {
-
-        const startsWithNonNumber = isNaN(Number(value.charAt(0)));
-
-        const hasNoSpaces = !/\s/.test(value);
-
-        return startsWithNonNumber && hasNoSpaces;
+        if (!value) return true;
+        return isNaN(Number(value.charAt(0))) && !/\s/.test(value);
     }
 }
