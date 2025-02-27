@@ -38,10 +38,17 @@ export const TAG_NODES = {
 @Injectable({ providedIn: 'root' })
 
 export class XmlValidationService {
+  // Track error positions to avoid duplicates
+  private reportedErrorPositions: Set<string> = new Set();
 
   constructor(private parsingHelper: ParsingHelperService) { }
 
   validateTagNode(iteratingNode: SyntaxNodeRef, tagsValidationStack: { mandatoryNodes: string[]; from: number; to: number; }[], diagnostics: Diagnostic[], sequenceValidationStack: string[], view: EditorView) {
+    // Reset error tracking for each validation run
+    if (iteratingNode.node.parent === null) {
+      this.reportedErrorPositions = new Set();
+    }
+
     switch (iteratingNode.name) {
       case TAG_NODE_NAMES.element:
         this.addElementNodesToStack(iteratingNode, tagsValidationStack);
@@ -57,7 +64,10 @@ export class XmlValidationService {
         sequenceValidationStack.push(TAG_NODE_NAMES.selfClosingTag);
         break;
       case TAG_NODE_NAMES.text:
-        this.validateTextNode(iteratingNode, diagnostics, view);
+        // Only validate text if it's not within a valid tag structure
+        if (!this.hasErrorNearby(iteratingNode.from, iteratingNode.to, diagnostics)) {
+          this.validateTextNode(iteratingNode, diagnostics, view);
+        }
         break;
       case TAG_NODE_NAMES.startTag:
         if (this.validateStartNode(iteratingNode, sequenceValidationStack, diagnostics)) {
@@ -83,10 +93,14 @@ export class XmlValidationService {
         tagsValidationStack.pop();
         break;
       case TAG_NODE_NAMES.mismatchedCloseNode:
+        // This is a high-priority error, always show it
         this.addValidationError(PARSING_ERRORS.mismatchedCloseTag, iteratingNode.from, iteratingNode.to, diagnostics);
         break;
       case TAG_NODE_NAMES.unexpectedParsingError:
-        this.addValidationError(PARSING_ERRORS.unexpectedParsingError, iteratingNode.from, iteratingNode.to, diagnostics);
+        // Only show unexpected parsing errors if there are no other errors
+        if (diagnostics.length === 0) {
+          this.addValidationError(PARSING_ERRORS.unexpectedParsingError, iteratingNode.from, iteratingNode.to, diagnostics);
+        }
         break;
     }
   }
@@ -145,7 +159,10 @@ export class XmlValidationService {
       return true;
     }
 
-    this.addValidationError(PARSING_ERRORS.genericTagError, iteratingNode.from, iteratingNode.to, diagnostics);
+    // Only report this error if we're not already reporting a higher-level error
+    if (!this.hasErrorNearby(iteratingNode.from, iteratingNode.to, diagnostics)) {
+      this.addValidationError(PARSING_ERRORS.genericTagError, iteratingNode.from, iteratingNode.to, diagnostics);
+    }
     return false;
   }
 
@@ -162,17 +179,78 @@ export class XmlValidationService {
       return true;
     }
 
-    this.addValidationError(PARSING_ERRORS.genericTagError, iteratingNode.from, iteratingNode.to, diagnostics);
+    // Only report this error if we're not already reporting a higher-level error
+    if (!this.hasErrorNearby(iteratingNode.from, iteratingNode.to, diagnostics)) {
+      this.addValidationError(PARSING_ERRORS.genericTagError, iteratingNode.from, iteratingNode.to, diagnostics);
+    }
     return false;
   }
 
+  // Check if there's already an error reported nearby
+  hasErrorNearby(from: number, to: number, diagnostics: Diagnostic[], threshold: number = 10): boolean {
+    return diagnostics.some(d => 
+      (Math.abs(d.from - from) < threshold || Math.abs(d.to - to) < threshold)
+    );
+  }
+
   addValidationError(errorMessage: string, from: number, to: number, diagnostics: Diagnostic[]) {
+    // Create a unique key for this error position
+    const errorKey = `${from}-${to}-${errorMessage}`;
+    
+    // Skip if we've already reported an error at this position
+    if (this.reportedErrorPositions.has(errorKey)) {
+      return;
+    }
+    
+    // Skip if there's already an error nearby with the same message
+    if (diagnostics.some(d => 
+      d.message === errorMessage && 
+      (Math.abs(d.from - from) < 15 || Math.abs(d.to - to) < 15)
+    )) {
+      return;
+    }
+    
+    // Prioritize specific errors over generic ones
+    if (errorMessage === PARSING_ERRORS.genericTagError) {
+      // If there's any error nearby, don't add generic errors
+      if (this.hasErrorNearby(from, to, diagnostics)) {
+        return;
+      }
+      
+      // Limit to one generic error per line
+      const line = this.getLineFromPosition(from);
+      if (diagnostics.some(d => 
+        d.message === PARSING_ERRORS.genericTagError && 
+        this.getLineFromPosition(d.from) === line
+      )) {
+        return;
+      }
+    }
+    
+    // Prioritize specific errors
+    if (errorMessage === PARSING_ERRORS.unexpectedParsingError) {
+      // Don't show unexpected parsing errors if there are other errors
+      if (diagnostics.length > 0) {
+        return;
+      }
+    }
+    
+    // Add to our tracking set
+    this.reportedErrorPositions.add(errorKey);
+    
     diagnostics.push({
       from: from,
       to: to,
       severity: 'error',
       message: errorMessage
     });
+  }
+  
+  // Helper to get line number from position
+  private getLineFromPosition(pos: number): number {
+    // This is a simple approximation - in a real implementation,
+    // you would use the editor's line information
+    return Math.floor(pos / 40); // Assuming average line length of 40 chars
   }
 
   validateElementNodes(tagsValidationStack: { mandatoryNodes: string[]; from: number; to: number; }[], diagnostics: Diagnostic[]) {
@@ -184,16 +262,15 @@ export class XmlValidationService {
     let currentTagData = tagsValidationStack.at(-1);
 
     if (currentTagData.mandatoryNodes.length > 0) {
-      currentTagData.mandatoryNodes.forEach(node => {
-        switch (node) {
-          case TAG_NODE_NAMES.tagName:
-            this.addValidationError(PARSING_ERRORS.missingTagName, currentTagData.from, currentTagData.to, diagnostics);
-            break;
-          default:
-            this.addValidationError(PARSING_ERRORS.genericTagError, currentTagData.from, currentTagData.to, diagnostics);
-            break;
+      // Only report the most specific error
+      if (currentTagData.mandatoryNodes.includes(TAG_NODE_NAMES.tagName)) {
+        // Only report missing tag name if there's no other error nearby
+        if (!this.hasErrorNearby(currentTagData.from, currentTagData.to, diagnostics)) {
+          this.addValidationError(PARSING_ERRORS.missingTagName, currentTagData.from, currentTagData.to, diagnostics);
         }
-      });
+      } else if (!this.hasErrorNearby(currentTagData.from, currentTagData.to, diagnostics)) {
+        this.addValidationError(PARSING_ERRORS.genericTagError, currentTagData.from, currentTagData.to, diagnostics);
+      }
     }
   }
 
@@ -209,7 +286,10 @@ export class XmlValidationService {
       currentTagNodes.mandatoryNodes.pop();
       return;
     } else {
-      this.addValidationError(PARSING_ERRORS.genericTagError, currentTagNodes.from, currentTagNodes.to, diagnostics);
+      // Only report this error if we're not already reporting a higher-level error
+      if (!this.hasErrorNearby(currentTagNodes.from, currentTagNodes.to, diagnostics)) {
+        this.addValidationError(PARSING_ERRORS.genericTagError, currentTagNodes.from, currentTagNodes.to, diagnostics);
+      }
     }
   }
 

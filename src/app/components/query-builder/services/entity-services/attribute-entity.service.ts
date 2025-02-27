@@ -12,6 +12,10 @@ export class AttributeEntityService extends BaseRequestService {
   constructor() { super(); }
   
   getAttributes(entityLogicalName: string): Observable<AttributeModel[]> {
+    if (!entityLogicalName || entityLogicalName.trim() === '') {
+      console.warn('AttributeEntityService: Cannot fetch attributes for empty entity name');
+      return of([]);
+    }
 
     this.getActiveEnvironmentUrl();
 

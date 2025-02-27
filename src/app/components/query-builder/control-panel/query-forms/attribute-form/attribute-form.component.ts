@@ -63,38 +63,30 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
-      // Clean up existing subscriptions
       this.destroy$.next();
       
-      // Reinitialize the form
       this.initializeForm();
     }
   }
 
   private initializeForm() {
-    // Create form group with controls for each attribute
     this.attributeForm = this.fb.group({
       name: [this.getAttributeValue(this.AttributeData.Attribute.Name)],
       alias: [this.getAttributeValue(this.AttributeData.Attribute.Alias)]
     });
     
-    // Setup attribute autocomplete
     this.setupAttributeAutocomplete();
     
-    // Subscribe to form value changes
     this.attributeForm.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(formValues => {
-        // Process each form control value
         Object.entries(formValues).forEach(([key, value]) => {
           const stringValue = value !== null && value !== undefined ? String(value) : '';
           
-          // Find the corresponding attribute
           const attribute = Object.values(this.AttributeData.Attribute)
             .find(attr => attr.EditorName === key);
           
           if (attribute) {
-            // Only update if the value has changed
             const currentValue = this.getAttributeValue(attribute);
             if (currentValue !== stringValue) {
               this.updateAttribute(attribute, stringValue);
