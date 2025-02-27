@@ -31,47 +31,45 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['selectedNode'] && this.selectedNode) {
-            // Clean up existing subscriptions
             this.destroy$.next();
             
-            // Reinitialize the form
             this.initializeForm();
         }
     }
 
     private initializeForm() {
-        // Create form group with controls for each attribute
         this.entityForm = this.fb.group({
             name: [this.getAttributeValue(this.AttributeData.Entity.Name)],
             alias: [this.getAttributeValue(this.AttributeData.Entity.Alias)]
         });
 
-        // Setup entity autocomplete
         this.setupEntityAutocomplete();
         
-        // Subscribe to form value changes
         this.entityForm.valueChanges
-            .pipe(takeUntil(this.destroy$))
+            .pipe(
+                debounceTime(200),
+                takeUntil(this.destroy$)
+            )
             .subscribe(formValues => {
-                // Process each form control value
                 Object.entries(formValues).forEach(([key, value]) => {
                     const stringValue = value !== null && value !== undefined ? String(value) : '';
                     
-                    // Find the corresponding attribute
                     const attribute = Object.values(this.AttributeData.Entity)
                         .find(attr => attr.EditorName === key);
                     
                     if (attribute) {
-                        // Only update if the value has changed
                         const currentValue = this.getAttributeValue(attribute);
                         if (currentValue !== stringValue) {
                             this.updateAttribute(attribute, stringValue);
                             
-                            // Special handling for entity name to update entitySetName
                             if (key === 'name') {
                                 this.updateEntitySetName(stringValue);
                             }
                         }
+                    }
+                    
+                    if (key === 'name' && !stringValue) {
+                        this.selectedNode.entitySetName$.next(null);
                     }
                 });
             });

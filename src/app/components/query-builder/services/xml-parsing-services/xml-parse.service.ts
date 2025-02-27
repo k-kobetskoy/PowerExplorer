@@ -6,6 +6,7 @@ import { QueryNodeTree } from '../../models/query-node-tree';
 import { EditorView } from 'codemirror';
 import { QueryNodeBuilderService } from './query-node-builder.service';
 import { NodeTreeService } from '../node-tree.service';
+import { syntaxTree } from "@codemirror/language";
 
 export const PARSER_NODE_NAMES = {
   openTag: 'OpenTag',
@@ -32,10 +33,17 @@ export class XmlParseService {
   nodeLevel: number = -1;
   from: number;
   to: number;
+  // Flag to control when parsing should update the node tree
+  isParsingEnabled: boolean = false;
 
   constructor(private parsingHelper: ParsingHelperService, private nodeBuilder: QueryNodeBuilderService, private nodeTreeService: NodeTreeService) { }
 
   parseNode(iteratingNode: SyntaxNodeRef, view: EditorView, xmlParseErrors: Diagnostic[]) {
+    // Skip node processing if parsing is disabled
+    if (!this.isParsingEnabled) {
+      return;
+    }
+
     console.log(iteratingNode.name);
     if (iteratingNode.name === PARSER_NODE_NAMES.element) {
       console.log(iteratingNode.from, iteratingNode.to);
@@ -70,7 +78,7 @@ export class XmlParseService {
   addNodeToTree(xmlParseErrors: Diagnostic[]) {
     let buildResult = this.nodeBuilder.buildQueryNode();
     if (buildResult.isBuildSuccess) {
-      this.nodeTreeService.addNode(buildResult.queryNode.nodeName);
+      this.nodeTreeService.addNodeFromParsing(buildResult.queryNode.nodeName);
     } else {
       for (let error of buildResult.errors) {
         xmlParseErrors.push({
@@ -80,6 +88,37 @@ export class XmlParseService {
           severity: 'error'
         });
       }
+    }
+  }
+
+  resetParserState() {
+    this.nodeLevel = -1;
+    this.isExpanded = false;
+    this.from = null;
+    this.to = null;
+  }
+
+  // Method to handle the Parse XML button click
+  parseXmlManually(view: EditorView) {
+    try {
+      this.nodeTreeService.prepareTreeForParsing();
+
+      this.resetParserState();
+
+      this.isParsingEnabled = true;
+
+      const xmlParseErrors: Diagnostic[] = [];
+
+      // Iterate through the syntax tree and parse each node
+      syntaxTree(view.state).cursor().iterate(iteratingNode => {
+        this.parseNode(iteratingNode, view, xmlParseErrors);
+      });
+
+      if (xmlParseErrors.length > 0) {
+        console.error('XML Parse Errors:', xmlParseErrors);
+      }
+    } finally {
+      this.isParsingEnabled = false;
     }
   }
 }

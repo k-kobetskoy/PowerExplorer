@@ -59,6 +59,44 @@ export class NodeTreeService {
     this.addNode(QueryNodeData.Entity.Name);
   }
 
+  prepareTreeForParsing() {
+    const nodeTree = new QueryNodeTree();
+
+    this._nodeTree$.next(nodeTree);
+    this._selectedNode$.next(null);
+  }
+
+  addNodeFromParsing(newNodeName: string): QueryNode {
+    let parentNode = this._selectedNode$.value;
+    
+    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
+    
+    // If this is the first node (root), handle it specially
+    if (!this._nodeTree$.value.root) {
+      this._nodeTree$.value.root = newNode;
+      this._selectedNode$.next(newNode);
+      return newNode;
+    }
+    
+    // Otherwise, add it to the tree normally
+    let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
+    let bottomNode = nodeAbove.next;
+
+    nodeAbove.next = newNode;
+    newNode.next = bottomNode;
+
+    newNode.level = parentNode.level + 1;
+    newNode.parent = parentNode;
+
+    if (parentNode) {
+      this.expandNode(parentNode);
+    }
+
+    this._selectedNode$.next(newNode);
+        
+    return newNode;
+  }
+
   addNode(newNodeName: string): QueryNode {
     let parentNode = this._selectedNode$.value;  
 

@@ -73,10 +73,10 @@ export class QueryNodeBuilderService {
       return { isBuildSuccess: false, queryNode: null, errors: this.errors };
     }
 
-    let queryNode = new QueryNode(this.tag.tagName, this.attributeFactoryResolver);
+    let queryNode = new QueryNode(QueryNodeData.TagNamesToNodeNames[this.tag.tagName], this.attributeFactoryResolver);
 
     if (this.attributes.length > 0) {
-      const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(this.tag.tagName);
+        const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(QueryNodeData.TagNamesToNodeNames[this.tag.tagName]);
       for (let attribute of this.attributes) {
         this.addAttributeValueToNode(attribute, queryNode, attributeFactory);
       }      

@@ -4,7 +4,6 @@ import { IAttributeValidationResult } from "../abstract/i-attribute-validation-r
 import { AttributeValidationTypes } from "../constants/attribute-validation-types";
 import { IAttributeValidator } from "../abstract/i-attribute-validator";
 
-
 export class AttributeStringValueValidator implements IAttributeValidator {
 
     constructor(private validationType: string) { }

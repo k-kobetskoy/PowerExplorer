@@ -124,6 +124,7 @@ export class QueryNodeData {
         Attributes: [],
         AttributesCount: 2,
     };
+
     static readonly NodesNames: string[] = [
         'Value',
         'Order',
@@ -145,4 +146,15 @@ export class QueryNodeData {
         'entity',
         'fetch'
     ];
+
+    static readonly TagNamesToNodeNames: { [key: string]: string } = {
+        'value': QueryNodeData.Value.Name,
+        'order': QueryNodeData.Order.Name,
+        'attribute': QueryNodeData.Attribute.Name,
+        'condition': QueryNodeData.Condition.Name,
+        'filter': QueryNodeData.Filter.Name, 
+        'link-entity': QueryNodeData.Link.Name,
+        'entity': QueryNodeData.Entity.Name,
+        'fetch': QueryNodeData.Root.Name
+    };    
 }

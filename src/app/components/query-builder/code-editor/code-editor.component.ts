@@ -16,6 +16,7 @@ import {
 } from '@codemirror/theme-one-dark';
 
 import { FormControl } from '@angular/forms';
+import { XmlParseService } from '../services/xml-parsing-services/xml-parse.service';
 
 @Component({
   selector: 'app-code-editor',
@@ -30,14 +31,15 @@ export class CodeEditorComponent implements OnInit {
 
   xmlRequest$: Observable<string>;
   xmlSyntaxErrors: any;
+  private editorView: EditorView;
 
   constructor(
     private nodeTreeProcessor: NodeTreeService,
     private linterProviderService: LinterProviderService,
     private queryRendererService: QueryRenderService,
+    private xmlParseService: XmlParseService,
     @Inject(DOCUMENT) private document: Document
   ) { }
-
 
   ngOnInit() {
     this.queryRendererService.renderXmlRequest();
@@ -64,7 +66,7 @@ export class CodeEditorComponent implements OnInit {
       extensions: editorExtensions
     });
 
-    let editorView = new EditorView({
+    this.editorView = new EditorView({
       state: initialState,
       parent: this.myEditor.nativeElement,
       extensions: [
@@ -75,9 +77,20 @@ export class CodeEditorComponent implements OnInit {
     });
 
     this.xmlRequest$.subscribe(xml => {
-      editorView.dispatch({
-        changes: { from: 0, to: editorView.state.doc.length, insert: xml }
+      this.editorView.dispatch({
+        changes: { from: 0, to: this.editorView.state.doc.length, insert: xml }
       });
     });
+  }
+
+  // Method to handle the Parse XML button click
+  parseXml() {
+    if (this.editorView) {
+      this.xmlParseService.parseXmlManually(this.editorView);
+    }
+  }
+
+  validateXml() {
+    console.log('XML validation requested');
   }
 }

@@ -5,6 +5,7 @@ import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { NodeTreeService } from './node-tree.service';
 import { QueryNode } from '../models/query-node';
 import { NodeAttribute } from '../models/node-attribute';
+import { XmlParseService } from './xml-parsing-services/xml-parse.service';
 
 @Injectable({ providedIn: 'root' })
 export class QueryRenderService implements OnDestroy {
@@ -15,7 +16,8 @@ export class QueryRenderService implements OnDestroy {
 
   constructor(
     private nodeTreeService: NodeTreeService, 
-    private eventBus: EventBusService
+    private eventBus: EventBusService,
+    private xmlParseService: XmlParseService
   ) {
     this.setupEventListeners();
   }
@@ -28,11 +30,18 @@ export class QueryRenderService implements OnDestroy {
   }
 
   renderXmlRequest(): void {
-    this.resetState();
-    this.currentNode = this.nodeTreeService.getNodeTree().value.root;
-
-    const observables$ = this.generateNodeObservables();
-    this.processObservables(observables$);
+    try {
+      // Disable parsing during XML generation to prevent circular updates
+      this.xmlParseService.isParsingEnabled = false;
+      
+      this.resetState();
+      this.currentNode = this.nodeTreeService.getNodeTree().value.root;
+  
+      const observables$ = this.generateNodeObservables();
+      this.processObservables(observables$);
+    } catch (error) {
+      console.error('Error rendering XML:', error);
+    }
   }
 
   private resetState(): void {

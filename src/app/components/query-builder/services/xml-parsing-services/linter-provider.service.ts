@@ -21,8 +21,10 @@ export class LinterProviderService {
       let sequenceValidationStack: string[] = [];
 
       syntaxTree(view.state).cursor().iterate(iteratingNode => {
+        // Always validate the XML syntax
         this.tagsValidator.validateTagNode(iteratingNode, tagsValidationStack, xmlValidationErrors, sequenceValidationStack, view)
 
+        // Only parse nodes if there are no validation errors
         if (xmlValidationErrors.length === 0) {
           this.xmlParser.parseNode(iteratingNode, view, xmlParseErrors)
         }
