@@ -1,8 +1,8 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, finalize } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
@@ -134,9 +134,12 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     this.filteredFromAttributes$ = combineLatest([
       this.linkEntityForm.get('fromAttribute').valueChanges.pipe(startWith(this.linkEntityForm.get('fromAttribute').value || '')),
       this.linkEntityForm.get('entity').valueChanges.pipe(
-        switchMap(entityName => 
-          entityName ? this.attributeService.getAttributes(entityName) : []
-        )
+        switchMap(entityName => {
+          if (!entityName) return of([]);
+          this.loading$.next(true);
+          return this.attributeService.getAttributes(entityName)
+            .pipe(finalize(() => this.loading$.next(false)));
+        })
       ),
       this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
     ]).pipe(
@@ -146,12 +149,36 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     );
 
     // To attributes
+    const parentEntityNode = this.selectedNode.getParentEntity();
+    if (!parentEntityNode) {
+      this.filteredToAttributes$ = of([]);
+      return;
+    }
+
     this.filteredToAttributes$ = combineLatest([
       this.linkEntityForm.get('toAttribute').valueChanges.pipe(startWith(this.linkEntityForm.get('toAttribute').value || '')),
-      this.selectedNode.getParentEntityName().pipe(
-        switchMap(entityName => 
-          entityName ? this.attributeService.getAttributes(entityName) : []
-        )
+      this.selectedNode.getParentEntityName(parentEntityNode).pipe(
+        distinctUntilChanged(),
+        switchMap(entityName => {
+          if (!entityName || entityName.trim() === '') {
+            console.warn('Empty parent entity name');
+            return of([]);
+          }
+          
+          // Check parent entity validation state before proceeding
+          return parentEntityNode.validationPassed$.pipe(
+            switchMap(isValid => {
+              if (!isValid) {
+                console.warn(`Parent entity '${entityName}' validation failed`);
+                return of([]);
+              }
+              
+              this.loading$.next(true);
+              return this.attributeService.getAttributes(entityName)
+                .pipe(finalize(() => this.loading$.next(false)));
+            })
+          );
+        })
       ),
       this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
     ]).pipe(
@@ -162,7 +189,6 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   }
 
   private setupFormSubscriptions() {
-    // Enable/disable attribute controls based on entity selection
     this.linkEntityForm.get('entity').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
@@ -175,17 +201,22 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
         this.updateAttribute(this.AttributeData.Link.Entity, value);
       });
 
-    // Subscribe to parent entity changes for to-attribute field
-    this.selectedNode.getParentEntityName()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(entityName => {
-        if (entityName) {
-          this.linkEntityForm.get('toAttribute').enable();
-        } else {
-          this.linkEntityForm.get('toAttribute').disable();
-          this.linkEntityForm.get('toAttribute').setValue('');
-        }
-      });
+    const parentEntityNode = this.selectedNode.getParentEntity();
+    if (parentEntityNode) {
+      this.selectedNode.getParentEntityName(parentEntityNode)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(entityName => {
+          if (entityName) {
+            this.linkEntityForm.get('toAttribute').enable();
+          } else {
+            this.linkEntityForm.get('toAttribute').disable();
+            this.linkEntityForm.get('toAttribute').setValue('');
+          }
+        });
+    } else {
+      this.linkEntityForm.get('toAttribute').disable();
+      this.linkEntityForm.get('toAttribute').setValue('');
+    }
 
     // Subscribe to form value changes
     this.linkEntityForm.get('fromAttribute').valueChanges

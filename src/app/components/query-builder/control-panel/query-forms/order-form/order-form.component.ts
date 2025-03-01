@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, finalize } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { QueryNode } from '../../../models/query-node';
@@ -60,36 +60,28 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
-      // Clean up existing subscriptions
       this.destroy$.next();
       
-      // Reinitialize the form
       this.initializeForm();
     }
   }
 
   private initializeForm() {
-    // Create form group with controls for each attribute
     this.orderForm = this.fb.group({
       attribute: [this.getAttributeValue(this.AttributeData.Order.Attribute)],
       descending: [this.getAttributeValue(this.AttributeData.Order.Desc) === 'true']
     });
     
-    // Setup attribute autocomplete
     this.setupAttributeAutocomplete();
     
-    // Subscribe to form value changes
     this.orderForm.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(formValues => {
-        // Process each form control value
         Object.entries(formValues).forEach(([key, value]) => {
-          // Convert boolean values to string
           const stringValue = value !== null && value !== undefined 
             ? (typeof value === 'boolean' ? value.toString() : String(value))
             : '';
           
-          // Find the corresponding attribute
           let attribute;
           if (key === 'attribute') {
             attribute = this.AttributeData.Order.Attribute;
@@ -98,7 +90,6 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
           }
           
           if (attribute) {
-            // Only update if the value has changed
             const currentValue = this.getAttributeValue(attribute);
             if (currentValue !== stringValue) {
               this.updateAttribute(attribute, stringValue);
@@ -109,7 +100,15 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   }
 
   private setupAttributeAutocomplete() {
-    const parentEntityName$ = this.selectedNode.getParentEntityName()
+    const parentEntityNode = this.selectedNode.getParentEntity();
+    
+    if (!parentEntityNode) {
+      console.warn('Parent entity node not found');
+      this.filteredAttributes$ = of([]);
+      return;
+    }
+    
+    const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
       .pipe(distinctUntilChanged());
 
     this.filteredAttributes$ = combineLatest([
@@ -117,11 +116,28 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
         startWith(this.orderForm.get('attribute').value || '')
       ),
       parentEntityName$.pipe(
-        switchMap(entityName => this.attributeService.getAttributes(entityName))
+        switchMap(entityName => {
+          if (!entityName || entityName.trim() === '') {
+            console.warn('Empty parent entity name');
+            return of([]);
+          }
+          
+          return parentEntityNode.validationPassed$.pipe(
+            switchMap(isValid => {
+              if (!isValid) {
+                console.warn(`Parent entity '${entityName}' validation failed`);
+                return of([]);
+              }
+              
+              this.loading$.next(true);
+              return this.attributeService.getAttributes(entityName)
+                .pipe(finalize(() => this.loading$.next(false)));
+            })
+          );
+        })
       )
     ]).pipe(
       debounceTime(300),
-      distinctUntilChanged(),
       map(([value, attributes]) => this.filterAttributes(value || '', attributes))
     );
   }

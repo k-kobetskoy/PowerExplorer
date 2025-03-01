@@ -1,23 +1,28 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Subscription } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: 'root' }) 
 export class LoadingIndicationService {
-
   private loadingSubject = new BehaviorSubject<boolean>(false);
-
+  private requestCount = 0;
   loading$ = this.loadingSubject.asObservable();
 
-  showLoaderUntilComplete(sub: Subscription) {
-    this.loadingOn()
-    sub.add(()=>this.loadingOff())
+  onRequestStarted() {
+    if (this.requestCount === 0) {
+      this.loadingSubject.next(true);
+    }
+    this.requestCount++;
   }
 
-  loadingOn() {
-    this.loadingSubject.next(true);
+  onRequestFinished() {
+    this.requestCount--;
+    if (this.requestCount === 0) {
+      this.loadingSubject.next(false);
+    }
   }
 
-  loadingOff() {
+  reset() {
+    this.requestCount = 0;
     this.loadingSubject.next(false);
   }
 }

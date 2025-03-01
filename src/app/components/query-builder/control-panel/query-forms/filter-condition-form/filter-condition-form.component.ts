@@ -33,7 +33,7 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   constructor(
     private attributeEntityService: AttributeEntityService,
     private fb: FormBuilder
-  ) {}
+  ) { }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.selectedNode) {
@@ -48,10 +48,26 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
       attribute: ['']
     });
 
-    this.entityName$ = this.selectedNode.getParentEntityName();
+    const parentEntityNode = this.selectedNode.getParentEntity();
+
+    this.entityName$ = parentEntityNode
+      ? this.selectedNode.getParentEntityName(parentEntityNode)
+      : of('');
+
     this.attributes$ = this.entityName$.pipe(
       distinctUntilChanged(),
-      switchMap(entityName => entityName ? this.attributeEntityService.getAttributes(entityName) : of([]))
+      switchMap(entityName => {
+        if (!entityName || entityName.trim() === '') { return of([]); }
+    
+        return parentEntityNode.validationPassed$.pipe(
+          switchMap(isValid => {
+            if (!isValid) {
+              return of([]);
+            }
+            return this.attributeEntityService.getAttributes(entityName);
+          })
+        );
+      })
     );
 
     const attributeInitialValue = this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1]?.value$.getValue() ?? '';
@@ -74,10 +90,10 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   }
 
   private _filter(value: any): Observable<AttributeModel[]> {
-    const filterValue = typeof value === 'object' && value && 'logicalName' in value 
-      ? value.logicalName.toLowerCase() 
+    const filterValue = typeof value === 'object' && value && 'logicalName' in value
+      ? value.logicalName.toLowerCase()
       : String(value || '').toLowerCase();
-    
+
     return this.attributes$.pipe(
       map(attributes => {
         const attribute = attributes.find(attr => attr.logicalName.toLowerCase() === filterValue);
@@ -86,7 +102,7 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
           this.selectedAttribute$ = of(attribute);
           this.previousAttribute = attribute;
         }
-        
+
         return attributes.filter(entity =>
           entity.logicalName.toLowerCase().includes(filterValue) ||
           entity.displayName.toLowerCase().includes(filterValue)
@@ -96,8 +112,8 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   }
 
   onKeyPressed($event: KeyboardEvent) {
-    if (($event.key === 'Delete' || $event.key === 'Backspace') && 
-        this.conditionForm.get('attribute').value === '') {
+    if (($event.key === 'Delete' || $event.key === 'Backspace') &&
+      this.conditionForm.get('attribute').value === '') {
       this.selectedNode.setAttribute(this.conditionAttribute, null);
     }
   }

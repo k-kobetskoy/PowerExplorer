@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { distinctUntilChanged, switchMap, takeUntil, finalize } from 'rxjs/operators';
 import { BooleanModel } from 'src/app/models/incoming/boolean/boolean-model';
 import { BooleanEntityService } from '../../../../services/entity-services/boolean-entity.service';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
@@ -54,10 +54,8 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.selectedNode || changes.attributeValue) {
-      // Clean up existing subscriptions
       this.destroy$.next();
-      
-      // Reinitialize the form
+
       this.initializeForm();
     }
   }
@@ -76,17 +74,45 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
   }
 
   private setupBooleanOptions() {
-    const entityName = this.selectedNode.getParentEntityName().value;
-    const attributeName = this.attributeValue;
-    if (entityName && attributeName) {
-      this.loading$.next(true);
-      this.booleanOptions$ = this.booleanService.getBooleanValues(entityName, attributeName);
-      this.loading$.next(false);
+    const parentEntityNode = this.selectedNode.getParentEntity();
+
+    if (!parentEntityNode) {
+      this.booleanOptions$ = of(<BooleanModel>{});
+      return;
     }
+
+    const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
+      .pipe(distinctUntilChanged());
+
+    this.booleanOptions$ = parentEntityName$.pipe(
+      switchMap(entityName => {
+        if (!entityName || entityName.trim() === '') {
+          return of(<BooleanModel>{});
+        }
+
+        return parentEntityNode.validationPassed$.pipe(
+          switchMap(isValid => {
+            if (!isValid) {
+              return of(<BooleanModel>{});
+            }
+            
+            const attributeName = this.attributeValue;
+            if (!attributeName) {
+              return of(<BooleanModel>{});
+            }
+            
+            this.loading$.next(true);
+            return this.booleanService.getBooleanValues(entityName, attributeName)
+              .pipe(
+                finalize(() => this.loading$.next(false))
+              );
+          })
+        );
+      })
+    );
   }
 
   private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
     const nodeId = this.selectedNode.id;
     if (this.storedValues.has(nodeId)) {
       const values = this.storedValues.get(nodeId);
@@ -97,19 +123,18 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
     } else {
       const operator = this.getAttributeValue(AttributeData.Condition.Operator);
       const value = this.getAttributeValue(AttributeData.Condition.Value);
-      
+
       this.booleanForm.patchValue({
         operator: operator || '',
         value: value || ''
       }, { emitEvent: false });
-      
-      this.storedValues.set(nodeId, { 
-        operator: operator || '', 
-        value: value || '' 
+
+      this.storedValues.set(nodeId, {
+        operator: operator || '',
+        value: value || ''
       });
     }
 
-    // Subscribe to form control changes
     this.booleanForm.get('operator').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {

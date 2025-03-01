@@ -137,6 +137,23 @@ export class QueryNode {
         }
     }
 
+    getParentEntityName(parentEntityNode: QueryNode): BehaviorSubject<string> {
+        // Parent entity node is already provided, no need to look it up again
+        if (!parentEntityNode) {
+            console.warn('[QueryNode] getParentEntityName: Parent entity node is null');
+            return new BehaviorSubject<string>('');
+        }
+
+        const nameAttribute = parentEntityNode.attributes$.value.find(a => a.editorName === 'name');
+        if (!nameAttribute) {
+            console.warn(`[QueryNode] getParentEntityName: 'name' attribute not found on entity node`, parentEntityNode);
+            return new BehaviorSubject<string>('');
+        }
+
+        return nameAttribute.value$;
+    }
+
+
     setAttribute(attributeData: IAttributeData, value: string | any): void {
         try {
             let attribute = this.findOrCreateAttribute(attributeData);
@@ -170,20 +187,6 @@ export class QueryNode {
         return this.findAttribute(attributeName);
     }
 
-    getParentEntityName(node: QueryNode = this): BehaviorSubject<string> {
-        const parent = this.getParentEntity(node);
-
-        if (!parent) {
-            return new BehaviorSubject<string>('');
-        }
-
-        const nameAttribute = parent.attributes$.value.find(a => a.editorName === 'name');
-        if (!nameAttribute) {
-            return new BehaviorSubject<string>('');
-        }
-
-        return nameAttribute.value$;
-    }
 
     addAttribute(attribute: NodeAttribute): void {
         let attributes = this.attributes$.value;

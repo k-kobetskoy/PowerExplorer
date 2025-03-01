@@ -1,11 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest, of } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
-import { IFormPropertyModel } from '../../../models/abstract/i-form-property-model';
-import { QueryNode } from '../../../models/query-node';
 import { BaseFormComponent } from '../base-form.component';
+import { LoadingIndicationService } from 'src/app/components/loading-indicator/services/loading-indication.service';
 
 @Component({
   selector: 'app-attribute-form',
@@ -45,14 +44,15 @@ import { BaseFormComponent } from '../base-form.component';
 })
 export class AttributeFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  
+
   attributeForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
-  loading$ = new BehaviorSubject<boolean>(false);
+  loading$ = this.loadingService.loading$;
 
   constructor(
     private attributeService: AttributeEntityService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private loadingService: LoadingIndicationService
   ) {
     super();
   }
@@ -64,7 +64,6 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-      
       this.initializeForm();
     }
   }
@@ -74,18 +73,18 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
       name: [this.getAttributeValue(this.AttributeData.Attribute.Name)],
       alias: [this.getAttributeValue(this.AttributeData.Attribute.Alias)]
     });
-    
+
     this.setupAttributeAutocomplete();
-    
+
     this.attributeForm.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(formValues => {
         Object.entries(formValues).forEach(([key, value]) => {
           const stringValue = value !== null && value !== undefined ? String(value) : '';
-          
+
           const attribute = Object.values(this.AttributeData.Attribute)
             .find(attr => attr.EditorName === key);
-          
+
           if (attribute) {
             const currentValue = this.getAttributeValue(attribute);
             if (currentValue !== stringValue) {
@@ -97,26 +96,51 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   }
 
   private setupAttributeAutocomplete() {
-    const parentEntityName$ = this.selectedNode.getParentEntityName()
+    const parentEntityNode = this.selectedNode.getParentEntity();
+
+    if (!parentEntityNode) {
+      console.warn('Parent entity node not found');
+      this.filteredAttributes$ = of([]);
+      return;
+    }
+
+    const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
       .pipe(distinctUntilChanged());
+
+    const validatedAttributes$ = parentEntityName$.pipe(
+      switchMap(entityName => {
+        if (!entityName || entityName.trim() === '') {
+          console.warn('Empty parent entity name');
+          return of([]);
+        }
+
+        return parentEntityNode.validationPassed$.pipe(
+          switchMap(isValid => {
+            if (!isValid) {
+              console.warn(`Parent entity '${entityName}' validation failed`);
+              return of([]);
+            }
+            
+            return this.attributeService.getAttributes(entityName);
+          })
+        );
+      })
+    );
 
     this.filteredAttributes$ = combineLatest([
       this.attributeForm.get('name').valueChanges.pipe(
         startWith(this.attributeForm.get('name').value || '')
       ),
-      parentEntityName$.pipe(
-        switchMap(entityName => this.attributeService.getAttributes(entityName))
-      )
+      validatedAttributes$
     ]).pipe(
       debounceTime(300),
-      distinctUntilChanged(),
       map(([value, attributes]) => this.filterAttributes(value, attributes))
     );
   }
 
   private filterAttributes(value: string, attributes: AttributeModel[]): AttributeModel[] {
     const filterValue = value?.toLowerCase() || '';
-    return attributes.filter(attr => 
+    return attributes.filter(attr =>
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );

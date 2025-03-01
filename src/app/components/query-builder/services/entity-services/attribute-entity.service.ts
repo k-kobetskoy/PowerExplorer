@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, switchMap, tap } from 'rxjs';
+import { Observable, concatMap, delay, map, of, switchMap, tap, timer } from 'rxjs';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeResponseModel } from 'src/app/models/incoming/attrubute/attribute-response-model';
@@ -8,8 +8,9 @@ import { BaseRequestService } from 'src/app/components/query-builder/services/en
 
 @Injectable({ providedIn: 'root' })
 export class AttributeEntityService extends BaseRequestService {
-
-  constructor() { super(); }
+  constructor() { 
+    super(); 
+  }
   
   getAttributes(entityLogicalName: string): Observable<AttributeModel[]> {
     if (!entityLogicalName || entityLogicalName.trim() === '') {
@@ -20,7 +21,6 @@ export class AttributeEntityService extends BaseRequestService {
     this.getActiveEnvironmentUrl();
 
     const key = `${entityLogicalName}_${CacheKeys.EntityAttributes}`;
-
     const attributes$ = this.cacheService.getItem<AttributeModel[]>(key);
 
     if (attributes$.value) {
@@ -33,17 +33,17 @@ export class AttributeEntityService extends BaseRequestService {
 
         const url = API_ENDPOINTS.attributes.getResourceUrl(envUrl, entityLogicalName);
 
-        return this.httpClient.get<AttributeResponseModel>(url)
-          .pipe(
-            map(({ value }) => value.map((
-              { LogicalName: logicalName, DisplayName: { UserLocalizedLabel } = {}, AttributeType: attributeType }): AttributeModel =>
-            ({
-              logicalName,
-              displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
-              attributeType
-            }))),
-            tap(data => this.cacheService.setItem(data, key))
-          );
-      }));
+        return this.httpClient.get<AttributeResponseModel>(url).pipe(
+          map(({ value }) => value.map((
+            { LogicalName: logicalName, DisplayName: { UserLocalizedLabel } = {}, AttributeType: attributeType }): AttributeModel =>
+          ({
+            logicalName,
+            displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
+            attributeType
+          }))),
+          tap(data => this.cacheService.setItem(data, key))
+        );
+      })
+    );
   }
 }

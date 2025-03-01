@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
+import { distinctUntilChanged, map, switchMap, takeUntil, finalize } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { AttributeData } from '../../../../models/constants/attribute-data';
 import { QueryNode } from '../../../../models/query-node';
@@ -73,10 +73,7 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.selectedNode || changes.attributeValue) {
-      // Clean up existing subscriptions
-      this.destroy$.next();
-      
-      // Reinitialize the form
+      this.destroy$.next();      
       this.initializeForm();
     }
   }
@@ -95,21 +92,47 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
   }
 
   private setupPicklistOptions() {
-    const entityName = this.selectedNode.getParentEntityName().value;
-    if (entityName && this.attributeValue) {
-      this.loading$.next(true);
-      this.picklistOptions$ = this.picklistService.getOptions(entityName, this.attributeValue, AttributeTypes.PICKLIST)
-        .pipe(
-          map(options => {
-            this.loading$.next(false);
-            return options;
+    const parentEntityNode = this.selectedNode.getParentEntity();
+
+    if (!parentEntityNode) {
+      this.picklistOptions$ = of([]);
+      return;
+    }
+
+    const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
+      .pipe(distinctUntilChanged());
+
+    this.picklistOptions$ = parentEntityName$.pipe(
+      switchMap(entityName => {
+        if (!entityName || entityName.trim() === '') {
+          return of([]);
+        }
+
+        return parentEntityNode.validationPassed$.pipe(
+          switchMap(isValid => {
+            if (!isValid) {
+              return of([]);
+            }
+            
+            const attributeName = this.attributeValue;
+            if (!attributeName) {
+              return of([]);
+            }
+            
+            this.loading$.next(true);
+            this.errorMessage$.next('');
+            
+            return this.picklistService.getOptions(entityName, attributeName, AttributeTypes.PICKLIST)
+              .pipe(
+                finalize(() => this.loading$.next(false))
+              );
           })
         );
-    }
+      })
+    );
   }
 
   private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
     const nodeId = this.selectedNode.id;
     if (this.storedValues.has(nodeId)) {
       const values = this.storedValues.get(nodeId);
@@ -132,7 +155,6 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
       });
     }
 
-    // Subscribe to form control changes
     this.picklistForm.get('operator').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
