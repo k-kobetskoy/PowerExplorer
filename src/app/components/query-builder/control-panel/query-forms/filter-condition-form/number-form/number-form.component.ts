@@ -39,7 +39,6 @@ export class NumberFormComponent extends BaseFormComponent implements OnInit, On
   private storedValues = new Map<string, { operator: string, value: string }>();
 
   numberForm: FormGroup;
-  loading$ = new BehaviorSubject<boolean>(false);
   errorMessage$ = new BehaviorSubject<string>('');
 
   readonly filterOperators = FilterStaticData.FilterNumberOperators;

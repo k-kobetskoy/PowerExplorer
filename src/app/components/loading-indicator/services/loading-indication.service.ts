@@ -1,28 +1,42 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-@Injectable({ providedIn: 'root' }) 
+@Injectable({
+  providedIn: 'root'
+})
 export class LoadingIndicationService {
-  private loadingSubject = new BehaviorSubject<boolean>(false);
-  private requestCount = 0;
-  loading$ = this.loadingSubject.asObservable();
+  private loadingStates = new Map<string, BehaviorSubject<boolean>>();
+  private defaultLoading = new BehaviorSubject<boolean>(false);
 
-  onRequestStarted() {
-    if (this.requestCount === 0) {
-      this.loadingSubject.next(true);
-    }
-    this.requestCount++;
+  get loading$() {
+    return this.defaultLoading.asObservable();
   }
 
-  onRequestFinished() {
-    this.requestCount--;
-    if (this.requestCount === 0) {
-      this.loadingSubject.next(false);
+  getLoadingState$(key: string) {
+    if (!this.loadingStates.has(key)) {
+      this.loadingStates.set(key, new BehaviorSubject<boolean>(false));
+    }
+    return this.loadingStates.get(key)!.asObservable();
+  }
+
+  loadingOn(key?: string) {
+    if (key) {
+      const state = this.loadingStates.get(key) || new BehaviorSubject<boolean>(false);
+      this.loadingStates.set(key, state);
+      state.next(true);
+    } else {
+      this.defaultLoading.next(true);
     }
   }
 
-  reset() {
-    this.requestCount = 0;
-    this.loadingSubject.next(false);
+  loadingOff(key?: string) {
+    if (key) {
+      const state = this.loadingStates.get(key);
+      if (state) {
+        state.next(false);
+      }
+    } else {
+      this.defaultLoading.next(false);
+    }
   }
 }

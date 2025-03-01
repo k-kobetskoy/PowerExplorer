@@ -4,7 +4,6 @@ import { BehaviorSubject, Observable, Subject, debounceTime, distinctUntilChange
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { BaseFormComponent } from '../base-form.component';
-import { LoadingIndicationService } from 'src/app/components/loading-indicator/services/loading-indication.service';
 
 @Component({
   selector: 'app-attribute-form',
@@ -47,12 +46,10 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
 
   attributeForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
-  loading$ = this.loadingService.loading$;
 
   constructor(
     private attributeService: AttributeEntityService,
     private fb: FormBuilder,
-    private loadingService: LoadingIndicationService
   ) {
     super();
   }

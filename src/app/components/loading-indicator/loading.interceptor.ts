@@ -8,17 +8,15 @@ export class LoadingInterceptor implements HttpInterceptor {
   constructor(private loadingService: LoadingIndicationService) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Skip loading indicator for specific requests if needed
     if (request.headers.get('skip-loader')) {
       return next.handle(request);
     }
 
-    this.loadingService.onRequestStarted();
+    this.loadingService.loadingOn();
     
     return next.handle(request).pipe(
-      finalize(() => {
-        this.loadingService.onRequestFinished();
-      })
+      // delay(1000), 
+      finalize(() => this.loadingService.loadingOff())
     );
   }
 } 

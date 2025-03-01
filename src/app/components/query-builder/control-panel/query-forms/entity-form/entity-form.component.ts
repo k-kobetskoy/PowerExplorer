@@ -2,7 +2,7 @@ import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetection
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { BehaviorSubject, Observable, Subject, combineLatest } from 'rxjs';
+import { Observable, Subject, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, startWith, takeUntil } from 'rxjs/operators';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 
@@ -12,18 +12,13 @@ import { EntityEntityService } from '../../../services/entity-services/entity-en
     styleUrls: ['./entity-form.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
+
 export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
     private destroy$ = new Subject<void>();
     entityForm: FormGroup;
     filteredEntities$: Observable<EntityModel[]>;
-    loading$ = new BehaviorSubject<boolean>(false);
 
-    constructor(
-        private entityService: EntityEntityService,
-        private fb: FormBuilder
-    ) {
-        super();
-    }
+    constructor(private entityService: EntityEntityService, private fb: FormBuilder) { super(); }
 
     ngOnInit() {
         this.initializeForm();
@@ -32,7 +27,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
     ngOnChanges(changes: SimpleChanges) {
         if (changes['selectedNode'] && this.selectedNode) {
             this.destroy$.next();
-            
+
             this.initializeForm();
         }
     }
@@ -44,7 +39,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
         });
 
         this.setupEntityAutocomplete();
-        
+
         this.entityForm.valueChanges
             .pipe(
                 debounceTime(200),
@@ -53,21 +48,21 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
             .subscribe(formValues => {
                 Object.entries(formValues).forEach(([key, value]) => {
                     const stringValue = value !== null && value !== undefined ? String(value) : '';
-                    
+
                     const attribute = Object.values(this.AttributeData.Entity)
                         .find(attr => attr.EditorName === key);
-                    
+
                     if (attribute) {
                         const currentValue = this.getAttributeValue(attribute);
                         if (currentValue !== stringValue) {
                             this.updateAttribute(attribute, stringValue);
-                            
+
                             if (key === 'name') {
                                 this.updateEntitySetName(stringValue);
                             }
                         }
                     }
-                    
+
                     if (key === 'name' && !stringValue) {
                         this.selectedNode.entitySetName$.next(null);
                     }
@@ -77,7 +72,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     private updateEntitySetName(entityName: string) {
         if (!entityName) return;
-        
+
         this.entityService.getEntities()
             .pipe(
                 map(entities => entities.find(e => e.logicalName === entityName)),
@@ -103,7 +98,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     private filterEntities(value: string, entities: EntityModel[]): EntityModel[] {
         const filterValue = value?.toLowerCase() || '';
-        return entities.filter(entity => 
+        return entities.filter(entity =>
             entity.logicalName.toLowerCase().includes(filterValue) ||
             entity.displayName.toLowerCase().includes(filterValue)
         );

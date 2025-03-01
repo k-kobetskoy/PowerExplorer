@@ -31,6 +31,7 @@
                 </div>
             </mat-option>
         </mat-autocomplete>
+        <app-loading-indicator matSuffix [diameter]="20" loadingKey="fromAttribute"></app-loading-indicator>
     </mat-form-field>
 
     <mat-form-field class="form-field">
@@ -47,6 +48,7 @@
                 </div>
             </mat-option>
         </mat-autocomplete>
+        <app-loading-indicator matSuffix [diameter]="20" loadingKey="toAttribute"></app-loading-indicator>
     </mat-form-field>
 
     <mat-form-field class="form-field">

@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { LoadingIndicationService } from 'src/app/components/loading-indicator/services/loading-indication.service';
+import { LoadingIndicationService } from './services/loading-indication.service';
 
 @Component({
   selector: 'app-loading-indicator',
@@ -9,26 +9,31 @@ import { LoadingIndicationService } from 'src/app/components/loading-indicator/s
   encapsulation: ViewEncapsulation.None
 })
 export class LoadingIndicatorComponent implements OnInit, OnDestroy {
+  @HostBinding('style.display') display: string = 'none';
+  @Input() diameter: number = 50;
+  @Input() loadingKey?: string;
 
-  @HostBinding('style.display') display: string
-  @Input() diameter: number
-
-  sub: Subscription
-  loading$: Observable<boolean>
+  private sub: Subscription;
+  loading$: Observable<boolean>;
 
   constructor(private loadingService: LoadingIndicationService) {
-    this.sub = this.loadingService.loading$.subscribe(data => {
-      if (data) {
-        this.display = 'flex'
-      } else {
-        this.display = 'none'
-      }
-    })
-  }
-  ngOnDestroy(): void {
-    this.sub.unsubscribe()
+    this.loading$ = this.loadingService.loading$;
+    this.sub = new Subscription();
   }
 
   ngOnInit() {
+    this.loading$ = this.loadingKey ? 
+      this.loadingService.getLoadingState$(this.loadingKey) : 
+      this.loadingService.loading$;
+
+    this.sub = this.loading$.subscribe(isLoading => {
+      this.display = isLoading ? 'flex' : 'none';
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.sub) {
+      this.sub.unsubscribe();
+    }
   }
 }

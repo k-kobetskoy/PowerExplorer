@@ -11,11 +11,7 @@
                 {{entity.logicalName}} {{entity.displayName}}
             </mat-option>
         </mat-autocomplete>
-        <mat-progress-spinner *ngIf="loading$ | async"
-            matSuffix
-            [diameter]="20"
-            mode="indeterminate">
-        </mat-progress-spinner>
+        <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
     </mat-form-field>
 
     <mat-form-field>

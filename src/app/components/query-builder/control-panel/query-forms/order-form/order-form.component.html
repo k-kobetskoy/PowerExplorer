@@ -1,11 +1,6 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
 <div class="form-container">
-  <mat-progress-spinner *ngIf="loading$ | async"
-    diameter="50"
-    mode="indeterminate">
-  </mat-progress-spinner>
-
   <form [formGroup]="orderForm">
     <mat-form-field class="form-field">
       <mat-label>Attribute</mat-label>
@@ -22,6 +17,7 @@
           </div>
         </mat-option>
       </mat-autocomplete>
+      <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
     </mat-form-field>
 
     <mat-checkbox formControlName="descending">

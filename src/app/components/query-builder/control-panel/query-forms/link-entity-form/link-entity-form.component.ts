@@ -58,7 +58,6 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   filteredEntities$: Observable<EntityModel[]>;
   filteredFromAttributes$: Observable<AttributeModel[]>;
   filteredToAttributes$: Observable<AttributeModel[]>;
-  loading$ = new BehaviorSubject<boolean>(false);
 
   readonly linkTypes = LinkTypeOptions;
 
@@ -136,9 +135,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
       this.linkEntityForm.get('entity').valueChanges.pipe(
         switchMap(entityName => {
           if (!entityName) return of([]);
-          this.loading$.next(true);
-          return this.attributeService.getAttributes(entityName)
-            .pipe(finalize(() => this.loading$.next(false)));
+          return this.attributeService.getAttributes(entityName);
         })
       ),
       this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
@@ -171,11 +168,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
               if (!isValid) {
                 console.warn(`Parent entity '${entityName}' validation failed`);
                 return of([]);
-              }
-              
-              this.loading$.next(true);
-              return this.attributeService.getAttributes(entityName)
-                .pipe(finalize(() => this.loading$.next(false)));
+              }              
+              return this.attributeService.getAttributes(entityName);
             })
           );
         })

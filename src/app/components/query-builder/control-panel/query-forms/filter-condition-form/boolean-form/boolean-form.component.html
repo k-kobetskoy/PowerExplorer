@@ -1,9 +1,4 @@
 <div class="form-container">
-  <mat-progress-spinner *ngIf="loading$ | async"
-    diameter="50"
-    mode="indeterminate">
-  </mat-progress-spinner>
-
   <form [formGroup]="booleanForm">
     <mat-form-field class="form-field">
       <mat-label>Operator</mat-label>
@@ -32,6 +27,7 @@
           </mat-option>
         </ng-container>
       </mat-select>
+      <app-loading-indicator matSuffix [diameter]="20" loadingKey="booleanOptions"></app-loading-indicator>
     </mat-form-field>
   </form>
 </div>

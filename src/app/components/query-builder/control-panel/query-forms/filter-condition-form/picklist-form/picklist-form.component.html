@@ -1,8 +1,4 @@
 <div class="form-container">
-  <mat-progress-spinner *ngIf="loading$ | async"
-    diameter="50"
-    mode="indeterminate">
-  </mat-progress-spinner>
 
   <form [formGroup]="picklistForm">
     <mat-form-field class="form-field">
@@ -29,6 +25,7 @@
       <mat-error *ngIf="errorMessage$ | async as error">
         {{error}}
       </mat-error>
+      <app-loading-indicator matSuffix [diameter]="20" loadingKey="picklistOptions"></app-loading-indicator>
     </mat-form-field>
   </form>
 </div>

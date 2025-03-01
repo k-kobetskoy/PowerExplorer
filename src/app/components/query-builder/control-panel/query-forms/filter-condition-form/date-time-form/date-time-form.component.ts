@@ -32,7 +32,6 @@ export class DateTimeFormComponent extends BaseFormComponent implements OnInit, 
   private storedValues = new Map<string, { operator: string, value: string }>();
 
   dateTimeForm: FormGroup;
-  loading$ = new BehaviorSubject<boolean>(false);
 
   readonly filterOperators = FilterStaticData.FilterDateTimeOperators;
 

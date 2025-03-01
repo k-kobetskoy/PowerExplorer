@@ -61,7 +61,6 @@ export class StringFormComponent extends BaseFormComponent implements OnInit, On
 
   operatorFormControl = new FormControl('');
   valueFormControl = new FormControl('');
-  loading$ = new BehaviorSubject<boolean>(false);
   errorMessage$ = new BehaviorSubject<string>('');
   showWildcardInfo$ = new BehaviorSubject<boolean>(false);
 

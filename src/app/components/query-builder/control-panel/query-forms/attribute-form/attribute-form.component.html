@@ -1,9 +1,7 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
-<app-loading-indicator [diameter]="50"></app-loading-indicator>
 
 <div class="form-container">
     <form [formGroup]="attributeForm">
-        <!-- <mat-spinner diameter="20" *ngIf="loading$ | async"></mat-spinner> -->
         <mat-form-field class="form-field">
             <mat-label>Attribute</mat-label>
             <input type="text" matInput
@@ -18,11 +16,7 @@
                     </div>
                 </mat-option>
             </mat-autocomplete>
-            <!-- <mat-progress-spinner *ngIf="loading$ | async"
-                matSuffix
-                [diameter]="20"
-                mode="indeterminate">
-            </mat-progress-spinner> -->
+            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
         </mat-form-field>
 
         <mat-form-field class="form-field">

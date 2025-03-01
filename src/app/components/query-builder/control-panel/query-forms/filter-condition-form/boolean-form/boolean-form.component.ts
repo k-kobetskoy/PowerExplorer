@@ -35,7 +35,6 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
 
   booleanForm: FormGroup;
   booleanOptions$: Observable<BooleanModel>;
-  loading$ = new BehaviorSubject<boolean>(false);
 
   readonly filterOperators = FilterStaticData.FilterBooleanOperators;
 
@@ -101,11 +100,7 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
               return of(<BooleanModel>{});
             }
             
-            this.loading$.next(true);
-            return this.booleanService.getBooleanValues(entityName, attributeName)
-              .pipe(
-                finalize(() => this.loading$.next(false))
-              );
+            return this.booleanService.getBooleanValues(entityName, attributeName);
           })
         );
       })

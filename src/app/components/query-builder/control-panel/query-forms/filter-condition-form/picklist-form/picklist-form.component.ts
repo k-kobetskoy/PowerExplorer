@@ -51,7 +51,6 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
   private storedValues = new Map<string, { operator: string, value: string }>();
 
   picklistForm: FormGroup;
-  loading$ = new BehaviorSubject<boolean>(false);
   errorMessage$ = new BehaviorSubject<string>('');
 
   readonly filterOperators = FilterStaticData.FilterPickListOperators;
@@ -119,13 +118,9 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
               return of([]);
             }
             
-            this.loading$.next(true);
             this.errorMessage$.next('');
             
-            return this.picklistService.getOptions(entityName, attributeName, AttributeTypes.PICKLIST)
-              .pipe(
-                finalize(() => this.loading$.next(false))
-              );
+            return this.picklistService.getOptions(entityName, attributeName, AttributeTypes.PICKLIST);              
           })
         );
       })

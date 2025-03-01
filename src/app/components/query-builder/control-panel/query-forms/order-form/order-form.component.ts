@@ -40,19 +40,13 @@ import { QueryNode } from '../../../models/query-node';
 })
 export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  
+
   orderForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
-  loading$ = new BehaviorSubject<boolean>(false);
 
   @Input() override selectedNode: QueryNode;
 
-  constructor(
-    private attributeService: AttributeEntityService,
-    private fb: FormBuilder
-  ) {
-    super();
-  }
+  constructor(private attributeService: AttributeEntityService, private fb: FormBuilder) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -61,7 +55,7 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-      
+
       this.initializeForm();
     }
   }
@@ -71,24 +65,24 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
       attribute: [this.getAttributeValue(this.AttributeData.Order.Attribute)],
       descending: [this.getAttributeValue(this.AttributeData.Order.Desc) === 'true']
     });
-    
+
     this.setupAttributeAutocomplete();
-    
+
     this.orderForm.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(formValues => {
         Object.entries(formValues).forEach(([key, value]) => {
-          const stringValue = value !== null && value !== undefined 
+          const stringValue = value !== null && value !== undefined
             ? (typeof value === 'boolean' ? value.toString() : String(value))
             : '';
-          
+
           let attribute;
           if (key === 'attribute') {
             attribute = this.AttributeData.Order.Attribute;
           } else if (key === 'descending') {
             attribute = this.AttributeData.Order.Desc;
           }
-          
+
           if (attribute) {
             const currentValue = this.getAttributeValue(attribute);
             if (currentValue !== stringValue) {
@@ -101,13 +95,13 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
 
   private setupAttributeAutocomplete() {
     const parentEntityNode = this.selectedNode.getParentEntity();
-    
+
     if (!parentEntityNode) {
       console.warn('Parent entity node not found');
       this.filteredAttributes$ = of([]);
       return;
     }
-    
+
     const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
       .pipe(distinctUntilChanged());
 
@@ -121,17 +115,14 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
             console.warn('Empty parent entity name');
             return of([]);
           }
-          
+
           return parentEntityNode.validationPassed$.pipe(
             switchMap(isValid => {
               if (!isValid) {
                 console.warn(`Parent entity '${entityName}' validation failed`);
                 return of([]);
               }
-              
-              this.loading$.next(true);
-              return this.attributeService.getAttributes(entityName)
-                .pipe(finalize(() => this.loading$.next(false)));
+              return this.attributeService.getAttributes(entityName);
             })
           );
         })
@@ -144,7 +135,7 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
 
   private filterAttributes(value: string, attributes: AttributeModel[]): AttributeModel[] {
     const filterValue = value.toLowerCase();
-    return attributes.filter(attr => 
+    return attributes.filter(attr =>
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );
