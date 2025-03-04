@@ -1,15 +1,18 @@
-import { ParsingHelperService } from './parsing-helper.service';
-import { Injectable } from '@angular/core';
 import { SyntaxNodeRef } from '@lezer/common';
+import { ParsingHelperService } from './parsing-helper.service';
+import { Injectable, Inject } from '@angular/core';
+import { syntaxTree } from '@codemirror/language';
 import { Diagnostic } from "@codemirror/lint";
 import { QueryNodeTree } from '../../models/query-node-tree';
-import { EditorView } from 'codemirror';
+import { EditorView } from '@codemirror/view';
 import { QueryNodeBuilderService } from './query-node-builder.service';
 import { NodeTreeService } from '../node-tree.service';
-import { syntaxTree } from "@codemirror/language";
 import { AttributeFactoryResorlverService } from '../attribute-services/attribute-factory-resorlver.service';
+
+import { QueryNode } from '../../models/query-node';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
+
 
 export const PARSER_NODE_NAMES = {
   openTag: 'OpenTag',
@@ -39,6 +42,10 @@ export class XmlParseService {
   isCloseTag: boolean = false;
   isParsingEnabled: boolean = false;
 
+  // Add a stack to track parent nodes
+  private parentNodeStack = [];
+  private currentParentNode = null;
+
   constructor(
     private parsingHelper: ParsingHelperService,
     private nodeBuilder: QueryNodeBuilderService,
@@ -47,23 +54,10 @@ export class XmlParseService {
     private eventBus: EventBusService
   ) { }
 
-  private sanitizeValue(value: string): string {
-    if (!value) return value;
-    return value
-      .replace(/&(?![a-zA-Z]+;)/g, '&amp;') // Replace & not part of an entity
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;')
-      .replace(/\x00/g, ''); // Remove null bytes
-  }
-
   parseNode(iteratingNode: SyntaxNodeRef, view: EditorView, xmlParseErrors: Diagnostic[]) {
     if (!this.isParsingEnabled) {
       return;
     }
-
-    console.log(`Processing node: ${iteratingNode.name} at level ${this.nodeLevel} [${iteratingNode.from}-${iteratingNode.to}]`);
 
     switch (iteratingNode.name) {
       case PARSER_NODE_NAMES.openTag:
@@ -73,10 +67,16 @@ export class XmlParseService {
         break;
       case PARSER_NODE_NAMES.selfClosingTag:
         this.isExpanded = false;
+        this.isCloseTag = false;
         break;
       case PARSER_NODE_NAMES.closeTag:
         this.nodeLevel--;
         this.isCloseTag = true;
+
+        if (this.parentNodeStack.length > 0) {
+          const poppedParent = this.parentNodeStack.pop();
+          this.currentParentNode = poppedParent;
+        }
         break;
       case PARSER_NODE_NAMES.tagName:
         if (this.isCloseTag) {
@@ -108,39 +108,38 @@ export class XmlParseService {
       case PARSER_NODE_NAMES.selfClosingEndNode:
         this.addNodeToTree(xmlParseErrors);
         break;
-      default:
-        if (iteratingNode.name) {
-          console.log(`Found other node type: ${iteratingNode.name} at level ${this.nodeLevel}`);
-        }
     }
   }
 
   addNodeToTree(xmlParseErrors: Diagnostic[]) {
-
     let buildResult = this.nodeBuilder.buildQueryNode();
 
-    if (buildResult.isBuildSuccess) {
+    let node = this.nodeTreeService.addNodeFromParsing(
+      buildResult.queryNode.nodeName,
+      this.currentParentNode
+    );
 
-      let node = this.nodeTreeService.addNodeFromParsing(buildResult.queryNode.nodeName);
+    if (this.nodeBuilder.attributes.length > 0) {
+      const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(buildResult.queryNode.nodeName);
 
-      if (this.nodeBuilder.attributes.length > 0) {
-        const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(buildResult.queryNode.nodeName);
-
-        for (let attribute of this.nodeBuilder.attributes) {
-          let nodeAttribute = attributeFactory.createAttribute(attribute.name, node, true, attribute.value);
-          node.addAttribute(nodeAttribute);
-        }
+      for (let attribute of this.nodeBuilder.attributes) {
+        let nodeAttribute = attributeFactory.createAttribute(attribute.name, node, true, attribute.value);
+        node.addAttribute(nodeAttribute);
       }
-    } else {
-      console.error("=== Failed to build node:", buildResult.errors);
-      for (let error of buildResult.errors) {
-        xmlParseErrors.push({
-          from: error.from,
-          to: error.to,
-          message: error.message,
-          severity: 'error'
-        });
-      }
+    }
+
+    if (this.isExpanded) {
+      this.parentNodeStack.push(this.currentParentNode);
+      this.currentParentNode = node;
+    }
+
+    for (let error of buildResult.errors) {
+      xmlParseErrors.push({
+        from: error.from,
+        to: error.to,
+        message: error.message,
+        severity: 'error'
+      });
     }
   }
 
@@ -149,6 +148,9 @@ export class XmlParseService {
     this.isExpanded = false;
     this.from = null;
     this.to = null;
+    this.parentNodeStack = [];
+    this.currentParentNode = null;
+    this.isCloseTag = false;
   }
 
   parseXmlManually(view: EditorView) {

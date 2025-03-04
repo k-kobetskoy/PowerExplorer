@@ -39,7 +39,8 @@ export class QueryNode {
         this.isExpanded = true;
         this.next = null;
 
-        const nodeData: INodeData = QueryNodeData[nodeName]
+        const nodeData: INodeData = QueryNodeData.getNodeData(nodeName);
+        
         this.defaultNodeDisplayValue = nodeData.Name;
         this.nodeName = nodeData.Name;
         this.tagName = nodeData.TagName;

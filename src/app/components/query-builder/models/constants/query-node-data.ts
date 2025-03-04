@@ -157,4 +157,20 @@ export class QueryNodeData {
         'entity': QueryNodeData.Entity.Name,
         'fetch': QueryNodeData.Root.Name
     };    
+
+    static getNodeData(nodeName: string): INodeData {
+        if (nodeName && this[nodeName]) {
+            return this[nodeName];
+        }
+        
+        console.warn(`Unknown node type: ${nodeName}, using default configuration`);
+        return {
+            Order: 999,
+            Actions: [],
+            Name: nodeName || 'Unknown',
+            TagName: nodeName?.toLowerCase() || 'unknown',
+            Attributes: [],
+            AttributesCount: 0
+        };
+    }
 }

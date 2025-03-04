@@ -69,14 +69,14 @@ export class QueryNodeBuilderService {
   }
 
   buildQueryNode(): IQueryNodeBuildResult {
-    if (!this.validateTagName(this.tag, this.errors)) {
-      return { isBuildSuccess: false, queryNode: null, errors: this.errors };
-    }
+    const isTagNameValid = this.validateTagName(this.tag, this.errors)
+    
+    const queryNodeName = isTagNameValid ? QueryNodeData.TagNamesToNodeNames[this.tag.tagName] : this.tag.tagName;
 
-    let queryNode = new QueryNode(QueryNodeData.TagNamesToNodeNames[this.tag.tagName], this.attributeFactoryResolver);
+    let queryNode = new QueryNode(queryNodeName, this.attributeFactoryResolver);
 
     if (this.attributes.length > 0) {
-        const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(QueryNodeData.TagNamesToNodeNames[this.tag.tagName]);
+        const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(queryNodeName);
       for (let attribute of this.attributes) {
         this.addAttributeValueToNode(attribute, queryNode, attributeFactory);
       }      

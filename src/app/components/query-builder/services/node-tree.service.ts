@@ -64,29 +64,27 @@ export class NodeTreeService {
     this._selectedNode$.next(null);
   }
 
-  addNodeFromParsing(newNodeName: string): QueryNode {
-    console.log(`Adding node from parsing: ${newNodeName}`);
-    
-    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
-    
-    // Handle null tree
-    if (!this._nodeTree$.value) {
-      
-      if(newNodeName != QueryNodeData.Root.Name){
-        console.error(`First node must be ${QueryNodeData.Root.Name}`);
-        return null;
-      }
+  addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
 
+    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
+
+
+    if (!this._nodeTree$.value) {
       const nodeTree = new QueryNodeTree();
 
       nodeTree.root = newNode;
 
       this._nodeTree$.next(nodeTree);
       this._selectedNode$.next(newNode);
+
       return newNode;
     }
-    
-    let parentNode = this._selectedNode$.value;
+
+
+
+    if (!parentNode) {
+      parentNode = this._selectedNode$.value;
+    }
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;
@@ -98,16 +96,16 @@ export class NodeTreeService {
     newNode.parent = parentNode;
 
     if (parentNode) {
-      this.expandNode(this._selectedNode$.value)
+      this.expandNode(parentNode);
     }
-
     this.selectedNode$ = newNode;
-        
+
+
     return newNode;
   }
 
   addNode(newNodeName: string): QueryNode {
-    let parentNode = this._selectedNode$.value;  
+    let parentNode = this._selectedNode$.value;
 
     let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
 
@@ -127,9 +125,7 @@ export class NodeTreeService {
     this.selectedNode$ = newNode;
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
 
-    // Handle special node types that require additional nodes
-    if(newNodeName === QueryNodeData.Filter.Name) {
-      // Add a condition node and make it the selected node
+    if (newNodeName === QueryNodeData.Filter.Name) {
       const conditionNode = this.addNode(QueryNodeData.Condition.Name);
       this.selectedNode$ = conditionNode;
     }
@@ -138,12 +134,11 @@ export class NodeTreeService {
   }
 
   getNodeAbove(newNodeOrder: number, parentNode: QueryNode): QueryNode {
-    // Safety check - if parent is null/undefined, we can't find a node above
     if (!parentNode) {
       console.error("getNodeAbove called with null/undefined parentNode");
       return null;
     }
-    
+
     let current = parentNode;
     let newNodeLevel = current.level + 1;
 
@@ -159,7 +154,7 @@ export class NodeTreeService {
       console.error("Error in getNodeAbove:", error);
       console.error("parentNode:", parentNode);
       console.error("newNodeOrder:", newNodeOrder);
-      // Return the parent node as a fallback
+
       return parentNode;
     }
   }
