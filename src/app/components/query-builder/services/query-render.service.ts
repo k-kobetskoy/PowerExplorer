@@ -23,7 +23,7 @@ export class QueryRenderService implements OnDestroy {
   }
 
   private setupEventListeners(): void {
-    const events = [AppEvents.NODE_ADDED, AppEvents.NODE_REMOVED];
+    const events = [AppEvents.NODE_ADDED, AppEvents.NODE_REMOVED, AppEvents.XML_PARSED];
     events.forEach(event => {
       this.eventBus.on(event, () => this.renderXmlRequest());
     });

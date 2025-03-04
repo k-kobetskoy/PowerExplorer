@@ -5,5 +5,6 @@ export const AppEvents = {
     NODE_SELECTED: "eventBus:nodeSelected",
     NODE_ADDED: "eventBus:nodeAdded",
     NODE_REMOVED: "eventBus:nodeRemoved",
+    XML_PARSED: "eventBus:xmlParsed",
 } as const;
 export type AppEvents = (typeof AppEvents)[keyof typeof AppEvents];

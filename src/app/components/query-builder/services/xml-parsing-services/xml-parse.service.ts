@@ -8,6 +8,8 @@ import { QueryNodeBuilderService } from './query-node-builder.service';
 import { NodeTreeService } from '../node-tree.service';
 import { syntaxTree } from "@codemirror/language";
 import { AttributeFactoryResorlverService } from '../attribute-services/attribute-factory-resorlver.service';
+import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
+import { AppEvents } from 'src/app/services/event-bus/app-events';
 
 export const PARSER_NODE_NAMES = {
   openTag: 'OpenTag',
@@ -35,18 +37,28 @@ export class XmlParseService {
   from: number;
   to: number;
   isCloseTag: boolean = false;
-  // Flag to control when parsing should update the node tree
   isParsingEnabled: boolean = false;
 
   constructor(
     private parsingHelper: ParsingHelperService,
     private nodeBuilder: QueryNodeBuilderService,
     private nodeTreeService: NodeTreeService,
-    private attributeFactoryResolver: AttributeFactoryResorlverService
+    private attributeFactoryResolver: AttributeFactoryResorlverService,
+    private eventBus: EventBusService
   ) { }
 
+  private sanitizeValue(value: string): string {
+    if (!value) return value;
+    return value
+      .replace(/&(?![a-zA-Z]+;)/g, '&amp;') // Replace & not part of an entity
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;')
+      .replace(/\x00/g, ''); // Remove null bytes
+  }
+
   parseNode(iteratingNode: SyntaxNodeRef, view: EditorView, xmlParseErrors: Diagnostic[]) {
-    // Skip node processing if parsing is disabled
     if (!this.isParsingEnabled) {
       return;
     }
@@ -104,21 +116,17 @@ export class XmlParseService {
   }
 
   addNodeToTree(xmlParseErrors: Diagnostic[]) {
-    console.log("=== Building node with collected attributes:", this.nodeBuilder.attributes);
 
     let buildResult = this.nodeBuilder.buildQueryNode();
 
     if (buildResult.isBuildSuccess) {
 
       let node = this.nodeTreeService.addNodeFromParsing(buildResult.queryNode.nodeName);
-      console.log("=== Node added to tree:", node);
 
-      // Add the attributes to the newly created node
       if (this.nodeBuilder.attributes.length > 0) {
         const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(buildResult.queryNode.nodeName);
 
         for (let attribute of this.nodeBuilder.attributes) {
-          console.log(`=== Adding attribute ${attribute.name}=${attribute.value} to node`);
           let nodeAttribute = attributeFactory.createAttribute(attribute.name, node, true, attribute.value);
           node.addAttribute(nodeAttribute);
         }
@@ -161,6 +169,7 @@ export class XmlParseService {
       }
     } finally {
       this.isParsingEnabled = false;
+      this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     }
   }
 

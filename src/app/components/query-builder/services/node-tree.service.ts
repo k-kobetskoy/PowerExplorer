@@ -102,74 +102,7 @@ export class NodeTreeService {
     }
 
     this.selectedNode$ = newNode;
-
-    // // Ensure proper parent-child relationships based on node level
-    // // XML parsing should maintain proper nesting by selecting the appropriate parent
-    // if (parentNode) {
-    //   // Find the correct parent based on the node level
-    //   let currentLevel = parentNode.level;
-      
-    //   // If we're going deeper in the XML hierarchy
-    //   if (newNode.level > parentNode.level) {
-    //     // This is a child of the current node
-    //     console.log(`Node ${newNodeName} is a child of ${parentNode.nodeName}`);
-    //   } 
-    //   // If we're at the same level in the XML hierarchy
-    //   else if (newNode.level === parentNode.level) {
-    //     // This is a sibling of the current node, so get its parent
-    //     parentNode = parentNode.parent;
-    //     console.log(`Node ${newNodeName} is a sibling of current node, parent: ${parentNode?.nodeName || 'none'}`);
-    //   }
-    //   // If we're going up in the XML hierarchy
-    //   else {
-    //     // Find the ancestor at the appropriate level
-    //     while (parentNode && parentNode.level >= newNode.level) {
-    //       parentNode = parentNode.parent;
-    //     }
-    //     console.log(`Node ${newNodeName} is at a higher level, parent: ${parentNode?.nodeName || 'none'}`);
-    //   }
-    // }
-    
-    // // If we still have no parent after all our logic, use the root node as parent
-    // if (!parentNode && this._nodeTree$.value.root) {
-    //   parentNode = this._nodeTree$.value.root;
-    //   console.log(`No parent found - defaulting to root node: ${parentNode.nodeName}`);
-    // }
-    
-    // // Handle node insertion
-    // if (parentNode) {
-    //   // Add it to the tree normally
-    //   let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
-    //   let bottomNode = nodeAbove.next;
-  
-    //   nodeAbove.next = newNode;
-    //   newNode.next = bottomNode;
-  
-    //   // Set the level and parent based on the XML structure
-    //   newNode.level = parentNode.level + 1;
-    //   newNode.parent = parentNode;
-    //   console.log(`Set node ${newNodeName} level to ${newNode.level} with parent ${parentNode.nodeName}`);
-      
-    //   this.expandNode(parentNode);
-    // } else {
-    //   // If we somehow still have no parent, make this a root-level node
-    //   console.log(`WARNING: No parent found for ${newNodeName}, adding as root-level node`);
-    //   newNode.level = 0;
-      
-    //   if (this._nodeTree$.value.root) {
-    //     // Add after the root
-    //     const root = this._nodeTree$.value.root;
-    //     newNode.next = root.next;
-    //     root.next = newNode;
-    //   } else {
-    //     // Make this the root if there is none
-    //     this._nodeTree$.value.root = newNode;
-    //   }
-    // }
-
-    // this._selectedNode$.next(newNode);
-    // console.log(`Selected node is now: ${newNode.nodeName}`);
-    
+        
     return newNode;
   }
 
