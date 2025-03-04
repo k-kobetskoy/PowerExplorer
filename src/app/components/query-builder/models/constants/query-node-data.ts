@@ -165,12 +165,12 @@ export class QueryNodeData {
         
         console.warn(`Unknown node type: ${nodeName}, using default configuration`);
         return {
-            Order: 999,
+            Order: 99,
             Actions: [],
             Name: nodeName || 'Unknown',
             TagName: nodeName?.toLowerCase() || 'unknown',
             Attributes: [],
-            AttributesCount: 0
+            AttributesCount: 1
         };
     }
 }

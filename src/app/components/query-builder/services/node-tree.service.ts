@@ -80,8 +80,6 @@ export class NodeTreeService {
       return newNode;
     }
 
-
-
     if (!parentNode) {
       parentNode = this._selectedNode$.value;
     }

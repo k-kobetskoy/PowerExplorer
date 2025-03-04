@@ -1,7 +1,7 @@
 import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
-import { IAttributeData } from "./constants/attribute-data";
+import {  IAttributeData } from "./constants/attribute-data";
 import { AttributeFactoryResorlverService } from "../services/attribute-services/attribute-factory-resorlver.service";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
 
@@ -192,7 +192,7 @@ export class QueryNode {
     addAttribute(attribute: NodeAttribute): void {
         let attributes = this.attributes$.value;
 
-        let isUndefinedAttribute = attribute.order > this.attributesCount;
+        const isUndefinedAttribute = attribute.order > this.attributesCount;
 
         if (isUndefinedAttribute) {
             this.addToLastFreePosition(attribute, attributes);

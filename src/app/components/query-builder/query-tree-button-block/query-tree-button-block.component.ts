@@ -23,12 +23,12 @@ export class QueryTreeButtonBlockComponent implements OnInit {
     this.executeXmlRequest.emit();
   }
 
-  private _getEntityNodeSetName(): BehaviorSubject<string> {
+  private getEntityNodeSetName(): BehaviorSubject<string> {
     return this.nodeTreeProcessor.getNodeTree().value.root.next.entitySetName$;
   }
 
   setToggleButtonState(): void {
-    this.buttonDisabled$ = this._getEntityNodeSetName().pipe(
+    this.buttonDisabled$ = this.getEntityNodeSetName().pipe(
       map(entitySetName => { return !entitySetName }))
   }
 }

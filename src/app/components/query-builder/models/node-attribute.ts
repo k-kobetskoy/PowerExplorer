@@ -53,9 +53,9 @@ export class NodeAttribute {
 
     private setupValidation() {
         const validators = [
-            ...(this.validators.defaultAsyncValidators || []),
-            ...(this.validators.parsingSynchronousValidators || []),
-            ...(this.validators.parsingAsyncValidators || [])
+            ...(this.validators?.defaultAsyncValidators || []),
+            ...(this.validators?.parsingSynchronousValidators || []),
+            ...(this.validators?.parsingAsyncValidators || [])
         ];
         
         // If no validators, return a default valid state
