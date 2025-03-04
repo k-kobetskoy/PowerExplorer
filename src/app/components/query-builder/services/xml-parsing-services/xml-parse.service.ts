@@ -115,14 +115,14 @@ export class XmlParseService {
     let buildResult = this.nodeBuilder.buildQueryNode();
 
     let node = this.nodeTreeService.addNodeFromParsing(
-      buildResult.queryNode.nodeName,
+      buildResult.nodeName,
       this.currentParentNode
     );
 
-    if (this.nodeBuilder.attributes.length > 0) {
-      const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(buildResult.queryNode.nodeName);
+    if (buildResult.attributes.length > 0) {
+      const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(buildResult.nodeName);
 
-      for (let attribute of this.nodeBuilder.attributes) {
+      for (let attribute of buildResult.attributes) {
         let nodeAttribute = attributeFactory.createAttribute(attribute.name, node, true, attribute.value);
         node.addAttribute(nodeAttribute);
       }

@@ -12,6 +12,6 @@ export class DefaultAttributesFactoryService implements IAttributeFactory {
   constructor(private validators: AttributeValidatorRegistryService) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
-    return new NodeAttribute(node, null, { Order: 99, EditorName: attributeName, IsValidName: false, TreeViewDisplayStyle: AttributeTreeViewDisplayStyle.none, TreeViewName: '' }, value);
+    return new NodeAttribute(node, null, { Order: 99, EditorName: attributeName, IsValidName: false, TreeViewDisplayStyle: AttributeTreeViewDisplayStyle.onlyValue, TreeViewName: attributeName }, value);
   }
 }

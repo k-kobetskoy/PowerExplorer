@@ -6,7 +6,8 @@ import { QueryNodeData } from '../../models/constants/query-node-data';
 
 export interface IQueryNodeBuildResult {
   isBuildSuccess: boolean;
-  queryNode: QueryNode;
+  nodeName: string;
+  attributes: ITagBuildEntityAttribute[];
   errors: IBuildQueryError[];
 }
 
@@ -73,18 +74,12 @@ export class QueryNodeBuilderService {
     
     const queryNodeName = isTagNameValid ? QueryNodeData.TagNamesToNodeNames[this.tag.tagName] : this.tag.tagName;
 
-    let queryNode = new QueryNode(queryNodeName, this.attributeFactoryResolver);
-
-    if (this.attributes.length > 0) {
-        const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(queryNodeName);
-      for (let attribute of this.attributes) {
-        this.addAttributeValueToNode(attribute, queryNode, attributeFactory);
-      }      
-    }
-
-    let buildResult = { isBuildSuccess: this.errors.length === 0, queryNode: queryNode, errors: this.errors };
-
-    return buildResult;
+    return {
+      isBuildSuccess: this.errors.length === 0,
+      nodeName: queryNodeName,
+      attributes: this.attributes,
+      errors: this.errors
+    };
   }
 
   addAttributeValueToNode(attribute: ITagBuildEntityAttribute, queryNode: QueryNode, attributeFactory: IAttributeFactory) {
