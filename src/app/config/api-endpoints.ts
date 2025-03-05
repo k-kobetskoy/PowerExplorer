@@ -12,7 +12,10 @@ export const API_ENDPOINTS = {
     },
     attributes: {
         attributeParameters: ['LogicalName', 'DisplayName', 'AttributeType'],
-        getResourceUrl(apiUrl: string, entityLogicalName: string) { return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes?$select=${this.attributeParameters.join(',')}&$filter=(AttributeType ne 'Virtual' and AttributeType ne 'EntityName')`; }
+        getResourceUrl(apiUrl: string, entityLogicalName: string) { 
+            // Simple standard approach for all entities
+            return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes?$select=${this.attributeParameters.join(',')}&$filter=(AttributeType ne 'Virtual' and AttributeType ne 'EntityName')`; 
+        }
     },
     picklist: {
         optionSetType: 'PicklistAttributeMetadata',

@@ -40,7 +40,14 @@ export class AttributeServerValidator implements IAttributeValidator {
                             : value;
                             
                         // Find entity with matching logical name
-                        return !!entities.find(e => e.logicalName === logicalName);
+                        const entity = entities.find(e => e.logicalName === logicalName);
+                        
+                        if (entity) {
+                            attribute.parentNode.entitySetName$.next(entity.entitySetName);
+                            return true;
+                        }
+                        
+                        return false;
                     })
                 );
             })

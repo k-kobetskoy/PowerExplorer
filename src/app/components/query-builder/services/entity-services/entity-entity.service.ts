@@ -41,4 +41,10 @@ export class EntityEntityService extends BaseRequestService {
       })
     );
   }
+
+  getEntityByLogicalName(logicalName: string): Observable<EntityModel | null> {
+    return this.getEntities().pipe(
+      map(entities => entities.find(entity => entity.logicalName === logicalName) || null)
+    );
+  }
 }
