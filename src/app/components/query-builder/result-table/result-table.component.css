@@ -157,3 +157,45 @@ tr.mat-mdc-row:hover {
   font-size: 0.9rem !important;
   background-color: rgba(245, 245, 245, 0.5) !important;
 }
+
+.table-controls {
+  display: flex;
+  justify-content: flex-start;
+  padding: 8px 16px;
+  background-color: #f8f8f8;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.format-toggle-container {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #555;
+  margin-left: 4px;
+}
+
+.toggle-label {
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+.format-toggle {
+  margin-left: 8px;
+}
+
+.has-formatted-value {
+  position: relative;
+}
+
+.has-formatted-value::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 8px 8px 0;
+  border-color: transparent #2c70b9 transparent transparent;
+  opacity: 0.3;
+}

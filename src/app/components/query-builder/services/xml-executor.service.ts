@@ -19,6 +19,11 @@ interface FetchXmlQueryOptions {
 export interface FieldTypeInfo {
   value: any;
   type: string;
+  displayName?: string;
+  FormattedValue?: string;
+  associatednavigationproperty?: string;
+  lookuplogicalname?: string;
+  [key: string]: any; // For any additional annotations
 }
 
 export interface TypedResultItem {
@@ -145,41 +150,94 @@ export class XmlExecutorService extends BaseRequestService {
   private normalizeDataWithTypes<T extends { [key: string]: any }>(data: T[], attributeMap: Map<string, AttributeModel>): TypedResultItem[] {
     if (!data?.length) return [];
 
-    console.log(attributeMap);
-
-    const allKeys = new Set<keyof T>(
-      data.flatMap(item =>
-        Object.keys(item).filter(key => key !== '@odata.etag')
-      ) as (keyof T)[]
-    );
-
-    const matchingKeys = Array.from(allKeys).filter(key => attributeMap.has(String(key)));
-
-    if (matchingKeys.length === 0) {
-      console.log('No matching keys found between data and attribute map. Will treat all fields as strings.');
-      return this.normalizeData(data);
-    }
-
+    console.log('Normalizing data with types and annotations');
+    
+    // Get all keys from the first item, including annotation keys
+    const firstItem = data[0];
+    const allKeys = Object.keys(firstItem).filter(key => key !== '@odata.etag');
+    
+    // Group keys by base field name (without annotations)
+    const fieldGroups = new Map<string, string[]>();
+    
+    allKeys.forEach(key => {
+      // Check if this is an annotation key
+      if (key.includes('@')) {
+        const baseKey = key.split('@')[0];
+        if (!fieldGroups.has(baseKey)) {
+          fieldGroups.set(baseKey, []);
+        }
+        fieldGroups.get(baseKey).push(key);
+      } else {
+        // Base field
+        if (!fieldGroups.has(key)) {
+          fieldGroups.set(key, []);
+        }
+      }
+    });
+    
+    console.log(`Found ${fieldGroups.size} unique fields with their annotations`);
+    
     return data.map(item => {
       const normalizedItem: TypedResultItem = {};
-
-      allKeys.forEach(key => {
-        const keyStr = String(key); // Convert symbol to string
-        const fieldValue = item[key] ?? null;
-        const attributeInfo = attributeMap.get(keyStr);
-
-        if (attributeInfo) {
-          // Include type information with the value
-          normalizedItem[keyStr] = {
-            value: fieldValue,
-            type: attributeInfo.attributeType
-          } as FieldTypeInfo;
-        } else {
-
-          normalizedItem[keyStr] = fieldValue;
+      
+      // Process each field group (base field + its annotations)
+      fieldGroups.forEach((annotationKeys, baseKey) => {
+        // Handle lookup fields (they start with underscore and end with _value)
+        let fieldKey = baseKey;
+        let isLookup = false;
+        
+        if (baseKey.startsWith('_') && baseKey.endsWith('_value')) {
+          isLookup = true;
+          // Try to get the logical name from associatednavigationproperty annotation
+          const navPropKey = `${baseKey}@Microsoft.Dynamics.CRM.associatednavigationproperty`;
+          let logicalName = '';
+          
+          if (item[navPropKey]) {
+            // Use associatednavigationproperty if available
+            logicalName = String(item[navPropKey]).toLowerCase();
+          } else {
+            // Extract from the field name: _fieldname_value -> fieldname
+            logicalName = baseKey.substring(1, baseKey.length - 6).toLowerCase();
+          }
+          
+          fieldKey = logicalName;
         }
+        
+        // Get attribute info if available
+        const attributeInfo = attributeMap.get(baseKey) || attributeMap.get(fieldKey);
+        
+        // Create the field info object
+        const fieldInfo: FieldTypeInfo = {
+          value: item[baseKey],
+          type: attributeInfo?.attributeType || (isLookup ? 'Lookup' : 'String'),
+          displayName: attributeInfo?.displayName || undefined
+        };
+        
+        // Add all annotations to the field info
+        annotationKeys.forEach(annotationKey => {
+          const annotationName = annotationKey.split('@')[1];
+          if (annotationName) {
+            // For formatted value, use a consistent property name
+            if (annotationName === 'OData.Community.Display.V1.FormattedValue') {
+              fieldInfo['FormattedValue'] = item[annotationKey];
+            } 
+            // For lookup-specific annotations
+            else if (annotationName === 'Microsoft.Dynamics.CRM.associatednavigationproperty') {
+              fieldInfo['associatednavigationproperty'] = item[annotationKey];
+            }
+            else if (annotationName === 'Microsoft.Dynamics.CRM.lookuplogicalname') {
+              fieldInfo['lookuplogicalname'] = item[annotationKey];
+            }
+            // Store other annotations as-is
+            else {
+              fieldInfo[annotationName] = item[annotationKey];
+            }
+          }
+        });
+        
+        normalizedItem[fieldKey] = fieldInfo;
       });
-
+      
       return normalizedItem;
     });
   }

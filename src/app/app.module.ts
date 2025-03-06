@@ -52,6 +52,7 @@ import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BehaviorSubject } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { ResultTableComponent } from './components/query-builder/result-table/result-table.component';
@@ -107,6 +108,7 @@ import { LoadingInterceptor } from './components/loading-indicator/loading.inter
         MatInputModule,
         MatCheckboxModule,
         MatSelectModule,
+        MatSlideToggleModule,
         ReactiveFormsModule,
         MatTableModule,        
         MsalConfigDynamicModule.forRoot('assets/configuration.json')
