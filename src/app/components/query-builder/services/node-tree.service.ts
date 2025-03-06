@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
@@ -17,6 +17,8 @@ export class NodeTreeService {
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
+  isExecutable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
   }
@@ -31,8 +33,11 @@ export class NodeTreeService {
     private _eventBus: EventBusService,
     private attributeFactoryResolver: AttributeFactoryResorlverService
   ) {
+    QueryNode.setNodeTreeService(this);
+    
     this.initializeNodeTree();
-    this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree())
+    
+    this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -60,14 +65,19 @@ export class NodeTreeService {
   }
 
   clearNodeTree() {
+    const nodeTree = this._nodeTree$.value;
+    if (nodeTree && nodeTree.root) {
+      this.cleanupNodeAndChildren(nodeTree.root);
+    }
+    
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
+    this.isExecutable$.next(false);
   }
 
   addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
 
     let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
-
 
     if (!this._nodeTree$.value) {
       const nodeTree = new QueryNodeTree();
@@ -169,6 +179,8 @@ export class NodeTreeService {
       throw new Error('Previous node not found.');
     }
 
+    this.cleanupNodeAndChildren(node);
+
     previousNode.next = nextNode;
 
     if (nextNode) {
@@ -178,7 +190,7 @@ export class NodeTreeService {
     }
 
     this._selectedNode$.next(previousNode);
-    this._eventBus.emit({ name: AppEvents.NODE_REMOVED })
+    this._eventBus.emit({ name: AppEvents.NODE_REMOVED });
   }
 
   expandNode(node: QueryNode) {
@@ -230,5 +242,17 @@ export class NodeTreeService {
     }
 
     return previousNode;
+  }
+
+  private cleanupNodeAndChildren(node: QueryNode): void {
+    if (!node) return;
+
+    const nextNode = node.next;
+
+    node.dispose();
+
+    if (nextNode && nextNode.level > node.level) {
+      this.cleanupNodeAndChildren(nextNode);
+    }
   }
 }

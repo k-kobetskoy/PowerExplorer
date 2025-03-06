@@ -169,9 +169,14 @@ export class XmlParseService {
       if (xmlParseErrors.length > 0) {
         console.error('XML Parse Errors:', xmlParseErrors);
       }
+      
+      if (!this.nodeTreeService.getNodeTree().value) {
+        this.nodeTreeService.initializeNodeTree();
+      }
+      
+      this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     } finally {
       this.isParsingEnabled = false;
-      this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     }
   }
 

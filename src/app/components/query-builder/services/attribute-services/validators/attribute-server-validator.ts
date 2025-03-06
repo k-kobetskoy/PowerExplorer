@@ -30,16 +30,13 @@ export class AttributeServerValidator implements IAttributeValidator {
             switchMap(entities => {
                 return attribute.value$.pipe(
                     distinctUntilChanged(),
-                    debounceTime(500),
                     map((value: string | HasLogicalName | any) => {
                         if (!value) return true;
                         
-                        // Extract logical name if it's an object with that property
                         const logicalName = typeof value === 'object' && value && 'logicalName' in value
                             ? (value as HasLogicalName).logicalName
                             : value;
                             
-                        // Find entity with matching logical name
                         const entity = entities.find(e => e.logicalName === logicalName);
                         
                         if (entity) {
@@ -55,7 +52,7 @@ export class AttributeServerValidator implements IAttributeValidator {
 
         return {
             isValid$: isValid,
-            errorMessage: `Entity with provided name not found.`
+            errorMessage: 'Entity not found'
         };
     }
 }

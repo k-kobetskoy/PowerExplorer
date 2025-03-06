@@ -1,34 +1,39 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { Observable, BehaviorSubject, map } from 'rxjs';
+import { Component, EventEmitter, OnInit, Output, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Observable, Subject, map, takeUntil } from 'rxjs';
 import { NodeTreeService } from '../services/node-tree.service';
 
 @Component({
   selector: 'app-query-tree-button-block',
   templateUrl: './query-tree-button-block.component.html',
-  styleUrls: ['./query-tree-button-block.component.css']
+  styleUrls: ['./query-tree-button-block.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class QueryTreeButtonBlockComponent implements OnInit {
+export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
 
   @Output() executeXmlRequest = new EventEmitter<void>()
 
   buttonDisabled$: Observable<boolean>;
+  private destroy$ = new Subject<void>();
 
   constructor(private nodeTreeProcessor: NodeTreeService) { }
 
   ngOnInit() {
-    this.setToggleButtonState();
+    this.setupButtonState();
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   execute() {
     this.executeXmlRequest.emit();
   }
 
-  private getEntityNodeSetName(): BehaviorSubject<string> {
-    return this.nodeTreeProcessor.getNodeTree().value.root.next.entitySetName$;
-  }
-
-  setToggleButtonState(): void {
-    this.buttonDisabled$ = this.getEntityNodeSetName().pipe(
-      map(entitySetName => { return !entitySetName }))
+  private setupButtonState(): void {
+    this.buttonDisabled$ = this.nodeTreeProcessor.isExecutable$.pipe(
+      map(isExecutable => !isExecutable),
+      takeUntil(this.destroy$)
+    );
   }
 }

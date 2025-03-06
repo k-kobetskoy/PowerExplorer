@@ -1,9 +1,10 @@
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap } from "rxjs";
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap, Subscription, Subject, takeUntil } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
 import {  IAttributeData } from "./constants/attribute-data";
 import { AttributeFactoryResorlverService } from "../services/attribute-services/attribute-factory-resorlver.service";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
+import { NodeTreeService } from "../services/node-tree.service";
 
 export class QueryNode {
     defaultNodeDisplayValue: string;
@@ -28,6 +29,10 @@ export class QueryNode {
     tagDisplayValue$: Observable<string>;
     nodeDisplayValue$: Observable<string>;
     private readonly attributeFactory: IAttributeFactory;
+    private static nodeTreeService: NodeTreeService;
+    
+    // Subject to signal when the node is destroyed
+    private destroyed$ = new Subject<void>();
 
     constructor(
         nodeName: string,
@@ -54,6 +59,38 @@ export class QueryNode {
 
         this.attributeFactory = this.attributeFactoryResolver.getAttributesFactory(nodeName);
         this.validationPassed$ = this.validateNode();
+
+        if (this.nodeName === QueryNodeData.Entity.Name) {
+            this.setupEntitySetNameSubscription();
+        }
+    }
+
+    public static setNodeTreeService(nodeTreeService: NodeTreeService) {
+        QueryNode.nodeTreeService = nodeTreeService;
+    }
+
+    public dispose(): void {
+        this.destroyed$.next();
+        this.destroyed$.complete();
+    }
+
+    private setupEntitySetNameSubscription() {
+        if (!QueryNode.nodeTreeService) {
+            return;
+        }
+
+        if (this.entitySetName$.value) {
+            QueryNode.nodeTreeService.isExecutable$.next(true);
+        }
+
+        this.entitySetName$.pipe(
+            distinctUntilChanged(),
+            takeUntil(this.destroyed$) 
+        ).subscribe(entitySetName => {
+            if (QueryNode.nodeTreeService) {
+                QueryNode.nodeTreeService.isExecutable$.next(!!entitySetName);
+            }
+        });
     }
 
     private createNodeDisplayValueObservable(): Observable<string> {
@@ -77,11 +114,12 @@ export class QueryNode {
                 );
                 
                 return combineLatest(displayValues$).pipe(
-                    map(values => `${this.nodeName} ${values.join(' ')}`)
+                    map(values => `${this.nodeName} ${values.join(' ')}`),
+                    takeUntil(this.destroyed$) 
                 );
             }),
             distinctUntilChanged(),
-            debounceTime(150)
+            takeUntil(this.destroyed$) 
         );
     }
 
@@ -118,9 +156,11 @@ export class QueryNode {
                             this.validationErrors$.next([`Error processing validation: ${error.message}`]);
                             return false;
                         }
-                    })
+                    }),
+                    takeUntil(this.destroyed$)
                 );
-            })
+            }),
+            takeUntil(this.destroyed$)
         );
     }
 
