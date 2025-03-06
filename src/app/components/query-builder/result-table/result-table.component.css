@@ -106,9 +106,10 @@
 }
 
 .mat-mdc-cell.number-cell {
-    text-align: right !important;
-    font-family: 'Courier New', Courier, monospace !important;
-    font-weight: 600 !important;
+  text-align: right !important;
+  font-family: 'Hack', monospace !important;
+  color: #2c70b9 !important;
+  font-size: 0.9rem !important;
 }
 
 .mat-mdc-cell.boolean-cell {
@@ -124,18 +125,35 @@
 
 .mat-mdc-cell.lookup-cell {
     text-align: left !important;
-    color: #0078d4 !important;
+    color: #2c70b9 !important;
     text-decoration: underline !important;
     cursor: pointer !important;
 }
 
+.mat-mdc-cell.uniqueidentifier-cell {
+  text-align: left !important;
+  color: #2c70b9  !important;
+  font-family: 'Hack', monospace !important;
+  letter-spacing: -0.05em !important;
+  font-size: 0.9rem !important;
+}
+
+
 .mat-mdc-cell.picklist-cell {
     text-align: center !important;
     font-weight: 500 !important;
-    background-color: rgba(132, 175, 209, 0.1) !important;
+     background-color: rgba(184, 172, 147, 0.1) !important;
 }
 
 /* Row hover effect */
 tr.mat-mdc-row:hover {
     background-color: rgba(224, 225, 230, 0.5) !important;
+}
+
+/* Add a new class for code-like content */
+.mat-mdc-cell.code-cell {
+  font-family: 'Hack', monospace !important;
+  letter-spacing: -0.05em !important;
+  font-size: 0.9rem !important;
+  background-color: rgba(245, 245, 245, 0.5) !important;
 }

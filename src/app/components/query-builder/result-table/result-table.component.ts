@@ -10,14 +10,14 @@ import { QueryNode } from '../models/query-node';
   styleUrls: ['./result-table.component.css']
 })
 export class ResultTableComponent implements OnInit {
-  
+
   selectedRow: any;
   selectedOverflowCell: any;
 
   displayedColumns: string[];
   dataSource: Object[];
   fieldTypes: Map<string, string> = new Map<string, string>();
-  
+
   constructor(private xmlExecutor: XmlExecutorService, private nodeTreeProcessor: NodeTreeService) { }
   @Output() resultTableGetResult = new EventEmitter<void>();
 
@@ -46,16 +46,16 @@ export class ResultTableComponent implements OnInit {
     ).subscribe({
       next: data => {
         this.fieldTypes.clear();
-        
+
         if (!data || data.length === 0) {
           this.displayedColumns = ['No results'];
           this.dataSource = [];
           return;
         }
-        
+
         const firstRow = data[0] as any;
         let hasTypeInfo = false;
-        
+
         Object.keys(firstRow).forEach(key => {
           const value = firstRow[key];
           if (value && typeof value === 'object' && 'type' in value) {
@@ -64,7 +64,7 @@ export class ResultTableComponent implements OnInit {
             hasTypeInfo = true;
           }
         });
-        
+
         let normalizedData: any[] = [];
         if (hasTypeInfo) {
           normalizedData = data.map(item => {
@@ -82,10 +82,10 @@ export class ResultTableComponent implements OnInit {
         } else {
           normalizedData = data;
         }
-        
+
         const dataKeys = Object.keys(normalizedData[0] || {});
         this.displayedColumns = dataKeys.length ? ['No.', ...dataKeys] : ['No results'];
-        this.dataSource = normalizedData.length 
+        this.dataSource = normalizedData.length
           ? normalizedData.map((item, index) => ({ 'No.': index + 1, ...item }))
           : [];
       },
@@ -108,7 +108,7 @@ export class ResultTableComponent implements OnInit {
   selectCell(element: Object, cell: HTMLElement) {
     if (this.isTextHidden(cell)) {
       this.selectedOverflowCell = element;
-    } else if(this.selectedOverflowCell != element){
+    } else if (this.selectedOverflowCell != element) {
       this.selectedOverflowCell = null;
     }
   }
@@ -116,19 +116,19 @@ export class ResultTableComponent implements OnInit {
   isTextHidden(cell: HTMLElement): boolean {
     return cell.scrollWidth > cell.clientWidth;
   }
-  
+
   getFieldType(columnName: string): string {
     if (columnName === 'No.') return 'number';
-    
+
     const type = this.fieldTypes.get(columnName);
     return type || 'string'; // Default to string type if no type info is available
   }
-  
+
   getCellClass(columnName: string): string {
     if (columnName === 'No.') return 'number-cell';
-    
+
     const type = this.getFieldType(columnName);
-    
+
     switch (type.toLowerCase()) {
       case 'string':
       case 'memo':
@@ -144,6 +144,8 @@ export class ResultTableComponent implements OnInit {
         return 'date-cell';
       case 'lookup':
         return 'lookup-cell';
+      case 'uniqueidentifier':
+        return 'uniqueidentifier-cell';
       case 'picklist':
       case 'state':
       case 'status':

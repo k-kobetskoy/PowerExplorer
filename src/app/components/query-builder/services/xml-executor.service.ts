@@ -145,6 +145,8 @@ export class XmlExecutorService extends BaseRequestService {
   private normalizeDataWithTypes<T extends { [key: string]: any }>(data: T[], attributeMap: Map<string, AttributeModel>): TypedResultItem[] {
     if (!data?.length) return [];
 
+    console.log(attributeMap);
+
     const allKeys = new Set<keyof T>(
       data.flatMap(item =>
         Object.keys(item).filter(key => key !== '@odata.etag')
