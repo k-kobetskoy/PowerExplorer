@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime } from 'rxjs';
 
 @Component({
     selector: 'app-root-form',
@@ -32,7 +32,7 @@ export class RootFormComponent extends BaseFormComponent implements OnInit, OnDe
     }
     
     private initializeForm() {
-        // Create form group with controls for each attribute
+        // Create form with existing attribute values
         this.rootForm = this.fb.group({
             top: [this.getAttributeValue(this.AttributeData.Root.Top)],
             distinct: [this.getAttributeValue(this.AttributeData.Root.Distinct) === 'true'],
@@ -45,11 +45,18 @@ export class RootFormComponent extends BaseFormComponent implements OnInit, OnDe
             datasource: [this.getAttributeValue(this.AttributeData.Root.DataSource)]
         });
         
+        this.setupFormChangeHandlers();
+    }
+    
+    private setupFormChangeHandlers() {
         // Subscribe to form value changes
         this.rootForm.valueChanges
-            .pipe(takeUntil(this.destroy$))
+            .pipe(
+                debounceTime(300),
+                takeUntil(this.destroy$)
+            )
             .subscribe(formValues => {
-                // Only update attributes that have changed
+                // Update existing attributes with new values
                 Object.entries(formValues).forEach(([key, value]) => {
                     // Convert boolean values to string
                     const stringValue = value !== null && value !== undefined 
@@ -65,6 +72,7 @@ export class RootFormComponent extends BaseFormComponent implements OnInit, OnDe
                         const currentValue = this.getAttributeValue(attribute);
                         if (currentValue !== stringValue) {
                             this.updateAttribute(attribute, stringValue);
+                            // No need to call validateNode() - validation will happen reactively
                         }
                     }
                 });

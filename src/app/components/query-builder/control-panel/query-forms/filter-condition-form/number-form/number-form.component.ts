@@ -55,11 +55,8 @@ export class NumberFormComponent extends BaseFormComponent implements OnInit, On
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode || changes.attributeValue) {
-      // Clean up existing subscriptions
+    if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-      
-      // Reinitialize the form
       this.initializeForm();
     }
   }

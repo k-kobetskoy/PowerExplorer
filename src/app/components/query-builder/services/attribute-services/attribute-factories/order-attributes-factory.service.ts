@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
-import { AttributeValidationTypes } from '../constants/attribute-validation-types';
+import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
 import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';

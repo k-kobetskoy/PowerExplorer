@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormBuilder } from '@angular/forms';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
@@ -69,7 +69,9 @@ export class StringFormComponent extends BaseFormComponent implements OnInit, On
   @Input() attributeValue: string;
   @Input() override selectedNode: QueryNode;
 
-  constructor() {
+  constructor(
+    private fb: FormBuilder
+  ) {
     super();
   }
 
@@ -78,11 +80,8 @@ export class StringFormComponent extends BaseFormComponent implements OnInit, On
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode || changes.attributeValue) {
-      // Clean up existing subscriptions
+    if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-      
-      // Reinitialize the form
       this.initializeForm();
     }
   }

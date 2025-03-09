@@ -12,6 +12,8 @@
     </div>
   </div>
 
+    <app-loading-indicator [diameter]="20"></app-loading-indicator>
+
   <table mat-table [dataSource]="data" class="mat-elevation-z0 full-size-table">
 
     <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">

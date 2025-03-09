@@ -74,7 +74,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode) {
+    if (changes['selectedNode'] && this.selectedNode) {
       // Clean up existing subscriptions
       this.destroy$.next();
       

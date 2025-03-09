@@ -1,4 +1,4 @@
-import { AttributeValidationTypes } from '../constants/attribute-validation-types';
+import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
 import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
@@ -38,13 +38,12 @@ export class ConditionAttributesFactoryService implements IAttributeFactory {
 
   private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
     let parsingSyncValidators: IAttributeValidator[] = [];
-    let parsingAsyncValidators: IAttributeValidator[] = [];
+
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
-      parsingAsyncValidators = this.getParserAsyncValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingAsyncValidators: parsingAsyncValidators, parsingSynchronousValidators: parsingSyncValidators };
+    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
   }
 
   private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {

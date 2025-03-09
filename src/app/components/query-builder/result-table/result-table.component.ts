@@ -1,6 +1,6 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { BehaviorSubject, switchMap, tap, catchError, of } from 'rxjs';
-import { FieldTypeInfo, TypedResultItem, XmlExecutorService } from '../services/xml-executor.service';
+import { Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
+import { switchMap, catchError, of, Subscription } from 'rxjs';
+import { XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
 
@@ -9,7 +9,10 @@ import { QueryNode } from '../models/query-node';
   templateUrl: './result-table.component.html',
   styleUrls: ['./result-table.component.css']
 })
-export class ResultTableComponent implements OnInit {
+export class ResultTableComponent implements OnInit, OnDestroy {
+
+  // Using same key defined in interceptor or a standard key for HTTP requests
+  readonly LOADING_KEY = 'http-requests';
 
   selectedRow: any;
   selectedOverflowCell: any;
@@ -23,11 +26,25 @@ export class ResultTableComponent implements OnInit {
   dataSource: Object[];
   fieldTypes: Map<string, string> = new Map<string, string>();
   private displayNames: Map<string, string> = new Map<string, string>();
+  
+  // Store the latest XML without executing it
+  private latestXml: string = '';
+  private xmlSubscription: Subscription;
 
-  constructor(private xmlExecutor: XmlExecutorService, private nodeTreeProcessor: NodeTreeService) { }
+  constructor(private xmlExecutor: XmlExecutorService, private nodeTreeService: NodeTreeService) { }
   @Output() resultTableGetResult = new EventEmitter<void>();
 
   ngOnInit() {
+    // Subscribe to XML changes but don't execute requests automatically
+    this.xmlSubscription = this.nodeTreeService.xmlRequest$.subscribe(xml => {
+      this.latestXml = xml;
+    });
+  }
+  
+  ngOnDestroy() {
+    if (this.xmlSubscription) {
+      this.xmlSubscription.unsubscribe();
+    }
   }
 
   getResult() {
@@ -41,91 +58,102 @@ export class ResultTableComponent implements OnInit {
       return;
     }
 
-    this.nodeTreeProcessor.xmlRequest$.pipe(
-      switchMap(xml => {
-        return this.xmlExecutor.executeXmlRequest(xml, entityNode);
-      }),
-      catchError(error => {
-        console.error('Error in query execution:', error);
-        return of([]);
-      })
-    ).subscribe({
-      next: data => {
-        this.fieldTypes.clear();
-        this.displayNames.clear();
-        this.rawData = [...data]; // Store a copy of the raw data
+    // Use the stored XML to execute the request only when explicitly called
+    this.executeQuery(this.latestXml, entityNode);
+  }
+  
+  private executeQuery(xml: string, entityNode: QueryNode) {
+    if (!xml) {
+      console.error('No XML available');
+      this.displayedColumns = ['No query available'];
+      this.dataSource = [];
+      return;
+    }
+    
+    this.xmlExecutor.executeXmlRequest(xml, entityNode)
+      .pipe(
+        catchError(error => {
+          console.error('Error in query execution:', error);
+          return of([]);
+        })
+      )
+      .subscribe({
+        next: data => {
+          this.fieldTypes.clear();
+          this.displayNames.clear();
+          this.rawData = [...data]; // Store a copy of the raw data
 
-        if (!data || data.length === 0) {
-          this.displayedColumns = ['No results'];
-          this.dataSource = [];
-          return;
-        }
+          if (!data || data.length === 0) {
+            this.displayedColumns = ['No results'];
+            this.dataSource = [];
+            return;
+          }
 
-        console.log('Raw data from executor:', data);
-        
-        // Process the structured data
-        const normalizedData = data.map((item: any, index) => {
-          const normalizedItem: { [key: string]: any } = { 'No.': index + 1 };
+          console.log('Raw data from executor:', data);
           
-          // Process each field in the item
-          Object.keys(item).forEach(key => {
-            const fieldInfo = item[key];
+          // Process the structured data
+          const normalizedData = data.map((item: any, index) => {
+            const normalizedItem: { [key: string]: any } = { 'No.': index + 1 };
             
-            // Store field type information for styling
-            if (fieldInfo && typeof fieldInfo === 'object' && 'type' in fieldInfo) {
-              this.fieldTypes.set(key, fieldInfo.type);
+            // Process each field in the item
+            Object.keys(item).forEach(key => {
+              const fieldInfo = item[key];
               
-              // Store display name if available
-              if (fieldInfo.displayName) {
-                this.displayNames.set(key, fieldInfo.displayName);
+              // Store field type information for styling
+              if (fieldInfo && typeof fieldInfo === 'object' && 'type' in fieldInfo) {
+                this.fieldTypes.set(key, fieldInfo.type);
+                
+                // Store display name if available
+                if (fieldInfo.displayName) {
+                  this.displayNames.set(key, fieldInfo.displayName);
+                }
+                
+                // Use formatted value if available and showFormattedValues is true, otherwise use raw value
+                normalizedItem[key] = (this.showFormattedValues && fieldInfo.FormattedValue) 
+                  ? fieldInfo.FormattedValue 
+                  : fieldInfo.value;
+              } else {
+                // Fallback for simple values
+                normalizedItem[key] = fieldInfo;
               }
-              
-              // Use formatted value if available and showFormattedValues is true, otherwise use raw value
-              normalizedItem[key] = (this.showFormattedValues && fieldInfo.FormattedValue) 
-                ? fieldInfo.FormattedValue 
-                : fieldInfo.value;
-            } else {
-              // Fallback for simple values
-              normalizedItem[key] = fieldInfo;
-            }
+            });
+            
+            return normalizedItem;
           });
           
-          return normalizedItem;
-        });
-        
-        // Get all unique keys from the normalized data
-        const allKeys = new Set<string>();
-        normalizedData.forEach(item => {
-          Object.keys(item).forEach(key => {
-            if (key !== 'No.') {
-              allKeys.add(key);
-            }
+          // Get all unique keys from the normalized data
+          const allKeys = new Set<string>();
+          normalizedData.forEach(item => {
+            Object.keys(item).forEach(key => {
+              if (key !== 'No.') {
+                allKeys.add(key);
+              }
+            });
           });
-        });
-        
-        // Store both technical and display column names
-        this.technicalColumns = ['No.', ...Array.from(allKeys)];
-        
-        // Create display columns with formatted names - keep the same columns, just display them differently
-        this.displayColumns = [...this.technicalColumns]; // Same columns, different display
-        
-        // Set the displayed columns based on the toggle state
-        this.displayedColumns = this.showFormattedValues ? this.displayColumns : this.technicalColumns;
-        this.dataSource = normalizedData;
-        
-        console.log('Normalized data for display:', normalizedData);
-        console.log('Field types for styling:', this.fieldTypes);
-      },
-      error: error => {
-        console.error('Error getting results:', error);
-        this.displayedColumns = ['Error'];
-        this.dataSource = [{ 'Error': 'Failed to fetch results. See console for details.' }];
-      }
-    });
+          
+          // Store both technical and display column names
+          this.technicalColumns = ['No.', ...Array.from(allKeys)];
+          
+          // Create display columns with formatted names - keep the same columns, just display them differently
+          this.displayColumns = [...this.technicalColumns]; // Same columns, different display
+          
+          // Set the displayed columns based on the toggle state
+          this.displayedColumns = this.showFormattedValues ? this.displayColumns : this.technicalColumns;
+          this.dataSource = normalizedData;
+          
+          console.log('Normalized data for display:', normalizedData);
+          console.log('Field types for styling:', this.fieldTypes);
+        },
+        error: error => {
+          console.error('Error getting results:', error);
+          this.displayedColumns = ['Error'];
+          this.dataSource = [{ 'Error': 'Failed to fetch results. See console for details.' }];
+        }
+      });
   }
 
   private getEntityNode(): QueryNode {
-    return this.nodeTreeProcessor.getNodeTree().value.root.next;
+    return this.nodeTreeService.getNodeTree().value.root.next;
   }
 
   selectRow(row: any) {

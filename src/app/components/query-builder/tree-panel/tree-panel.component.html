@@ -1,5 +1,5 @@
 <div class="tree-container">
-
+  <!-- Tree content only -->
   <div class="tree">
     <div *ngFor="let node of dataSource$ | async">
 
@@ -14,8 +14,9 @@
             [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}">
             <mat-icon class="tree-element-icon">
             </mat-icon>
-            <p class="small prevent-select"> {{node.nodeDisplayValue$|async}}
-              <span *ngIf="(node.validationPassed$|async)===false" class="validationError">!</span>
+            <p class="small prevent-select">
+              {{node.nodeDisplayValue$|async}}
+              <span *ngIf="(node.validationResult$|async).isValid===false" class="validationError">!</span>
             </p>
           </div>
         </div>
@@ -28,10 +29,9 @@
             [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}">
             <mat-icon class="tree-element-icon">
             </mat-icon>
-            <p class="small prevent-select">{{node.nodeDisplayValue$|async}}
-              <ng-container *ngIf="node.validationPassed$">
-                <span *ngIf="(node.validationPassed$|async)===false" class="validationError">!</span>
-              </ng-container>
+            <p class="small prevent-select">
+              {{node.nodeDisplayValue$|async}}
+              <span *ngIf="(node.validationResult$|async).isValid===false" class="validationError">!</span>         
             </p>
           </div>
         </div>

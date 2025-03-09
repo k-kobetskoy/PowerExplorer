@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, tap, switchMap, of } from 'rxjs';
+import { Observable, map, tap, switchMap, of, shareReplay, distinctUntilChanged } from 'rxjs';
 import { EntityDefinitionsResponseModel } from 'src/app/models/incoming/environment/entity-definitions-response-model';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { CacheKeys } from 'src/app/config/cache-keys';
@@ -21,24 +21,29 @@ export class EntityEntityService extends BaseRequestService {
       switchMap(cachedEntities => {
         if (cachedEntities) {
           return of(cachedEntities);
-        } else {
-          return this.activeEnvironmentUrl$.pipe(
-            switchMap(envUrl => {
-              if (!envUrl) return of([]);
-              
-              const url = API_ENDPOINTS.entities.getResourceUrl(envUrl);
-              return this.httpClient.get<EntityDefinitionsResponseModel>(url).pipe(
-                map(({ value }) => value.map(({ LogicalName: logicalName, DisplayName: { UserLocalizedLabel } = {}, EntitySetName: entitySetName }) => ({
-                  logicalName,
-                  displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
-                  entitySetName
-                }))),
-                tap(data => this.cacheService.setItem(data, key))
-              );
-            })
-          );
         }
-      })
+        return this.activeEnvironmentUrl$.pipe(
+          distinctUntilChanged(),
+          switchMap(envUrl => {
+            if (!envUrl) return of([]);
+
+            const url = API_ENDPOINTS.entities.getResourceUrl(envUrl as string);
+            return this.httpClient.get<EntityDefinitionsResponseModel>(url).pipe(
+              map(({ value }) => value.map(({
+                LogicalName: logicalName,
+                DisplayName: { UserLocalizedLabel } = {},
+                EntitySetName: entitySetName
+              }) => ({
+                logicalName,
+                displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
+                entitySetName
+              }))),
+              tap(data => this.cacheService.setItem(data, key)),
+            );
+          })
+        );
+      }),
+      shareReplay(1)
     );
   }
 

@@ -1,19 +1,17 @@
 import { Component, Input } from '@angular/core';
 import { QueryNode } from '../../models/query-node';
-import { AttributeData } from '../../models/constants/attribute-data';
 import { IAttributeData } from '../../models/constants/attribute-data';
+import { NodeAttribute } from '../../models/node-attribute';
 
 @Component({ template: '' })
 export class BaseFormComponent {
     @Input() selectedNode: QueryNode;
-    protected readonly AttributeData = AttributeData;
 
-    protected getAttributeValue(attributeData: IAttributeData): string {
-        const attribute = this.selectedNode.findAttribute(attributeData.EditorName);
-        return attribute?.value$.value || '';
+    protected getAttribute(attributeData: IAttributeData): NodeAttribute | undefined {
+        return this.selectedNode?.findAttribute(attributeData.EditorName);
     }
 
     protected updateAttribute(attributeData: IAttributeData, value: string): void {
-        this.selectedNode.setAttribute(attributeData, value);
+        this.selectedNode?.setAttribute(attributeData, value);
     }
 } 

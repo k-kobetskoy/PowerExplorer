@@ -1,48 +1,53 @@
-import { AttributeValidationTypes } from './../constants/attribute-validation-types';
-import { debounceTime, distinctUntilChanged, map, of } from 'rxjs';
+import { AttributeValidationTypes } from './constants/attribute-validation-types';
+import { distinctUntilChanged, map, Observable, of } from 'rxjs';
 import { IAttributeValidator } from "../abstract/i-attribute-validator";
 import { NodeAttribute } from '../../../models/node-attribute';
-import { IAttributeValidationResult } from '../abstract/i-attribute-validation-result';
+import { ValidationResult } from '../../validation.service';
+
+const VALID_RESULT: Readonly<ValidationResult> = {
+    isValid: true,
+    errors: [] as string[]
+};
 
 export class AttributeTypeValidator implements IAttributeValidator {
 
     constructor(private validationType: string) { }
 
-    getValidator(attribute: NodeAttribute): () => IAttributeValidationResult {
+    getValidator(attribute: NodeAttribute): Observable<ValidationResult> {
         switch (this.validationType) {
             case AttributeValidationTypes.typeNumber:
-                return () => this.validateNumber(attribute);
+                return this.validateNumber(attribute);
             case AttributeValidationTypes.typeBoolean:
-                return () => this.validateBoolean(attribute);
+                return this.validateBoolean(attribute);
             default:
-                return () => ({ isValid$: of(true), errorMessage: '' });
+                return of(VALID_RESULT);
         }
     }
 
-    private validateBoolean(attribute: NodeAttribute): IAttributeValidationResult {
-        const isValid = attribute.value$.pipe(
+    private validateBoolean(attribute: NodeAttribute): Observable<ValidationResult> {
+        return attribute.value$.pipe(
             distinctUntilChanged(),
-            debounceTime(300),
-            map(value => this.isBoolean(String(value || '')))
+            map(value => {
+                const isValid = this.isBoolean(String(value || ''));
+                return {
+                    isValid,
+                    errors: isValid ? [] : [`The value must be a boolean.`]
+                };
+            })
         );
-
-        return {
-            isValid$: isValid,
-            errorMessage: `The value for attribute '${attribute.editorName}' must be a boolean.`
-        };
     }
 
-    private validateNumber(attribute: NodeAttribute): IAttributeValidationResult {
-        const isValid = attribute.value$.pipe(
+    private validateNumber(attribute: NodeAttribute): Observable<ValidationResult> {
+        return attribute.value$.pipe(
             distinctUntilChanged(),
-            debounceTime(300),
-            map(value => this.isNumber(String(value || '')))
+            map(value => {
+                const isValid = this.isNumber(String(value || ''));
+                return {
+                    isValid,
+                    errors: isValid ? [] : [`The value must be a number.`]
+                };
+            })
         );
-
-        return {
-            isValid$: isValid,
-            errorMessage: `The value for attribute '${attribute.editorName}' must be a number.`
-        };
     }
 
     private isNumber(value: string): boolean {

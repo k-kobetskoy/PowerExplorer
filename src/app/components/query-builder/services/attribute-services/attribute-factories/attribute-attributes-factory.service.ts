@@ -1,5 +1,4 @@
-import { AttributeValidationTypes } from '../constants/attribute-validation-types';
-import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
+import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
 import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
@@ -14,7 +13,7 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 
 export class AttributeAttributesFactoryService implements IAttributeFactory {
 
-  constructor(private validators: AttributeValidatorRegistryService) { }
+  constructor() { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
@@ -44,66 +43,42 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
 
   private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
     let parsingSyncValidators: IAttributeValidator[] = [];
-    let parsingAsyncValidators: IAttributeValidator[] = [];
 
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
-      parsingAsyncValidators = this.getParserAsyncValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingAsyncValidators: parsingAsyncValidators, parsingSynchronousValidators: parsingSyncValidators };
+    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
   }
 
   private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {
     switch (attributeName) {
       case AttributeNames.attributeAggregate:
         return [
-          this.validators.list(AttributeValidationTypes.attributeAggregateList)
+          this.validators.list(AttributeValidationTypes.attributeAggregateList),
+          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure)
         ]
       case AttributeNames.attributeGroupBy:
         return [
-          this.validators.type(AttributeValueTypes.boolean)
-        ]
-      case AttributeNames.attributeDistinct:
-        return [
-          this.validators.type(AttributeValueTypes.boolean)
-        ]
-      case AttributeNames.attributeUserTimeZone:
-        return [
-          this.validators.type(AttributeValueTypes.boolean)
-        ]
-      case AttributeNames.attributeDateGrouping:
-        return [
-          this.validators.list(AttributeValidationTypes.attributeDateGrouping)
-        ]
-      default:
-        return []
-    }
-  }
-
-  private getParserAsyncValidators(attributeName: string): IAttributeValidator[] {
-    switch (attributeName) {
-      case AttributeNames.attributeAggregate:
-        return [
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-        ]
-      case AttributeNames.attributeGroupBy:
-        return [
+          this.validators.type(AttributeValueTypes.boolean),
           this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
           this.validators.condition(AttributeValidationTypes.attributeDistinctFalse),
         ]
       case AttributeNames.attributeDistinct:
         return [
+          this.validators.type(AttributeValueTypes.boolean),
           this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
           this.validators.condition(AttributeValidationTypes.attributeGroupByFalse),
         ]
       case AttributeNames.attributeUserTimeZone:
         return [
+          this.validators.type(AttributeValueTypes.boolean),
           this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
           this.validators.condition(AttributeValidationTypes.attributeGroupByTrue),
         ]
       case AttributeNames.attributeDateGrouping:
         return [
+          this.validators.list(AttributeValidationTypes.attributeDateGrouping),
           this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
           this.validators.condition(AttributeValidationTypes.attributeGroupByTrue),
         ]
@@ -116,7 +91,7 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
     switch (attributeName) {
       case AttributeNames.attributeName:
         return [
-          this.validators.server(AttributeValidationTypes.serverParentEntityAttribute)
+          this.validators.server(AttributeValidationTypes.serverParentEntityAttribute),
         ];
       case AttributeNames.attributeAlias:
         return [

@@ -6,6 +6,7 @@ import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
 import { AttributeFactoryResorlverService } from './attribute-services/attribute-factory-resorlver.service';
+import { ValidationService } from './validation.service';
 
 @Injectable({ providedIn: 'root' })
 
@@ -31,7 +32,8 @@ export class NodeTreeService {
 
   constructor(
     private _eventBus: EventBusService,
-    private attributeFactoryResolver: AttributeFactoryResorlverService
+    private attributeFactoryResolver: AttributeFactoryResorlverService,
+    private validationService: ValidationService
   ) {
     QueryNode.setNodeTreeService(this);
     
@@ -53,7 +55,7 @@ export class NodeTreeService {
   initializeNodeTree() {
     const nodeTree = new QueryNodeTree();
 
-    const rootNode = new QueryNode(QueryNodeData.Root.Name, this.attributeFactoryResolver);
+    const rootNode = new QueryNode(QueryNodeData.Root.Name, this.attributeFactoryResolver, this.validationService);
 
     nodeTree.root = rootNode;
 
@@ -77,7 +79,7 @@ export class NodeTreeService {
 
   addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
 
-    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
+    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver, this.validationService);
 
     if (!this._nodeTree$.value) {
       const nodeTree = new QueryNodeTree();
@@ -115,7 +117,7 @@ export class NodeTreeService {
   addNode(newNodeName: string): QueryNode {
     let parentNode = this._selectedNode$.value;
 
-    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver);
+    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver, this.validationService);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;

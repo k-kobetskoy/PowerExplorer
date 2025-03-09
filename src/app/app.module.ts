@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -33,6 +33,10 @@ import { StringFormComponent } from './components/query-builder/control-panel/qu
 import { LinkEntityFormComponent } from './components/query-builder/control-panel/query-forms/link-entity-form/link-entity-form.component';
 import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
 import { QueryTreeButtonBlockComponent } from './components/query-builder/query-tree-button-block/query-tree-button-block.component';
+import { ValidationDebugDirective } from './components/query-builder/tree-panel/validation-debug.directive';
+import { ValidationService } from './components/query-builder/services/validation.service';
+import { NodeAttribute } from './components/query-builder/models/node-attribute';
+import { QueryNode } from './components/query-builder/models/query-node';
 
 import { MsalRedirectComponent } from '@azure/msal-angular';
 import { MsalConfigDynamicModule } from './msal-config-dynamic.module';
@@ -57,6 +61,16 @@ import { BehaviorSubject } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { ResultTableComponent } from './components/query-builder/result-table/result-table.component';
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
+
+// Factory function to initialize validation service
+export function initValidationService(validationService: ValidationService) {
+  return () => {
+    // Register the validation service with NodeAttribute and QueryNode
+    NodeAttribute.setValidationService(validationService);
+    QueryNode.setValidationService(validationService);
+    return Promise.resolve();
+  };
+}
 
 @NgModule({ declarations: [
         AppComponent,
@@ -88,7 +102,8 @@ import { LoadingInterceptor } from './components/loading-indicator/loading.inter
         LinkEntityFormComponent,
         OrderFormComponent,
         QueryTreeButtonBlockComponent,
-        ResultTableComponent
+        ResultTableComponent,
+        ValidationDebugDirective
     ],
     bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
         BrowserAnimationsModule,
@@ -121,6 +136,13 @@ import { LoadingInterceptor } from './components/loading-indicator/loading.inter
             provide: HTTP_INTERCEPTORS,
             useClass: LoadingInterceptor,
             multi: true
+        },
+        ValidationService,
+        {
+          provide: APP_INITIALIZER,
+          useFactory: initValidationService,
+          deps: [ValidationService],
+          multi: true
         }
     ] })
 export class AppModule { }

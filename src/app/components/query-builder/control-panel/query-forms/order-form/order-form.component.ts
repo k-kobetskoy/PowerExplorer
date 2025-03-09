@@ -55,42 +55,19 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-
       this.initializeForm();
     }
   }
 
   private initializeForm() {
+    // Create form with existing attribute values
     this.orderForm = this.fb.group({
       attribute: [this.getAttributeValue(this.AttributeData.Order.Attribute)],
       descending: [this.getAttributeValue(this.AttributeData.Order.Desc) === 'true']
     });
 
     this.setupAttributeAutocomplete();
-
-    this.orderForm.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(formValues => {
-        Object.entries(formValues).forEach(([key, value]) => {
-          const stringValue = value !== null && value !== undefined
-            ? (typeof value === 'boolean' ? value.toString() : String(value))
-            : '';
-
-          let attribute;
-          if (key === 'attribute') {
-            attribute = this.AttributeData.Order.Attribute;
-          } else if (key === 'descending') {
-            attribute = this.AttributeData.Order.Desc;
-          }
-
-          if (attribute) {
-            const currentValue = this.getAttributeValue(attribute);
-            if (currentValue !== stringValue) {
-              this.updateAttribute(attribute, stringValue);
-            }
-          }
-        });
-      });
+    this.setupFormChangeHandlers();
   }
 
   private setupAttributeAutocomplete() {
@@ -139,6 +116,37 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );
+  }
+
+  private setupFormChangeHandlers() {
+    this.orderForm.valueChanges
+      .pipe(
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(formValues => {
+        // Update existing attributes with new values
+        Object.entries(formValues).forEach(([key, value]) => {
+          const stringValue = value !== null && value !== undefined
+            ? (typeof value === 'boolean' ? value.toString() : String(value))
+            : '';
+
+          let attribute;
+          if (key === 'attribute') {
+            attribute = this.AttributeData.Order.Attribute;
+          } else if (key === 'descending') {
+            attribute = this.AttributeData.Order.Desc;
+          }
+
+          if (attribute) {
+            const currentValue = this.getAttributeValue(attribute);
+            if (currentValue !== stringValue) {
+              this.updateAttribute(attribute, stringValue);
+              // No need to call validateNode() - validation will happen reactively
+            }
+          }
+        });
+      });
   }
 
   ngOnDestroy() {

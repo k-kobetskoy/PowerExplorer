@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -7,6 +7,7 @@ import { AttributeTypes } from '../../../models/constants/dataverse/attribute-ty
 import { FilterOperatorTypes } from '../../../models/constants/ui/option-set-types';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { BaseFormComponent } from '../base-form.component';
 
 @Component({
   selector: 'app-filter-condition-form',
@@ -14,13 +15,13 @@ import { AttributeData } from '../../../models/constants/attribute-data';
   styleUrls: ['./filter-condition-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FilterConditionFormComponent implements OnChanges, OnDestroy {
+export class FilterConditionFormComponent extends BaseFormComponent implements OnInit, OnChanges, OnDestroy {
   private _destroy$ = new Subject<void>();
   private readonly conditionAttribute = AttributeData.Condition.Attribute;
   private readonly conditionOperator = AttributeData.Condition.Operator;
   private readonly conditionValue = AttributeData.Condition.Value;
 
-  @Input() selectedNode: QueryNode;
+  @Input() override selectedNode: QueryNode;
 
   conditionForm: FormGroup;
   attributes$: Observable<AttributeModel[]>;
@@ -33,10 +34,16 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   constructor(
     private attributeEntityService: AttributeEntityService,
     private fb: FormBuilder
-  ) { }
+  ) { 
+    super();
+  }
+
+  ngOnInit() {
+    this.initializeForm();
+  }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode) {
+    if (changes['selectedNode'] && this.selectedNode) {
       this._destroy$.next();
       this.previousAttribute = null;
       this.initializeForm();
@@ -44,8 +51,11 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
   }
 
   private initializeForm() {
+    // Create form with existing attribute values
+    const attributeValue = this.getAttributeValue(this.conditionAttribute);
+    
     this.conditionForm = this.fb.group({
-      attribute: ['']
+      attribute: [attributeValue]
     });
 
     const parentEntityNode = this.selectedNode.getParentEntity();
@@ -70,10 +80,8 @@ export class FilterConditionFormComponent implements OnChanges, OnDestroy {
       })
     );
 
-    const attributeInitialValue = this.selectedNode.attributes$.getValue()[this.conditionAttribute.Order - 1]?.value$.getValue() ?? '';
-    this.conditionForm.patchValue({ attribute: attributeInitialValue });
-
-    this.setupFiltering(attributeInitialValue);
+    const initialValue = this.conditionForm.get('attribute').value;
+    this.setupFiltering(initialValue);
 
     this.conditionForm.get('attribute').valueChanges
       .pipe(distinctUntilChanged(), takeUntil(this._destroy$))

@@ -71,8 +71,8 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode || changes.attributeValue) {
-      this.destroy$.next();      
+    if (changes['selectedNode'] && this.selectedNode) {
+      this.destroy$.next();
       this.initializeForm();
     }
   }

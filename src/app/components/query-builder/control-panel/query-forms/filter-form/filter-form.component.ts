@@ -2,7 +2,7 @@ import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetection
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, debounceTime } from 'rxjs/operators';
 import { FilterStaticData } from '../../../models/constants/ui/filter-static-data';
 
 @Component({
@@ -43,12 +43,12 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-
       this.initializeForm();
     }
   }
 
   private initializeForm() {
+    // Create form with existing attribute values
     this.filterForm = this.fb.group({
       type: [this.getAttributeValue(this.AttributeData.Filter.Type)],
       isquickfindfields: [this.getAttributeValue(this.AttributeData.Filter.IsQuickFind) === 'true'],
@@ -56,24 +56,72 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
       overridequickfindrecordlimitdisabled: [this.getAttributeValue(this.AttributeData.Filter.BypassQuickFind) === 'true']
     });
 
-    this.filterForm.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(formValues => {
-        Object.entries(formValues).forEach(([key, value]) => {
-          const stringValue = value !== null && value !== undefined
-            ? (typeof value === 'boolean' ? value.toString() : String(value))
-            : '';
+    this.setupFormChangeHandlers();
+  }
 
-          const attribute = Object.values(this.AttributeData.Filter)
-            .find(attr => attr.EditorName === key);
+  private setupFormChangeHandlers() {
+    // Handle type attribute changes
+    this.filterForm.get('type').valueChanges
+      .pipe(
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(value => {
+        const stringValue = value !== null && value !== undefined ? String(value) : '';
+        const currentValue = this.getAttributeValue(this.AttributeData.Filter.Type);
+        
+        if (currentValue !== stringValue) {
+          console.debug(`Updating filter type from '${currentValue}' to '${stringValue}'`);
+          this.updateAttribute(this.AttributeData.Filter.Type, stringValue);
+        }
+      });
 
-          if (attribute) {
-            const currentValue = this.getAttributeValue(attribute);
-            if (currentValue !== stringValue) {
-              this.updateAttribute(attribute, stringValue);
-            }
-          }
-        });
+    // Handle isquickfindfields attribute changes
+    this.filterForm.get('isquickfindfields').valueChanges
+      .pipe(
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(value => {
+        const stringValue = value !== null && value !== undefined ? value.toString() : 'false';
+        const currentValue = this.getAttributeValue(this.AttributeData.Filter.IsQuickFind);
+        
+        if (currentValue !== stringValue) {
+          console.debug(`Updating filter isquickfindfields from '${currentValue}' to '${stringValue}'`);
+          this.updateAttribute(this.AttributeData.Filter.IsQuickFind, stringValue);
+        }
+      });
+
+    // Handle overridequickfindrecordlimitenabled attribute changes
+    this.filterForm.get('overridequickfindrecordlimitenabled').valueChanges
+      .pipe(
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(value => {
+        const stringValue = value !== null && value !== undefined ? value.toString() : 'false';
+        const currentValue = this.getAttributeValue(this.AttributeData.Filter.OverrideRecordLimit);
+        
+        if (currentValue !== stringValue) {
+          console.debug(`Updating filter overridequickfindrecordlimitenabled from '${currentValue}' to '${stringValue}'`);
+          this.updateAttribute(this.AttributeData.Filter.OverrideRecordLimit, stringValue);
+        }
+      });
+
+    // Handle overridequickfindrecordlimitdisabled attribute changes
+    this.filterForm.get('overridequickfindrecordlimitdisabled').valueChanges
+      .pipe(
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(value => {
+        const stringValue = value !== null && value !== undefined ? value.toString() : 'false';
+        const currentValue = this.getAttributeValue(this.AttributeData.Filter.BypassQuickFind);
+        
+        if (currentValue !== stringValue) {
+          console.debug(`Updating filter overridequickfindrecordlimitdisabled from '${currentValue}' to '${stringValue}'`);
+          this.updateAttribute(this.AttributeData.Filter.BypassQuickFind, stringValue);
+        }
       });
   }
 

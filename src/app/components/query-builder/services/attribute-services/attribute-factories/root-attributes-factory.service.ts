@@ -1,5 +1,5 @@
 import { AttributeValidators } from '../../../models/attribute-validators';
-import { AttributeValidationTypes } from '../constants/attribute-validation-types';
+import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
 import { Injectable } from '@angular/core';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';

@@ -1,6 +1,7 @@
+import { Observable } from 'rxjs';
 import { NodeAttribute } from "../../../models/node-attribute";
-import { IAttributeValidationResult } from "./i-attribute-validation-result";
+import { ValidationResult } from '../../validation.service';
 
 export interface IAttributeValidator {
-    getValidator(attribute: NodeAttribute): () => IAttributeValidationResult;
+    getValidator(attribute: NodeAttribute): Observable<ValidationResult>;
 }

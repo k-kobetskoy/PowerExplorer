@@ -21,5 +21,6 @@ export const AttributeValidationTypes = {
     listFilterType: 'listFilterType',
     listLinkType: 'listLinkType',
     orderFetchAggregateFalse: 'orderFetchAggregateFalse',
+    attributeNameRequired: 'attributeNameRequired',
 } as const;
 export type AttributeValidationTypes = (typeof AttributeValidationTypes)[keyof typeof AttributeValidationTypes];

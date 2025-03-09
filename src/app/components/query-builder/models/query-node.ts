@@ -1,10 +1,11 @@
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap, Subscription, Subject, takeUntil } from "rxjs";
+import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap, Subscription, Subject, takeUntil, take, catchError, shareReplay } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
 import {  IAttributeData } from "./constants/attribute-data";
 import { AttributeFactoryResorlverService } from "../services/attribute-services/attribute-factory-resorlver.service";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
 import { NodeTreeService } from "../services/node-tree.service";
+import { ValidationService, ValidationResult } from '../services/validation.service';
 
 export class QueryNode {
     defaultNodeDisplayValue: string;
@@ -21,22 +22,22 @@ export class QueryNode {
     next?: QueryNode | null;
     parent?: QueryNode | null;
     visible: boolean;
-    validationErrors$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     entitySetName$: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     relationship$?: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     showOnlyLookups$?: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    validationPassed$: Observable<boolean>;
     tagDisplayValue$: Observable<string>;
     nodeDisplayValue$: Observable<string>;
+    validationResult$: Observable<ValidationResult>;
+
     private readonly attributeFactory: IAttributeFactory;
     private static nodeTreeService: NodeTreeService;
     
-    // Subject to signal when the node is destroyed
     private destroyed$ = new Subject<void>();
 
     constructor(
         nodeName: string,
-        private attributeFactoryResolver: AttributeFactoryResorlverService
+        private attributeFactoryResolver: AttributeFactoryResorlverService,
+        private validationService: ValidationService
     ) {
         this.expandable = false;
         this.level = 0;
@@ -58,11 +59,12 @@ export class QueryNode {
         this.nodeDisplayValue$ = this.createNodeDisplayValueObservable();
 
         this.attributeFactory = this.attributeFactoryResolver.getAttributesFactory(nodeName);
-        this.validationPassed$ = this.validateNode();
-
+            
         if (this.nodeName === QueryNodeData.Entity.Name) {
             this.setupEntitySetNameSubscription();
         }
+
+        this.validationResult$ = this.validationService.validateNode(this, this.destroyed$);
     }
 
     public static setNodeTreeService(nodeTreeService: NodeTreeService) {
@@ -119,57 +121,21 @@ export class QueryNode {
                 );
             }),
             distinctUntilChanged(),
-            takeUntil(this.destroyed$) 
-        );
-    }
-
-    validateNode(): Observable<boolean> {
-        return this.attributes$.pipe(
-            switchMap(attributes => {
-                if (attributes.length === 0) {
-                    return of(true);
-                }
-                
-                return combineLatest(
-                    attributes.map(attr => {
-                        return attr.getValidationState().pipe(
-                            switchMap(result => {
-                                return result.isValid$.pipe(
-                                    map(isValid => ({ isValid, errorMessage: result.errorMessage })),
-                                );
-                            })
-                        );
-                    })
-                ).pipe(
-                    map(results => {
-                        try {
-                            const errors = results
-                                .filter(result => !result.isValid)
-                                .map(result => result.errorMessage)
-                                .filter(error => error != null && error !== '');
-                            
-                            console.log(`[QueryNode] Found ${errors.length} errors for node: ${this.nodeName}`);
-                            this.validationErrors$.next(errors);
-                            return errors.length === 0;
-                        } catch (error) {
-                            console.error(`[QueryNode] Error processing validation results for node: ${this.nodeName}`, error);
-                            this.validationErrors$.next([`Error processing validation: ${error.message}`]);
-                            return false;
-                        }
-                    }),
-                    takeUntil(this.destroyed$)
-                );
-            }),
-            takeUntil(this.destroyed$)
+            takeUntil(this.destroyed$),
+            shareReplay(1)
         );
     }
 
     getParentEntity(node: QueryNode = this): QueryNode {
-        if (node.nodeName === QueryNodeData.Root.Name) return null;
+        if (node.nodeName === QueryNodeData.Root.Name) {
+            return null;
+        }
 
         const parent = node.parent;
 
-        if (!parent) throw new Error('Parent not found');
+        if (!parent) {
+            return null; // Return null instead of throwing an error
+        }
 
         if (parent?.nodeName === QueryNodeData.Entity.Name || parent?.nodeName === QueryNodeData.Link.Name) {
             return parent;
@@ -179,15 +145,12 @@ export class QueryNode {
     }
 
     getParentEntityName(parentEntityNode: QueryNode): BehaviorSubject<string> {
-        // Parent entity node is already provided, no need to look it up again
         if (!parentEntityNode) {
-            console.warn('[QueryNode] getParentEntityName: Parent entity node is null');
             return new BehaviorSubject<string>('');
         }
 
         const nameAttribute = parentEntityNode.attributes$.value.find(a => a.editorName === 'name');
         if (!nameAttribute) {
-            console.warn(`[QueryNode] getParentEntityName: 'name' attribute not found on entity node`, parentEntityNode);
             return new BehaviorSubject<string>('');
         }
 
@@ -199,7 +162,6 @@ export class QueryNode {
         try {
             let attribute = this.findOrCreateAttribute(attributeData);
             
-            // Handle objects with logicalName property
             if (typeof value === 'object' && value && 'logicalName' in value) {
                 attribute.value$.next(value.logicalName);
             } else {
@@ -228,7 +190,6 @@ export class QueryNode {
         return this.findAttribute(attributeName);
     }
 
-
     addAttribute(attribute: NodeAttribute): void {
         let attributes = this.attributes$.value;
 
@@ -254,12 +215,4 @@ export class QueryNode {
         this.attributesCount = indexToInsert + 1;
         attributes[indexToInsert] = attribute;
     }
-
-    handleAttributeValidationChange(change: {attributeName: string, errors: string[]}) {
-        const currentErrors = this.validationErrors$.value;
-        const otherErrors = currentErrors.filter(err => !err.startsWith(`${change.attributeName}:`));
-        const newErrors = change.errors.map(err => `${change.attributeName}: ${err}`);
-        this.validationErrors$.next([...otherErrors, ...newErrors]);
-    }
 }
-

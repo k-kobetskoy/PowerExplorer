@@ -52,9 +52,8 @@ export class BooleanFormComponent extends BaseFormComponent implements OnInit, O
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.selectedNode || changes.attributeValue) {
+    if (changes['selectedNode'] && this.selectedNode) {
       this.destroy$.next();
-
       this.initializeForm();
     }
   }
