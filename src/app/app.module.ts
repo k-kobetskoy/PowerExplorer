@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, APP_INITIALIZER } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -33,10 +33,7 @@ import { StringFormComponent } from './components/query-builder/control-panel/qu
 import { LinkEntityFormComponent } from './components/query-builder/control-panel/query-forms/link-entity-form/link-entity-form.component';
 import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
 import { QueryTreeButtonBlockComponent } from './components/query-builder/query-tree-button-block/query-tree-button-block.component';
-import { ValidationDebugDirective } from './components/query-builder/tree-panel/validation-debug.directive';
 import { ValidationService } from './components/query-builder/services/validation.service';
-import { NodeAttribute } from './components/query-builder/models/node-attribute';
-import { QueryNode } from './components/query-builder/models/query-node';
 
 import { MsalRedirectComponent } from '@azure/msal-angular';
 import { MsalConfigDynamicModule } from './msal-config-dynamic.module';
@@ -62,87 +59,74 @@ import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { ResultTableComponent } from './components/query-builder/result-table/result-table.component';
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
 
-// Factory function to initialize validation service
-export function initValidationService(validationService: ValidationService) {
-  return () => {
-    // Register the validation service with NodeAttribute and QueryNode
-    NodeAttribute.setValidationService(validationService);
-    QueryNode.setValidationService(validationService);
-    return Promise.resolve();
-  };
-}
 
-@NgModule({ declarations: [
-        AppComponent,
-        MainToolbarComponent,
-        QueryBuilder,
-        ConnectionsComponent,
-        MenuComponent,
-        UserInfoComponent,
-        ConnectionsDialogComponent,
-        ControlPanelComponent,
-        TreePanelComponent,
-        CodeEditorComponent,
-        CodeEditorFooterComponent,
-        NodeStyleDirective,
-        QuickActionsComponent,
-        ConnectionsComponent,
-        LoadingIndicatorComponent,
-        EntityFormComponent,
-        RootFormComponent,
-        AttributeFormComponent,
-        FilterFormComponent,
-        FilterConditionFormComponent,
-        NumberFormComponent,
-        BooleanFormComponent,
-        DateTimeFormComponent,
-        IdFormComponent,
-        PicklistFormComponent,
-        StringFormComponent,
-        LinkEntityFormComponent,
-        OrderFormComponent,
-        QueryTreeButtonBlockComponent,
-        ResultTableComponent,
-        ValidationDebugDirective
-    ],
-    bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
-        BrowserAnimationsModule,
-        AppRoutingModule,
-        MatDialogModule,
-        MatButtonModule,
-        MatListModule,
-        MatRippleModule,
-        AngularSplitModule,
-        MatTabsModule,
-        MatIconModule,
-        FormsModule,
-        CdkTreeModule,
-        MatProgressSpinnerModule,
-        MatAutocompleteModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatCheckboxModule,
-        MatSelectModule,
-        MatSlideToggleModule,
-        ReactiveFormsModule,
-        MatTableModule,        
-        MsalConfigDynamicModule.forRoot('assets/configuration.json')
-        ], providers: [
-        { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
-        { provide: ACTIVE_ENVIRONMENT_URL, useValue: new BehaviorSubject<string>('') },
-        { provide: USER_IS_LOGGED_IN, useValue: new BehaviorSubject<boolean>(false) },
-        provideHttpClient(withInterceptorsFromDi()),
-        {
-            provide: HTTP_INTERCEPTORS,
-            useClass: LoadingInterceptor,
-            multi: true
-        },
-        ValidationService,
-        {
-          provide: APP_INITIALIZER,
-          useFactory: initValidationService,
-          deps: [ValidationService],
-          multi: true
-        }
-    ] })
+@NgModule({
+  declarations: [
+    AppComponent,
+    MainToolbarComponent,
+    QueryBuilder,
+    ConnectionsComponent,
+    MenuComponent,
+    UserInfoComponent,
+    ConnectionsDialogComponent,
+    ControlPanelComponent,
+    TreePanelComponent,
+    CodeEditorComponent,
+    CodeEditorFooterComponent,
+    NodeStyleDirective,
+    QuickActionsComponent,
+    ConnectionsComponent,
+    LoadingIndicatorComponent,
+    EntityFormComponent,
+    RootFormComponent,
+    AttributeFormComponent,
+    FilterFormComponent,
+    FilterConditionFormComponent,
+    NumberFormComponent,
+    BooleanFormComponent,
+    DateTimeFormComponent,
+    IdFormComponent,
+    PicklistFormComponent,
+    StringFormComponent,
+    LinkEntityFormComponent,
+    OrderFormComponent,
+    QueryTreeButtonBlockComponent,
+    ResultTableComponent
+  ],
+  bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
+    BrowserAnimationsModule,
+    AppRoutingModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatListModule,
+    MatRippleModule,
+    AngularSplitModule,
+    MatTabsModule,
+    MatIconModule,
+    FormsModule,
+    CdkTreeModule,
+    MatProgressSpinnerModule,
+    MatAutocompleteModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    ReactiveFormsModule,
+    MatTableModule,
+    MsalConfigDynamicModule.forRoot('assets/configuration.json')
+  ], providers: [
+    { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
+    { provide: ACTIVE_ENVIRONMENT_URL, useValue: new BehaviorSubject<string>('') },
+    { provide: USER_IS_LOGGED_IN, useValue: new BehaviorSubject<boolean>(false) },
+    provideHttpClient(withInterceptorsFromDi()),
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LoadingInterceptor,
+      multi: true
+    },
+    ValidationService
+
+  ]
+})
 export class AppModule { }

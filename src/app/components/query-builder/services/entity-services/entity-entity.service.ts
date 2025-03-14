@@ -12,44 +12,39 @@ export class EntityEntityService extends BaseRequestService {
   constructor() { super(); }
 
   getEntities(): Observable<EntityModel[]> {
+    return this.activeEnvironmentUrl$.pipe(
+      switchMap(envUrl => {
+        if (!envUrl) return of([]);
 
-    this.getActiveEnvironmentUrl();
+        const key = `${this.prepareEnvUrl(envUrl)}_${CacheKeys.Entities}`;
+        const entities$ = this.cacheService.getItem<EntityModel[]>(key);  
 
-    const key = `${CacheKeys.Entities}`;
-
-    return this.cacheService.getItem<EntityModel[]>(key).pipe(
-      switchMap(cachedEntities => {
-        if (cachedEntities) {
-          return of(cachedEntities);
+        if (entities$.value) {
+          return entities$.asObservable();
         }
-        return this.activeEnvironmentUrl$.pipe(
-          distinctUntilChanged(),
-          switchMap(envUrl => {
-            if (!envUrl) return of([]);
 
-            const url = API_ENDPOINTS.entities.getResourceUrl(envUrl as string);
-            return this.httpClient.get<EntityDefinitionsResponseModel>(url).pipe(
-              map(({ value }) => value.map(({
-                LogicalName: logicalName,
-                DisplayName: { UserLocalizedLabel } = {},
-                EntitySetName: entitySetName
-              }) => ({
-                logicalName,
-                displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
-                entitySetName
-              }))),
-              tap(data => this.cacheService.setItem(data, key)),
-            );
-          })
+        const url = API_ENDPOINTS.entities.getResourceUrl(envUrl as string);  
+
+        return this.httpClient.get<EntityDefinitionsResponseModel>(url).pipe(
+          map(({ value }) => value.map(({
+            LogicalName: logicalName,
+            DisplayName: { UserLocalizedLabel } = {},
+            EntitySetName: entitySetName
+          }) => ({
+            logicalName,
+            displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
+            entitySetName
+          }))),
+          tap(data => this.cacheService.setItem(data, key)),  
         );
-      }),
-      shareReplay(1)
+      })
     );
   }
 
   getEntityByLogicalName(logicalName: string): Observable<EntityModel | null> {
     return this.getEntities().pipe(
-      map(entities => entities.find(entity => entity.logicalName === logicalName) || null)
+      map(entities => entities.find(entity => entity.logicalName === logicalName) || null),
+      shareReplay(1)
     );
   }
 }

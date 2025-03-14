@@ -173,4 +173,9 @@ export class QueryNodeData {
             AttributesCount: 1
         };
     }
+
+    static getNodeAttributes(nodeName: string): string[] {
+        const nodeData = this.getNodeData(nodeName);
+        return nodeData.Attributes;
+    }
 }

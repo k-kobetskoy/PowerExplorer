@@ -16,9 +16,6 @@
            type="text"
            [formControl]="valueFormControl"
            placeholder="Enter string value">
-    <mat-error *ngIf="errorMessage$ | async as error">
-      {{error}}
-    </mat-error>
     <mat-hint *ngIf="showWildcardInfo$ | async">
       <div class="wildcard-info">
         <mat-icon>info</mat-icon>

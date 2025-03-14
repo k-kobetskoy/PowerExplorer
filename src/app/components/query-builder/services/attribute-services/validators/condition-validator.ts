@@ -7,7 +7,7 @@ import { ValidationResult } from '../../validation.service';
 export class ConditionValidator implements IAttributeValidator {
     constructor() {}
 
-    getValidator(attribute: NodeAttribute): Observable<ValidationResult> {
+    validate(attribute: NodeAttribute): Observable<ValidationResult> {
         return this.validateConditionStructure(attribute.parentNode);
     }
 

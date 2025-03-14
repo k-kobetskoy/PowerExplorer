@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
-import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
-import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
+import { AttributeValidationTypes } from '../validators/OBSOLETE constants/OBSOLETE attribute-validation-types';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { QueryNode } from '../../../models/query-node';
@@ -13,7 +12,7 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 
 export class FilterAttributesFactoryService implements IAttributeFactory {
 
-  constructor(private validators: AttributeValidatorRegistryService) { }
+  constructor() { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     
@@ -23,15 +22,15 @@ export class FilterAttributesFactoryService implements IAttributeFactory {
 
     switch (attributeName) {
       case attribute.Type.EditorName:
-        return new NodeAttribute(node, validators,  attribute.Type, value);
+        return new NodeAttribute(node, validators,  attribute.Type, value, parserValidation);
       case AttributeNames.filterIsQuickFind:
-        return new NodeAttribute(node, validators,  attribute.IsQuickFind, value);
+        return new NodeAttribute(node, validators,  attribute.IsQuickFind, value, parserValidation);
       case AttributeNames.filterBypassQuickFind:
-        return new NodeAttribute(node, validators,  attribute.BypassQuickFind, value);
+        return new NodeAttribute(node, validators,  attribute.BypassQuickFind, value, parserValidation);
       case AttributeNames.filterOverrideRecordLimit:
-        return new NodeAttribute(node, validators,  attribute.OverrideRecordLimit, value);
+        return new NodeAttribute(node, validators,  attribute.OverrideRecordLimit, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 

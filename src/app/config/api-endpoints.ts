@@ -1,4 +1,4 @@
-import { AttributeTypes } from "../components/query-builder/models/constants/dataverse/attribute-types";
+import { AttributeType } from "../components/query-builder/models/constants/dataverse/attribute-types";
 
 export const API_ENDPOINTS = {
     environments: {
@@ -21,12 +21,12 @@ export const API_ENDPOINTS = {
         optionSetType: 'PicklistAttributeMetadata',
         getResourceUrl(apiUrl: string, entityLogicalName: string, attributeName: string, attributeType: string) {
             switch (attributeType) {
-                case AttributeTypes.PICKLIST:
+                case AttributeType.PICKLIST:
                     break;
-                case AttributeTypes.STATE:
+                case AttributeType.STATE:
                     this.optionSetType = 'StateAttributeMetadata';
                     break;
-                case AttributeTypes.STATUS:
+                case AttributeType.STATUS:
                     this.optionSetType = 'StatusAttributeMetadata';
                     break;
             }

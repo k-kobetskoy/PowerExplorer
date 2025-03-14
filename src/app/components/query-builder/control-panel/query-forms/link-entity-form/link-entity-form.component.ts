@@ -1,15 +1,17 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, finalize } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, finalize, filter, catchError, take, shareReplay } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { LinkTypeOptions } from '../../../models/constants/ui/link-type-options';
-import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
-
+import { AttributeType } from '../../../models/constants/dataverse/attribute-types';
+import { QueryNode } from '../../../models/query-node';
+import { AttributeData } from '../../../models/constants/attribute-data';
+import { AttributeNames } from '../../../models/constants/attribute-names';
 @Component({
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',
@@ -49,25 +51,36 @@ import { AttributeTypes } from '../../../models/constants/dataverse/attribute-ty
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LinkEntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
-  private destroy$ = new Subject<void>();
-  
-  // Form group
-  linkEntityForm: FormGroup;
+  @Input() selectedNode: QueryNode;
 
-  // Observables for autocomplete
-  filteredEntities$: Observable<EntityModel[]>;
-  filteredFromAttributes$: Observable<AttributeModel[]>;
-  filteredToAttributes$: Observable<AttributeModel[]>;
+  private destroy$ = new Subject<void>();
 
   readonly linkTypes = LinkTypeOptions;
 
+  entityNameFormControl = new FormControl('');
+  fromAttributeFormControl = new FormControl('');
+  toAttributeFormControl = new FormControl('');
+  linkTypeFormControl = new FormControl('');
+  aliasFormControl = new FormControl('');
+  intersectFormControl = new FormControl(false);
+  visibleFormControl = new FormControl(false);
+  showOnlyLookupsFormControl = new FormControl(false);
+
+  // Observables for autocomplete
+  filteredEntities$: Observable<EntityModel[]>; // New entity to link to 
+  filteredFromAttributes$: Observable<AttributeModel[]>; // From attribute of the new entity
+  filteredToAttributes$: Observable<AttributeModel[]>; // To attribute of the parent entity
+
+  entities$: Observable<EntityModel[]>;
+  fromAttributes$: Observable<AttributeModel[]>;
+  toAttributes$: Observable<AttributeModel[]>;
+
+
+  showOnlyLookups$: Observable<boolean>;
+
   constructor(
     private entityService: EntityEntityService,
-    private attributeService: AttributeEntityService,
-    private fb: FormBuilder
-  ) {
-    super();
-  }
+    private attributeService: AttributeEntityService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -75,176 +88,195 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
-      // Clean up existing subscriptions
       this.destroy$.next();
-      
-      // Reinitialize the form
       this.initializeForm();
     }
   }
 
   private initializeForm() {
-    this.createFormGroup();
     this.setupInitialValues();
-    this.setupEntityAutocomplete();
-    this.setupAttributeAutocomplete();
-    this.setupFormSubscriptions();
+
+    // TODO: Check if this is needed
+    // Model -> Form input
+    this.setupEntityModelToFormBinding();
+    this.setupFromAttributeModelToFormBindings();
+    this.setupToAttributeModelToFormBindings();
+
+    this.setupEntityAutocomplete();    
+    this.setupFromAttributeAutocomplete();
+    this.setupToAttributeAutocomplete();
   }
 
-  private createFormGroup() {
-    this.linkEntityForm = this.fb.group({
-      entity: [''],
-      fromAttribute: [{ value: '', disabled: true }],
-      toAttribute: [{ value: '', disabled: true }],
-      linkType: [''],
-      alias: [''],
-      intersect: [false],
-      visible: [false],
-      showOnlyLookups: [false]
+  private setupEntityModelToFormBinding() {
+    this.selectedNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      takeUntil(this.destroy$),
+      filter(attributes => attributes.length > 0),
+    ).subscribe(attributes => {
+      const entityName = attributes.find(attr => attr.editorName === AttributeNames.linkEntity);
+
+      if (entityName) {
+        entityName.value$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged()
+        ).subscribe(value => {
+          this.entityNameFormControl.setValue(value, { emitEvent: false });
+        });
+      }
+    });
+  }
+
+  setupFromAttributeModelToFormBindings() {
+    this.selectedNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      takeUntil(this.destroy$),
+      filter(attributes => attributes.length > 0),
+    ).subscribe(attributes => {
+      const fromAttribute = attributes.find(attr => attr.editorName === AttributeNames.linkFromAttribute);
+      if (fromAttribute) {
+        fromAttribute.value$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged()
+        ).subscribe(value => {
+          this.fromAttributeFormControl.setValue(value, { emitEvent: false });
+        });
+      }
+    });
+  }
+
+  setupToAttributeModelToFormBindings() {
+    this.selectedNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      takeUntil(this.destroy$),
+      filter(attributes => attributes.length > 0),
+    ).subscribe(attributes => {
+      const toAttribute = attributes.find(attr => attr.editorName === AttributeNames.linkToAttribute);
+      if (toAttribute) {
+        toAttribute.value$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged()
+        ).subscribe(value => {
+          this.toAttributeFormControl.setValue(value, { emitEvent: false });
+        });
+      }
     });
   }
 
   private setupInitialValues() {
-    // Set initial values from node attributes
-    this.linkEntityForm.patchValue({
-      entity: this.getAttributeValue(this.AttributeData.Link.Entity),
-      fromAttribute: this.getAttributeValue(this.AttributeData.Link.From),
-      toAttribute: this.getAttributeValue(this.AttributeData.Link.To),
-      linkType: this.getAttributeValue(this.AttributeData.Link.Type),
-      alias: this.getAttributeValue(this.AttributeData.Link.Alias),
-      intersect: this.getAttributeValue(this.AttributeData.Link.Intersect) === 'true',
-      visible: this.getAttributeValue(this.AttributeData.Link.Visible) === 'true',
-      showOnlyLookups: this.selectedNode.showOnlyLookups$.value
-    });
+    this.showOnlyLookups$ = this.showOnlyLookupsFormControl.valueChanges.pipe(
+      startWith(this.showOnlyLookupsFormControl.value), shareReplay(1)
+    );
+
+    const linkType = this.getAttribute(AttributeData.Link.Type, this.selectedNode);
+    if (linkType) {
+      this.linkTypeFormControl.setValue(linkType.value$.value, { emitEvent: false });
+    }
+
+    const alias = this.getAttribute(AttributeData.Link.Alias, this.selectedNode);
+    if (alias) {
+      this.aliasFormControl.setValue(alias.value$.value, { emitEvent: false });
+    }
+
+    const intersect = this.getAttribute(AttributeData.Link.Intersect, this.selectedNode);
+    if (intersect) {
+      this.intersectFormControl.setValue(intersect.value$.value === 'true', { emitEvent: false });
+    }
+
+    const visible = this.getAttribute(AttributeData.Link.Visible, this.selectedNode);
+    if (visible) {
+      this.visibleFormControl.setValue(visible.value$.value === 'true', { emitEvent: false });
+    }
   }
 
   private setupEntityAutocomplete() {
     this.filteredEntities$ = combineLatest([
-      this.linkEntityForm.get('entity').valueChanges.pipe(startWith(this.linkEntityForm.get('entity').value || '')),
+      this.entityNameFormControl.valueChanges.pipe(startWith(this.entityNameFormControl.value || '')),
       this.entityService.getEntities()
     ]).pipe(
-      debounceTime(300),
       map(([value, entities]) => this.filterEntities(value, entities))
     );
   }
 
-  private setupAttributeAutocomplete() {
-    // From attributes
-    this.filteredFromAttributes$ = combineLatest([
-      this.linkEntityForm.get('fromAttribute').valueChanges.pipe(startWith(this.linkEntityForm.get('fromAttribute').value || '')),
-      this.linkEntityForm.get('entity').valueChanges.pipe(
-        switchMap(entityName => {
-          if (!entityName) return of([]);
-          return this.attributeService.getAttributes(entityName);
-        })
-      ),
-      this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
-    ]).pipe(
-      map(([value, attributes, showOnlyLookups]) => 
-        this.filterAttributes(value, attributes, showOnlyLookups)
-      )
+  private setupFromAttributeAutocomplete() {
+    const attributes$ = this.selectedNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      filter(attributes => attributes.length > 0),
+      map(attributes => attributes.find(attr => attr.editorName === AttributeNames.linkEntity)),
+      takeUntil(this.destroy$),
+      switchMap(entityAttribute => {
+        if (!entityAttribute) { return of([] as AttributeModel[]) };
+        return entityAttribute.validationResult$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged((prev, curr) => prev.isValid === curr.isValid),
+          switchMap(validationResult => {
+            if (!validationResult) { return of([] as AttributeModel[]) }
+            return entityAttribute.value$.pipe(
+              takeUntil(this.destroy$),
+              distinctUntilChanged(),
+              switchMap(entityName => this.attributeService.getAttributes(entityName)),
+              catchError(error => {
+                console.error(`[LinkEntityFormComponent] Error fetching attributes`, error);
+                return of([] as AttributeModel[]);
+              })
+            );
+          })
+        )
+      })
     );
 
-    // To attributes
-    const parentEntityNode = this.selectedNode.getParentEntity();
-    if (!parentEntityNode) {
+    const fromAttributeInput$ = this.fromAttributeFormControl.valueChanges.pipe(
+      startWith(this.fromAttributeFormControl.value || '')
+    );
+
+    this.filteredFromAttributes$ = combineLatest([
+      fromAttributeInput$,
+      attributes$,
+      this.showOnlyLookups$
+    ]).pipe(
+      map(([value, attributes, showOnlyLookups]) => this.filterAttributes(value, attributes, showOnlyLookups))
+    );
+  }
+
+  private setupToAttributeAutocomplete() {
+    const parentNode = this.selectedNode.getParentEntity();
+    if (!parentNode || parentNode.validationResult$.pipe(take(1)).subscribe(result => !result.isValid)) {
       this.filteredToAttributes$ = of([]);
       return;
     }
 
-    this.filteredToAttributes$ = combineLatest([
-      this.linkEntityForm.get('toAttribute').valueChanges.pipe(startWith(this.linkEntityForm.get('toAttribute').value || '')),
-      this.selectedNode.getParentEntityName(parentEntityNode).pipe(
-        distinctUntilChanged(),
-        switchMap(entityName => {
-          if (!entityName || entityName.trim() === '') {
-            console.warn('Empty parent entity name');
-            return of([]);
-          }
-          
-          // Check parent entity validation state before proceeding
-          return parentEntityNode.validationPassed$.pipe(
-            switchMap(isValid => {
-              if (!isValid) {
-                console.warn(`Parent entity '${entityName}' validation failed`);
-                return of([]);
-              }              
-              return this.attributeService.getAttributes(entityName);
-            })
-          );
-        })
-      ),
-      this.linkEntityForm.get('showOnlyLookups').valueChanges.pipe(startWith(this.linkEntityForm.get('showOnlyLookups').value))
-    ]).pipe(
-      map(([value, attributes, showOnlyLookups]) => 
-        this.filterAttributes(value, attributes, showOnlyLookups)
-      )
+    const parentEntityAttribute$ = parentNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      map(attributes => attributes.find(attr => attr.editorName === AttributeNames.entityName)),
+      takeUntil(this.destroy$),
+      switchMap(entityAttribute => {
+        return entityAttribute.value$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged(),
+          switchMap(entityName => this.attributeService.getAttributes(entityName)),
+          catchError(error => {
+            console.error(`[LinkEntityFormComponent] Error fetching attributes`, error);
+            return of([] as AttributeModel[]);
+          })
+        )
+      })
     );
-  }
 
-  private setupFormSubscriptions() {
-    this.linkEntityForm.get('entity').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (value) {
-          this.linkEntityForm.get('fromAttribute').enable();
-        } else {
-          this.linkEntityForm.get('fromAttribute').disable();
-          this.linkEntityForm.get('fromAttribute').setValue('');
-        }
-        this.updateAttribute(this.AttributeData.Link.Entity, value);
-      });
+    const toAttributeInput$ = this.toAttributeFormControl.valueChanges.pipe(
+      startWith(this.toAttributeFormControl.value || '')
+    );
 
-    const parentEntityNode = this.selectedNode.getParentEntity();
-    if (parentEntityNode) {
-      this.selectedNode.getParentEntityName(parentEntityNode)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(entityName => {
-          if (entityName) {
-            this.linkEntityForm.get('toAttribute').enable();
-          } else {
-            this.linkEntityForm.get('toAttribute').disable();
-            this.linkEntityForm.get('toAttribute').setValue('');
-          }
-        });
-    } else {
-      this.linkEntityForm.get('toAttribute').disable();
-      this.linkEntityForm.get('toAttribute').setValue('');
-    }
-
-    // Subscribe to form value changes
-    this.linkEntityForm.get('fromAttribute').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Link.From, value));
-
-    this.linkEntityForm.get('toAttribute').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Link.To, value));
-
-    this.linkEntityForm.get('linkType').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Link.Type, value));
-
-    this.linkEntityForm.get('alias').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Link.Alias, value));
-
-    this.linkEntityForm.get('intersect').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Link.Intersect, value.toString()));
-
-    this.linkEntityForm.get('visible').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.updateAttribute(this.AttributeData.Link.Visible, value.toString()));
-
-    this.linkEntityForm.get('showOnlyLookups').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => this.selectedNode.showOnlyLookups$.next(value));
+    this.filteredToAttributes$ = combineLatest([
+      toAttributeInput$,
+      parentEntityAttribute$,
+      this.showOnlyLookups$
+    ]).pipe(
+      map(([value, attributes, showOnlyLookups]) => this.filterAttributes(value, attributes, showOnlyLookups))
+    );
   }
 
   private filterEntities(value: string, entities: EntityModel[]): EntityModel[] {
     const filterValue = value?.toLowerCase() || '';
-    return entities.filter(entity => 
+    return entities.filter(entity =>
       entity.logicalName.toLowerCase().includes(filterValue) ||
       entity.displayName.toLowerCase().includes(filterValue)
     );
@@ -253,7 +285,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   private filterAttributes(value: string, attributes: AttributeModel[], showOnlyLookups: boolean): AttributeModel[] {
     let filtered = attributes;
     if (showOnlyLookups) {
-      filtered = filtered.filter(attr => attr.attributeType === AttributeTypes.LOOKUP);
+      filtered = filtered.filter(attr => attr.attributeType === AttributeType.LOOKUP);
     }
     const filterValue = value?.toLowerCase() || '';
     return filtered.filter(attr =>

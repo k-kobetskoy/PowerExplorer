@@ -9,22 +9,19 @@ import { PicklistModel } from 'src/app/models/incoming/picklist/picklist-model';
 export class PicklistEntityService extends BaseRequestService {
 
   constructor() { super(); }
-  
+
   getOptions(entityLogicalName: string, attributeName: string, attributeType: string): Observable<PicklistModel[]> {
-
-    this.getActiveEnvironmentUrl();
-
-    const key = `${entityLogicalName}_${attributeName}`;
-
-    const options$ = this.cacheService.getItem<PicklistModel[]>(key);
-
-    if (options$.value) {
-      return options$.asObservable();
-    }
-
     return this.activeEnvironmentUrl$.pipe(
       switchMap(envUrl => {
         if (!envUrl) return of([]);
+
+        const key = `${this.prepareEnvUrl(envUrl)}_${entityLogicalName}_${attributeName}`;
+
+        const options$ = this.cacheService.getItem<PicklistModel[]>(key);
+
+        if (options$.value) {
+          return options$.asObservable();
+        }
 
         const url = API_ENDPOINTS.picklist.getResourceUrl(envUrl, entityLogicalName, attributeName, attributeType);
 

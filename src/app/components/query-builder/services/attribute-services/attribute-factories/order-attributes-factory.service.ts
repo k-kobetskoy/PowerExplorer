@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
-import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
-import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
+import { AttributeValidationTypes } from '../validators/OBSOLETE constants/OBSOLETE attribute-validation-types';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { QueryNode } from '../../../models/query-node';
@@ -13,7 +12,7 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 
 export class OrderAttributesFactoryService implements IAttributeFactory {
 
-  constructor(private validators: AttributeValidatorRegistryService) { }
+  constructor() { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
@@ -23,25 +22,23 @@ export class OrderAttributesFactoryService implements IAttributeFactory {
 
     switch (attributeName) {
       case attribute.Attribute.EditorName:
-        return new NodeAttribute(node, validators, attribute.Attribute, value);
+        return new NodeAttribute(node, validators, attribute.Attribute, value, parserValidation);
       case attribute.Alias.EditorName:
-        return new NodeAttribute(node, validators, attribute.Alias, value);
+        return new NodeAttribute(node, validators, attribute.Alias, value, parserValidation);
       case attribute.Desc.EditorName:
-        return new NodeAttribute(node, validators, attribute.Desc, value);
+        return new NodeAttribute(node, validators, attribute.Desc, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
   private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
     let parsingSyncValidators: IAttributeValidator[] = [];
-    let parsingAsyncValidators: IAttributeValidator[] = [];
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
-      parsingAsyncValidators = this.getParserAsyncValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingAsyncValidators: parsingAsyncValidators, parsingSynchronousValidators: parsingSyncValidators };
+    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
   }
 
   private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {

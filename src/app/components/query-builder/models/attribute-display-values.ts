@@ -8,7 +8,7 @@ export class AttributeDisplayValues {
 
     constructor(attributeValue$: BehaviorSubject<string>, editorViewDisplayName: string, treeViewDisplayName?: string, treeViewDisplayStyle: string = AttributeTreeViewDisplayStyle.none) {
         // Only display on tree view if we have a tree view name AND the display style is not 'none'
-        this.displayOnTreeView = !!treeViewDisplayName && treeViewDisplayStyle !== AttributeTreeViewDisplayStyle.none;
+        this.displayOnTreeView = treeViewDisplayStyle !== AttributeTreeViewDisplayStyle.none;
 
         // Initialize with empty observable by default
         this.treeViewDisplayValue$ = of('');

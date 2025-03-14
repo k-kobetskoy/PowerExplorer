@@ -1,12 +1,10 @@
 import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
-import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
-import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
+import { AttributeValidationTypes } from '../validators/OBSOLETE constants/OBSOLETE attribute-validation-types';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
-import { AttributeTreeViewDisplayStyle } from '../../../models/constants/attribute-tree-view-display-style';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 
@@ -14,7 +12,7 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 
 export class LinkAttributesFactoryService implements IAttributeFactory {
 
-  constructor(private validators: AttributeValidatorRegistryService) { }
+  constructor() { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
@@ -25,23 +23,23 @@ export class LinkAttributesFactoryService implements IAttributeFactory {
 
     switch (attributeName) {
       case attribute.Entity.EditorName:
-        return new NodeAttribute(node, validators, attribute.Entity, value);
+        return new NodeAttribute(node, validators, attribute.Entity, value, parserValidation);
       case attribute.Alias.EditorName:
-        return new NodeAttribute(node, validators, attribute.Alias, value);
+        return new NodeAttribute(node, validators, attribute.Alias, value, parserValidation);
       case attribute.Type.EditorName:
-        return new NodeAttribute(node, validators, attribute.Type, value);
+        return new NodeAttribute(node, validators, attribute.Type, value, parserValidation);
       case attribute.Intersect.EditorName:
-        return new NodeAttribute(node, validators, attribute.Intersect, value);
+        return new NodeAttribute(node, validators, attribute.Intersect, value, parserValidation);
       case attribute.From.EditorName:
-        return new NodeAttribute(node, validators, attribute.From, value);
+        return new NodeAttribute(node, validators, attribute.From, value, parserValidation);
       case attribute.To.EditorName:
-        return new NodeAttribute(node, validators, attribute.To, value);
+        return new NodeAttribute(node, validators, attribute.To, value, parserValidation);
       case attribute.Visible.EditorName:
-        return new NodeAttribute(node, validators, attribute.Visible, value);
+        return new NodeAttribute(node, validators, attribute.Visible, value, parserValidation);
       case attribute.ShowOnlyLookups.EditorName:
-        return new NodeAttribute(node, validators, attribute.ShowOnlyLookups, value);
+        return new NodeAttribute(node, validators, attribute.ShowOnlyLookups, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
@@ -53,7 +51,7 @@ export class LinkAttributesFactoryService implements IAttributeFactory {
       parsingAsyncValidators = this.getParserAsyncValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingAsyncValidators: parsingAsyncValidators, parsingSynchronousValidators: parsingSyncValidators };
+    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
   }
 
   private getParserAsyncValidators(attributeName: string): IAttributeValidator[] {

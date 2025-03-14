@@ -1,84 +1,74 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<form [formGroup]="linkEntityForm" class="form-container">
-    <mat-form-field class="form-field">
-        <mat-label>Entity</mat-label>
-        <input type="text" matInput
-            formControlName="entity"
-            [matAutocomplete]="entityAuto"
-            placeholder="Select an entity">
-        <mat-autocomplete #entityAuto="matAutocomplete">
-            <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
-                <div class="option-content">
-                    <span class="logical-name">{{entity.logicalName}}</span>
-                    <span class="display-name">{{entity.displayName}}</span>
-                </div>
-            </mat-option>
-        </mat-autocomplete>
-    </mat-form-field>
+<mat-form-field class="form-field">
+    <mat-label>Entity</mat-label>
+    <input type="text" matInput [formControl]="entityNameFormControl" [matAutocomplete]="entityAuto" placeholder="Select an entity">
+    <mat-autocomplete #entityAuto="matAutocomplete">
+        <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
+            <div class="option-content">
+                <span class="logical-name">{{entity.logicalName}}</span>
+                <span class="display-name">{{entity.displayName}}</span>
+            </div>
+        </mat-option>
+    </mat-autocomplete>
+    <app-loading-indicator matSuffix [diameter]="20" loadingKey="entityName"></app-loading-indicator>
+</mat-form-field>
 
-    <mat-form-field class="form-field">
-        <mat-label>From Attribute</mat-label>
-        <input type="text" matInput
-            formControlName="fromAttribute"
-            [matAutocomplete]="fromAttrAuto"
-            placeholder="Select from attribute">
-        <mat-autocomplete #fromAttrAuto="matAutocomplete">
-            <mat-option *ngFor="let attr of filteredFromAttributes$ | async" [value]="attr.logicalName">
-                <div class="option-content">
-                    <span class="logical-name">{{attr.logicalName}}</span>
-                    <span class="display-name">{{attr.displayName}}</span>
-                </div>
-            </mat-option>
-        </mat-autocomplete>
-        <app-loading-indicator matSuffix [diameter]="20" loadingKey="fromAttribute"></app-loading-indicator>
-    </mat-form-field>
+<mat-form-field class="form-field">
+    <mat-label>From Attribute</mat-label>
+    <input type="text" matInput [formControl]="fromAttributeFormControl" [matAutocomplete]="fromAttrAuto"
+        placeholder="Select from attribute">
+    <mat-autocomplete #fromAttrAuto="matAutocomplete">
+        <mat-option *ngFor="let attr of filteredFromAttributes$ | async" [value]="attr.logicalName">
+            <div class="option-content">
+                <span class="logical-name">{{attr.logicalName}}</span>
+                <span class="display-name">{{attr.displayName}}</span>
+            </div>
+        </mat-option>
+    </mat-autocomplete>
+    <app-loading-indicator matSuffix [diameter]="20" loadingKey="fromAttribute"></app-loading-indicator>
+</mat-form-field>
 
-    <mat-form-field class="form-field">
-        <mat-label>To Attribute</mat-label>
-        <input type="text" matInput
-            formControlName="toAttribute"
-            [matAutocomplete]="toAttrAuto"
-            placeholder="Select to attribute">
-        <mat-autocomplete #toAttrAuto="matAutocomplete">
-            <mat-option *ngFor="let attr of filteredToAttributes$ | async" [value]="attr.logicalName">
-                <div class="option-content">
-                    <span class="logical-name">{{attr.logicalName}}</span>
-                    <span class="display-name">{{attr.displayName}}</span>
-                </div>
-            </mat-option>
-        </mat-autocomplete>
-        <app-loading-indicator matSuffix [diameter]="20" loadingKey="toAttribute"></app-loading-indicator>
-    </mat-form-field>
+<mat-form-field class="form-field">
+    <mat-label>To Attribute</mat-label>
+    <input type="text" matInput [formControl]="toAttributeFormControl" [matAutocomplete]="toAttrAuto"
+        placeholder="Select to attribute">
+    <mat-autocomplete #toAttrAuto="matAutocomplete">
+        <mat-option *ngFor="let attr of filteredToAttributes$ | async" [value]="attr.logicalName">
+            <div class="option-content">
+                <span class="logical-name">{{attr.logicalName}}</span>
+                <span class="display-name">{{attr.displayName}}</span>
+            </div>
+        </mat-option>
+    </mat-autocomplete>
+    <app-loading-indicator matSuffix [diameter]="20" loadingKey="toAttribute"></app-loading-indicator>
+</mat-form-field>
 
-    <mat-form-field class="form-field">
-        <mat-label>Link Type</mat-label>
-        <mat-select formControlName="linkType">
-            <mat-option>--</mat-option>
-            <mat-option *ngFor="let type of linkTypes" [value]="type">
-                {{type}}
-            </mat-option>
-        </mat-select>
-    </mat-form-field>
+<mat-form-field class="form-field">
+    <mat-label>Link Type</mat-label>
+    <mat-select [formControl]="linkTypeFormControl">
+        <mat-option>--</mat-option>
+        <mat-option *ngFor="let type of linkTypes" [value]="type">
+            {{type}}
+        </mat-option>
+    </mat-select>
+</mat-form-field>
 
-    <mat-form-field class="form-field">
-        <mat-label>Alias</mat-label>
-        <input type="text" matInput
-            formControlName="alias"
-            placeholder="Enter an alias">
-    </mat-form-field>
+<mat-form-field class="form-field">
+    <mat-label>Alias</mat-label>
+    <input type="text" matInput [formControl]="aliasFormControl" placeholder="Enter an alias">
+</mat-form-field>
 
-    <div class="checkbox-group">
-        <mat-checkbox formControlName="intersect">
-            Intersect
-        </mat-checkbox>
+<div class="checkbox-group">
+    <mat-checkbox [formControl]="intersectFormControl">
+        Intersect
+    </mat-checkbox>
 
-        <mat-checkbox formControlName="visible">
-            Visible
-        </mat-checkbox>
+    <mat-checkbox [formControl]="visibleFormControl">
+        Visible
+    </mat-checkbox>
 
-        <mat-checkbox formControlName="showOnlyLookups">
-            Show Only Lookups/Id Attributes
-        </mat-checkbox>
-    </div>
-</form>
+    <mat-checkbox [formControl]="showOnlyLookupsFormControl">
+        Show Only Lookups
+    </mat-checkbox>
+</div>

@@ -1,126 +1,116 @@
-import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
+import { AttributeNameWithParentEntityServerValidatorService } from './../validators/attributes/attribute-name-with-parent-entity-server-validator.service';
 import { Injectable } from '@angular/core';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { AttributeNames } from '../../../models/constants/attribute-names';
-import { AttributeValueTypes } from '../../../models/constants/attribute-value-types';
 import { NodeAttribute } from '../../../models/node-attribute';
-import { AttributeValidators } from '../../../models/attribute-validators';
+import { IAttributeValidators } from '../abstract/i-attribute-validators';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 
+import { AttributeAggregateFunctionNameValidatorService } from '../validators/attributes/parser/attribute-aggregate-function-name-validator.service';
+import { TypeBooleanValidatorService } from '../validators/attributes/parser/type-boolean-validator.service';
+import { AttributeAliasValueValidatorService } from '../validators/attributes/attribute-alias-value-validator.service';
+import { NodeAttributesNamesValidatorService } from '../validators/attributes/one-time-validators/node-attributes-names-validator.service';
+import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-validator';
+import { AttributeAggregateGroupByValidatorService } from '../validators/attributes/attribute-aggregate-groupby-validator.service';
+import { AttributeDateGroupingNameValidatorService } from '../validators/attributes/parser/attribute-dategrouping-name-validator.service';
+import { AttributeAggregateConditionFetchAggregateValidatorService } from '../validators/attributes/attribute-aggregate-condition-fetch-aggregate-validator.service';
 @Injectable({ providedIn: 'root' })
 
 export class AttributeAttributesFactoryService implements IAttributeFactory {
 
-  constructor() { }
+  constructor(
+    private attributeAggregateFunctionNameValidator: AttributeAggregateFunctionNameValidatorService,
+    private attributeTypeBooleanValidatorService: TypeBooleanValidatorService,
+    private aliasValueValidatorService: AttributeAliasValueValidatorService,
+    private attributeNameWithParentEntityServerValidatorService: AttributeNameWithParentEntityServerValidatorService,
+    private nodeAttributesNamesValidatorService: NodeAttributesNamesValidatorService,
+    private attributeDateGroupingNameValidator: AttributeDateGroupingNameValidatorService,
+    private attributeAggregateConditionFetchAggregateValidatorService: AttributeAggregateConditionFetchAggregateValidatorService,
+    private attributeAggregateGroupByValidatorService: AttributeAggregateGroupByValidatorService
+  ) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
-    const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
+    const validators = this.getAttributeValidators(attributeName, parserValidation);
 
     const attribute = AttributeData.Attribute;
 
     switch (attributeName) {
       case attribute.Name.EditorName:
-        return new NodeAttribute(node, validators, attribute.Name, value);
+        return new NodeAttribute(node, validators, attribute.Name, value, parserValidation);
       case attribute.Alias.EditorName:
-        return new NodeAttribute(node, validators, attribute.Alias, value);
+        return new NodeAttribute(node, validators, attribute.Alias, value, parserValidation);
       case attribute.Aggregate.EditorName:
-        return new NodeAttribute(node, validators, attribute.Aggregate, value);
+        return new NodeAttribute(node, validators, attribute.Aggregate, value, parserValidation);
       case attribute.GroupBy.EditorName:
-        return new NodeAttribute(node, validators, attribute.GroupBy, value);
+        return new NodeAttribute(node, validators, attribute.GroupBy, value, parserValidation);
       case attribute.Distinct.EditorName:
-        return new NodeAttribute(node, validators, attribute.Distinct, value);
+        return new NodeAttribute(node, validators, attribute.Distinct, value, parserValidation);
       case attribute.UserTimeZone.EditorName:
-        return new NodeAttribute(node, validators, attribute.UserTimeZone, value);
+        return new NodeAttribute(node, validators, attribute.UserTimeZone, value, parserValidation);
       case attribute.DateGrouping.EditorName:
-        return new NodeAttribute(node, validators, attribute.DateGrouping, value);
+        return new NodeAttribute(node, validators, attribute.DateGrouping, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
-  private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
-    let parsingSyncValidators: IAttributeValidator[] = [];
+  private getAttributeValidators(attributeName: string, parserValidation: boolean): IAttributeValidators {
+
+    let validators: IAttributeValidator[] = [];
+    let oneTimeValidators: IAttributeOneTimeValidator[] = [];
 
     if (parserValidation) {
-      parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
+      validators = this.getParserValidators(attributeName);
+      oneTimeValidators = this.getParserOneTimeValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
+    return {
+      validators: [...validators, ...this.getDefaultValidators(attributeName)],
+      oneTimeValidators: oneTimeValidators
+    };
   }
 
-  private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {
+
+  getParserOneTimeValidators(attributeName: string): IAttributeOneTimeValidator[] {
+    return [this.nodeAttributesNamesValidatorService];
+  }
+
+  private getParserValidators(attributeName: string): IAttributeValidator[] {
     switch (attributeName) {
       case AttributeNames.attributeAggregate:
-        return [
-          this.validators.list(AttributeValidationTypes.attributeAggregateList),
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure)
-        ]
+        return [this.attributeAggregateFunctionNameValidator]
       case AttributeNames.attributeGroupBy:
-        return [
-          this.validators.type(AttributeValueTypes.boolean),
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeDistinctFalse),
-        ]
+        return [this.attributeTypeBooleanValidatorService]
       case AttributeNames.attributeDistinct:
-        return [
-          this.validators.type(AttributeValueTypes.boolean),
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeGroupByFalse),
-        ]
+        return [this.attributeTypeBooleanValidatorService]
       case AttributeNames.attributeUserTimeZone:
-        return [
-          this.validators.type(AttributeValueTypes.boolean),
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeGroupByTrue),
-        ]
+        return [this.attributeTypeBooleanValidatorService]
       case AttributeNames.attributeDateGrouping:
-        return [
-          this.validators.list(AttributeValidationTypes.attributeDateGrouping),
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeGroupByTrue),
-        ]
+        return [this.attributeDateGroupingNameValidator]
       default:
         return []
     }
   }
 
-  private getDefaultAsyncValidators(attributeName: string): IAttributeValidator[] {
+  private getDefaultValidators(attributeName: string): IAttributeValidator[] {
     switch (attributeName) {
       case AttributeNames.attributeName:
-        return [
-          this.validators.server(AttributeValidationTypes.serverParentEntityAttribute),
-        ];
+        return [this.attributeNameWithParentEntityServerValidatorService];
       case AttributeNames.attributeAlias:
-        return [
-          this.validators.string(AttributeValidationTypes.alias)
-        ]
+        return [this.aliasValueValidatorService];
       case AttributeNames.attributeAggregate:
-        return [
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-        ]
+        return [this.attributeAggregateConditionFetchAggregateValidatorService]
       case AttributeNames.attributeGroupBy:
-        return [
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeDistinctFalse),
-        ]
+        return [this.attributeAggregateGroupByValidatorService]
       case AttributeNames.attributeDistinct:
-        return [
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeGroupByFalse),
-        ]
+        return [this.attributeTypeBooleanValidatorService]
       case AttributeNames.attributeUserTimeZone:
-        return [
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeGroupByTrue),
-        ]
+        return [this.attributeTypeBooleanValidatorService]
       case AttributeNames.attributeDateGrouping:
-        return [
-          this.validators.condition(AttributeValidationTypes.attributeFetchAggregateTure),
-          this.validators.condition(AttributeValidationTypes.attributeGroupByTrue),
-        ]
+        return []
       default:
         return []
     }

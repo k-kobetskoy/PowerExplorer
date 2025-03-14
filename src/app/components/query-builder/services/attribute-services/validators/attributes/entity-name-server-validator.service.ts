@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
-import { IAttributeValidator } from '../abstract/i-attribute-validator';
+import { IAttributeValidator } from '../../abstract/i-attribute-validator';
 import { distinctUntilChanged, map, NEVER, Observable, shareReplay, switchMap, takeUntil } from 'rxjs';
-import { ValidationResult } from '../../validation.service';
-import { NodeAttribute } from '../../../models/node-attribute';
-import { EntityEntityService } from '../../entity-services/entity-entity.service';
-
-const VALID_RESULT: Readonly<ValidationResult> = {
-  isValid: true,
-  errors: [] as string[]
-};
+import { VALID_RESULT, ValidationResult } from '../../../validation.service';
+import { NodeAttribute } from '../../../../models/node-attribute';
+import { EntityEntityService } from '../../../entity-services/entity-entity.service';
 
 @Injectable({ providedIn: 'root' })
 
@@ -16,14 +11,17 @@ export class EntityNameServerValidatorService implements IAttributeValidator {
 
   constructor(private entityService: EntityEntityService) { }
 
-  getValidator(attribute: NodeAttribute): Observable<ValidationResult> {
+  validate(attribute: NodeAttribute): Observable<ValidationResult> {
 
     return this.entityService.getEntities().pipe(
       switchMap(entities => {
         return attribute.value$.pipe(
           distinctUntilChanged(),
           map((value) => {
-            if (!value) return VALID_RESULT;
+            if (!value) return {
+              isValid: false,
+              errors: ['Entity name is required']
+            };
 
             const entity = entities.find(e => e.logicalName === value);
 
@@ -39,7 +37,13 @@ export class EntityNameServerValidatorService implements IAttributeValidator {
           })
         );
       }),
-      takeUntil(attribute?.destroyNotifier$ || NEVER),
+      takeUntil(attribute?.destroyed$ || NEVER),
+      //We need shareReplay because this validation is also called to check if the attribute name is valid. !Not sure about that.
+      shareReplay({
+        refCount: true,
+        bufferSize: 1,
+        windowTime: 0
+      })
     );
   }
 }

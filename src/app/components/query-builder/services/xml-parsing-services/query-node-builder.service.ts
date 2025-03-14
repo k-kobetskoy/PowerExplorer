@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AttributeFactoryResorlverService } from '../attribute-services/attribute-factory-resorlver.service';
+import { NodeFactoryService } from '../attribute-services/node-factory.service';
 import { IAttributeFactory } from '../attribute-services/abstract/i-attribute-validators-factory';
 import { QueryNode } from '../../models/query-node';
 import { QueryNodeData } from '../../models/constants/query-node-data';
@@ -40,7 +40,7 @@ export const UNEXPECTED_ERROR_TEXT = 'Unexpected error. Please check you XML';
 @Injectable({ providedIn: 'root' })
 
 export class QueryNodeBuilderService {
-  constructor(private attributeFactoryResolver: AttributeFactoryResorlverService) { }
+  constructor(private attributeFactoryResolver: NodeFactoryService) { }
 
   tag: ITagBuildEntity;
   attribute: ITagBuildEntityAttribute;

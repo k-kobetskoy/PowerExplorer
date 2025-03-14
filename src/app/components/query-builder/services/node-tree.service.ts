@@ -5,7 +5,7 @@ import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
-import { AttributeFactoryResorlverService } from './attribute-services/attribute-factory-resorlver.service';
+import { NodeFactoryService } from './attribute-services/node-factory.service';
 import { ValidationService } from './validation.service';
 
 @Injectable({ providedIn: 'root' })
@@ -17,8 +17,6 @@ export class NodeTreeService {
   xmlRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
-
-  isExecutable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -32,10 +30,9 @@ export class NodeTreeService {
 
   constructor(
     private _eventBus: EventBusService,
-    private attributeFactoryResolver: AttributeFactoryResorlverService,
+    private nodeFactory: NodeFactoryService,
     private validationService: ValidationService
   ) {
-    QueryNode.setNodeTreeService(this);
     
     this.initializeNodeTree();
     
@@ -55,7 +52,7 @@ export class NodeTreeService {
   initializeNodeTree() {
     const nodeTree = new QueryNodeTree();
 
-    const rootNode = new QueryNode(QueryNodeData.Root.Name, this.attributeFactoryResolver, this.validationService);
+    const rootNode = this.nodeFactory.createNode(QueryNodeData.Root.Name);
 
     nodeTree.root = rootNode;
 
@@ -66,20 +63,9 @@ export class NodeTreeService {
     this.addNode(QueryNodeData.Entity.Name);
   }
 
-  clearNodeTree() {
-    const nodeTree = this._nodeTree$.value;
-    if (nodeTree && nodeTree.root) {
-      this.cleanupNodeAndChildren(nodeTree.root);
-    }
-    
-    this._nodeTree$.next(null);
-    this._selectedNode$.next(null);
-    this.isExecutable$.next(false);
-  }
-
   addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
 
-    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver, this.validationService);
+    let newNode = this.nodeFactory.createNode(newNodeName, true);
 
     if (!this._nodeTree$.value) {
       const nodeTree = new QueryNodeTree();
@@ -110,14 +96,13 @@ export class NodeTreeService {
     }
     this.selectedNode$ = newNode;
 
-
     return newNode;
   }
 
   addNode(newNodeName: string): QueryNode {
     let parentNode = this._selectedNode$.value;
 
-    let newNode = new QueryNode(newNodeName, this.attributeFactoryResolver, this.validationService);
+    let newNode = this.nodeFactory.createNode(newNodeName);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;
@@ -244,6 +229,16 @@ export class NodeTreeService {
     }
 
     return previousNode;
+  }
+
+  clearNodeTree() {
+    const nodeTree = this._nodeTree$.value;
+    if (nodeTree && nodeTree.root) {
+      this.cleanupNodeAndChildren(nodeTree.root);
+    }
+    
+    this._nodeTree$.next(null);
+    this._selectedNode$.next(null);
   }
 
   private cleanupNodeAndChildren(node: QueryNode): void {

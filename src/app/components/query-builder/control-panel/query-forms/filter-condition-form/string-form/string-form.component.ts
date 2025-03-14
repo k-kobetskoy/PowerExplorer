@@ -1,8 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
 import { FormControl, FormBuilder } from '@angular/forms';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Subject, distinctUntilChanged, takeUntil } from 'rxjs';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { AttributeData } from '../../../../models/constants/attribute-data';
 import { QueryNode } from '../../../../models/query-node';
@@ -57,23 +56,18 @@ import { QueryNode } from '../../../../models/query-node';
 })
 export class StringFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  private storedValues = new Map<string, { operator: string, value: string }>();
 
   operatorFormControl = new FormControl('');
   valueFormControl = new FormControl('');
-  errorMessage$ = new BehaviorSubject<string>('');
+
   showWildcardInfo$ = new BehaviorSubject<boolean>(false);
 
   readonly filterOperators = FilterStaticData.FilterStringOperators;
 
   @Input() attributeValue: string;
-  @Input() override selectedNode: QueryNode;
+  @Input() selectedNode: QueryNode;
 
-  constructor(
-    private fb: FormBuilder
-  ) {
-    super();
-  }
+  constructor() { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -87,66 +81,30 @@ export class StringFormComponent extends BaseFormComponent implements OnInit, On
   }
 
   private initializeForm() {
-    this.setupNodeValueHandling();
-  }
+    const operator = this.getAttribute(AttributeData.Condition.Operator, this.selectedNode);
+    const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
 
-  private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
-    const nodeId = this.selectedNode.id;
-    if (this.storedValues.has(nodeId)) {
-      const values = this.storedValues.get(nodeId);
-      this.operatorFormControl.setValue(values.operator, { emitEvent: false });
-      this.valueFormControl.setValue(values.value, { emitEvent: false });
-    } else {
-      const operator = this.getAttributeValue(AttributeData.Condition.Operator);
-      const value = this.getAttributeValue(AttributeData.Condition.Value);
-      
-      if (operator) {
-        this.operatorFormControl.setValue(operator, { emitEvent: false });
-      }
-      if (value) {
-        this.valueFormControl.setValue(value, { emitEvent: false });
-      }
-      
-      this.storedValues.set(nodeId, { 
-        operator: operator || '', 
-        value: value || '' 
-      });
+    if (operator) {
+      this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
+    }
+    if (value) {
+      this.valueFormControl.setValue(value.value$.value, { emitEvent: false });
     }
 
     // Subscribe to form control changes
     this.operatorFormControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            operator: value
-          });
-          this.updateAttribute(AttributeData.Condition.Operator, value);
+        this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
 
-          // Show wildcard info for 'Like' and 'Not Like' operators
-          this.showWildcardInfo$.next(['like', 'not-like'].includes(value.toLowerCase()));
-        }
+        // Show wildcard info for 'Like' and 'Not Like' operators
+        this.showWildcardInfo$.next(['like', 'not-like'].includes(value.toLowerCase()));
       });
 
     this.valueFormControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        if (typeof value === 'string') {
-          // Validate string length
-          if (value && value.length > 2000) {
-            this.errorMessage$.next('String value cannot exceed 2000 characters');
-            return;
-          }
-          this.errorMessage$.next('');
-
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            value: value
-          });
-          this.updateAttribute(AttributeData.Condition.Value, value);
-        }
+        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
       });
   }
 

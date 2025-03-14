@@ -1,4 +1,5 @@
 import { AttributeTreeViewDisplayStyle } from './attribute-tree-view-display-style';
+import { AttributeType } from './dataverse/attribute-types';
 
 export interface IAttributeData {
     Order?: number,
@@ -27,6 +28,10 @@ export class BaseAttributeData implements IAttributeData {
         this.Order = order;
         this.IsValidName = isValidName ??= true;
     }
+}
+
+export interface IAttributeType {
+    name: string;
 }
 
 export class EntityAttributeData {
@@ -165,4 +170,23 @@ export class AttributeData {
         'Entity',
         'Root'
     ];
+
+    static readonly AggregateFuncNames: string[] =[
+        'avg',
+        'count',
+        'countcolumn',
+        'max',
+        'min',
+        'sum'
+    ]
+
+    static readonly DateGroupingNames: string[] =[
+        'day',
+        'fiscal-period',
+        'fiscal-year',
+        'month',
+        'quarter',
+        'week',
+        'year'
+    ]
 }

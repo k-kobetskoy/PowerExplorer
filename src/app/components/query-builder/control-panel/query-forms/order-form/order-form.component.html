@@ -1,12 +1,11 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
 <div class="form-container">
-  <form [formGroup]="orderForm">
     <mat-form-field class="form-field">
       <mat-label>Attribute</mat-label>
       <input type="text"
              matInput
-             formControlName="attribute"
+             [formControl]="attributeFormControl"
              [matAutocomplete]="attributeAutoComplete">
 
       <mat-autocomplete #attributeAutoComplete="matAutocomplete">
@@ -20,8 +19,7 @@
       <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
     </mat-form-field>
 
-    <mat-checkbox formControlName="descending">
+    <mat-checkbox [formControl]="descendingFormControl">
       Descending Order
     </mat-checkbox>
-  </form>
 </div>

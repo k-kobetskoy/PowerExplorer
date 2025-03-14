@@ -8,7 +8,7 @@ import { ValidationResult } from '../../validation.service';
 export class FilterValidator implements IAttributeValidator {
     constructor() {}
 
-    getValidator(attribute: NodeAttribute): Observable<ValidationResult> {
+    validate(attribute: NodeAttribute): Observable<ValidationResult> {
         return this.validateFilterStructure(attribute.parentNode);
     }
 

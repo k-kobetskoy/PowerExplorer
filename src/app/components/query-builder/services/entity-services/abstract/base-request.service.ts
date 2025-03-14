@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, map } from 'rxjs';
+import { BehaviorSubject, Observable, distinctUntilChanged, map, shareReplay } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL } from 'src/app/models/tokens';
 import { CacheStorageService } from 'src/app/services/data-sorage/cache-storage.service';
 import { EnvironmentEntityService } from '../environment-entity.service';
@@ -9,20 +9,23 @@ import { EnvironmentEntityService } from '../environment-entity.service';
 export abstract class BaseRequestService {
 
     protected activeEnvironmentUrl$: Observable<string>;
-    
+
     protected httpClient: HttpClient = inject(HttpClient);
     protected cacheService: CacheStorageService = inject(CacheStorageService);
     protected environmentService: EnvironmentEntityService = inject(EnvironmentEntityService);
     protected activeEnvironmentUrlSubject$: BehaviorSubject<string> = inject(ACTIVE_ENVIRONMENT_URL);
 
-    constructor() { }
-    
-    protected getActiveEnvironmentUrl() {
-        if (this.activeEnvironmentUrlSubject$?.value) {
-            this.activeEnvironmentUrl$ = this.activeEnvironmentUrlSubject$.asObservable();
-            return;
-        }
+    constructor() {
+        this.activeEnvironmentUrl$ = this.activeEnvironmentUrlSubject$?.value
+            ? this.activeEnvironmentUrlSubject$.asObservable()
+            : this.environmentService.getActiveEnvironment().pipe(
+                distinctUntilChanged((prev, curr) => prev.apiUrl === curr.apiUrl),
+                map(env => env?.apiUrl),
+                shareReplay({ bufferSize: 1, refCount: true })
+            );
+    }
 
-        this.activeEnvironmentUrl$ = this.environmentService.getActiveEnvironment().pipe(map(env => env?.apiUrl));
+    protected prepareEnvUrl(envUrl: string): string {
+        return envUrl?.replace(/[^a-zA-Z0-9]/g, '_');
     }
 }

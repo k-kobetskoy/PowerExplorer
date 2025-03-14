@@ -9,11 +9,16 @@ const VALID_RESULT: Readonly<ValidationResult> = {
     errors: [] as string[]
 };
 
+/**
+ * check if attribute's value is in the list of allowed values (Parser Validation Only)
+ * 
+ * */ 
+
 export class AttributeListValidator implements IAttributeValidator {
 
     constructor(private validationType: string) { }
 
-    getValidator(attribute: NodeAttribute): Observable<ValidationResult> {
+    validate(attribute: NodeAttribute): Observable<ValidationResult> {
         switch (this.validationType) {
             case DataverseEntityTypeNames.entity:
                 return of(VALID_RESULT);

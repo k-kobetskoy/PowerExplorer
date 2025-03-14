@@ -1,16 +1,17 @@
-import { BehaviorSubject, combineLatest, debounceTime, distinctUntilChanged, map, Observable, switchMap, of, tap, Subscription, Subject, takeUntil, take, catchError, shareReplay } from "rxjs";
+import { INodeValidators } from './../services/attribute-services/abstract/i-node-validators';
+import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
-import {  IAttributeData } from "./constants/attribute-data";
-import { AttributeFactoryResorlverService } from "../services/attribute-services/attribute-factory-resorlver.service";
+import { IAttributeData } from "./constants/attribute-data";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
 import { NodeTreeService } from "../services/node-tree.service";
-import { ValidationService, ValidationResult } from '../services/validation.service';
+import { ValidationResult } from '../services/validation.service';
+import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 
 export class QueryNode {
     defaultNodeDisplayValue: string;
     order: number;
-    attributes$: BehaviorSubject<NodeAttribute[]>;
+    attributes$: BehaviorSubject<NodeAttribute[]> = new BehaviorSubject<NodeAttribute[]>([]);
     attributesCount: number;
     expandable: boolean;
     nodeName: string;
@@ -20,24 +21,29 @@ export class QueryNode {
     level?: number;
     isExpanded?: boolean;
     next?: QueryNode | null;
-    parent?: QueryNode | null;
+    parent?: QueryNode | null; // This is the parent node not the node above. 
     visible: boolean;
     entitySetName$: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     relationship$?: BehaviorSubject<string> = new BehaviorSubject<string>(null);
     showOnlyLookups$?: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     tagDisplayValue$: Observable<string>;
     nodeDisplayValue$: Observable<string>;
+
+    validatiors: INodeValidators;
     validationResult$: Observable<ValidationResult>;
 
+    //TODO: implement this functionality later
+    hasAggregateOrGroupByAttribute: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
     private readonly attributeFactory: IAttributeFactory;
-    private static nodeTreeService: NodeTreeService;
-    
-    private destroyed$ = new Subject<void>();
+    private nodeTreeService: NodeTreeService;
+
+    destroyed$ = new Subject<void>();
 
     constructor(
-        nodeName: string,
-        private attributeFactoryResolver: AttributeFactoryResorlverService,
-        private validationService: ValidationService
+        nodeData: INodeData,
+        attributeFactory: IAttributeFactory,
+        nodeValidators: INodeValidators
     ) {
         this.expandable = false;
         this.level = 0;
@@ -45,85 +51,29 @@ export class QueryNode {
         this.isExpanded = true;
         this.next = null;
 
-        const nodeData: INodeData = QueryNodeData.getNodeData(nodeName);
-        
         this.defaultNodeDisplayValue = nodeData.Name;
         this.nodeName = nodeData.Name;
         this.tagName = nodeData.TagName;
         this.order = nodeData.Order;
         this.actions = nodeData.Actions;
         this.attributesCount = nodeData.AttributesCount;
-        this.attributes$ = new BehaviorSubject<NodeAttribute[]>([]);
 
         this.tagDisplayValue$ = new BehaviorSubject<string>(this.defaultNodeDisplayValue);
-        this.nodeDisplayValue$ = this.createNodeDisplayValueObservable();
 
-        this.attributeFactory = this.attributeFactoryResolver.getAttributesFactory(nodeName);
-            
-        if (this.nodeName === QueryNodeData.Entity.Name) {
-            this.setupEntitySetNameSubscription();
+        this.attributeFactory = attributeFactory;
+        this.validatiors = nodeValidators;
+    }
+
+    public setNodeTreeService(nodeTreeService: NodeTreeService) {
+        this.nodeTreeService = nodeTreeService;
+    }
+
+    getRootNode(): QueryNode {
+        if (this.nodeName === QueryNodeData.Root.Name) {
+            return this;
         }
 
-        this.validationResult$ = this.validationService.validateNode(this, this.destroyed$);
-    }
-
-    public static setNodeTreeService(nodeTreeService: NodeTreeService) {
-        QueryNode.nodeTreeService = nodeTreeService;
-    }
-
-    public dispose(): void {
-        this.destroyed$.next();
-        this.destroyed$.complete();
-    }
-
-    private setupEntitySetNameSubscription() {
-        if (!QueryNode.nodeTreeService) {
-            return;
-        }
-
-        if (this.entitySetName$.value) {
-            QueryNode.nodeTreeService.isExecutable$.next(true);
-        }
-
-        this.entitySetName$.pipe(
-            distinctUntilChanged(),
-            takeUntil(this.destroyed$) 
-        ).subscribe(entitySetName => {
-            if (QueryNode.nodeTreeService) {
-                QueryNode.nodeTreeService.isExecutable$.next(!!entitySetName);
-            }
-        });
-    }
-
-    private createNodeDisplayValueObservable(): Observable<string> {
-        return this.attributes$.pipe(
-            switchMap(attributes => {
-                if (attributes.length === 0) {
-                    return of(this.nodeName);
-                }
-                
-                // Only include attributes that should be displayed on the tree view
-                const displayableAttributes = attributes.filter(attr => 
-                    attr.attributeDisplayValues.displayOnTreeView
-                );
-                
-                if (displayableAttributes.length === 0) {
-                    return of(this.nodeName);
-                }
-                
-                const displayValues$ = displayableAttributes.map(attr => 
-                    attr.attributeDisplayValues.treeViewDisplayValue$
-                );
-                
-                return combineLatest(displayValues$).pipe(
-                    map(values => `${this.nodeName} ${values.join(' ')}`),
-                    takeUntil(this.destroyed$) 
-                );
-            }),
-            distinctUntilChanged(),
-            takeUntil(this.destroyed$),
-            shareReplay(1)
-        );
+        return this.nodeTreeService.getNodeTree().value.root;
     }
 
     getParentEntity(node: QueryNode = this): QueryNode {
@@ -157,15 +107,15 @@ export class QueryNode {
         return nameAttribute.value$;
     }
 
-
-    setAttribute(attributeData: IAttributeData, value: string | any): void {
+    setAttribute(attributeData: IAttributeData, value: string, atributeModel: AttributeModel = null): void {
         try {
             let attribute = this.findOrCreateAttribute(attributeData);
-            
-            if (typeof value === 'object' && value && 'logicalName' in value) {
-                attribute.value$.next(value.logicalName);
-            } else {
+
+            if (attribute.value$.value !== value) {
                 attribute.value$.next(value);
+                if (atributeModel) {
+                    attribute.setAttributeModel(atributeModel);
+                }
             }
         } catch (error) {
             console.error(`[QueryNode] Error in setAttribute: ${error}`);
@@ -177,7 +127,7 @@ export class QueryNode {
         if (!attribute) {
             attribute = this.attributeFactory.createAttribute(attributeData.EditorName, this, false);
             this.addAttribute(attribute);
-        } 
+        }
         return attribute;
     }
 
@@ -214,5 +164,11 @@ export class QueryNode {
 
         this.attributesCount = indexToInsert + 1;
         attributes[indexToInsert] = attribute;
+    }
+
+    public dispose(): void {
+        this.attributes$.value.forEach(attribute => attribute.dispose());
+        this.destroyed$.next();
+        this.destroyed$.complete();
     }
 }

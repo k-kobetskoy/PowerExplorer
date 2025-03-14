@@ -1,4 +1,4 @@
-export const AttributeTypes = {
+export const AttributeType = {
     BIG_INT: 'BigInt',
     BOOLEAN: 'Boolean',
     CALENDAR_RULES: 'CalendarRules',
@@ -19,4 +19,12 @@ export const AttributeTypes = {
     STRING: 'String',
     UNIQUE_IDENTIFIER: 'Uniqueidentifier'
 } as const;
-export type AttributeTypes = (typeof AttributeTypes)[keyof typeof AttributeTypes];
+export type AttributeType = (typeof AttributeType)[keyof typeof AttributeType];
+
+
+export function toAttributeType(value: string): AttributeType | null {
+    const values = Object.values(AttributeType) as string[];
+    return values.includes(value) 
+        ? value as AttributeType 
+        : null;
+}

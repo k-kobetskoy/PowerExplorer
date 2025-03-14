@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { AttributeEntityService } from '../../entity-services/attribute-entity.service';
-import { IAttributeValidator } from '../abstract/i-attribute-validator';
-import { catchError, distinctUntilChanged, NEVER, Observable, of, shareReplay, switchMap, map, combineLatest, takeUntil } from 'rxjs';
-import { NodeAttribute } from '../../../models/node-attribute';
-import { ValidationResult } from '../../validation.service';
+import { AttributeEntityService } from '../../../entity-services/attribute-entity.service';
+import { IAttributeValidator } from '../../abstract/i-attribute-validator';
+import { catchError, distinctUntilChanged, NEVER, Observable, of, switchMap, map, combineLatest, takeUntil } from 'rxjs';
+import { NodeAttribute } from '../../../../models/node-attribute';
+import { ValidationResult } from '../../../validation.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 
 const VALID_RESULT: Readonly<ValidationResult> = {
@@ -17,7 +17,7 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
 
   constructor(private attributeService: AttributeEntityService) { }
 
-  getValidator(attribute: NodeAttribute): Observable<ValidationResult> {
+  validate(attribute: NodeAttribute): Observable<ValidationResult> {
     const parentEntity = attribute.parentNode.getParentEntity();
     if (!parentEntity) {
       return of({
@@ -69,10 +69,10 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
                   };
                 }
 
-                const attributeExists = attributes.some(attr =>
+                const attributeWithProvidedName = attributes.find(attr =>
                   attr.logicalName.toLowerCase() === attrName.toLowerCase());
 
-                return attributeExists
+                return attributeWithProvidedName
                   ? VALID_RESULT
                   : {
                     isValid: false,
@@ -90,8 +90,7 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
           })
         );
       }),
-      takeUntil(attribute?.destroyNotifier$ || NEVER),
-      shareReplay(1),
+      takeUntil(attribute?.destroyed$ || NEVER),      
       catchError(error => {
         console.error('Error in attribute validation:', error);
         return of({

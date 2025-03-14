@@ -12,19 +12,15 @@ export class BooleanEntityService extends BaseRequestService {
 
   getBooleanValues(entityLogicalName: string, attributeName: string): Observable<BooleanModel> {
 
-    this.getActiveEnvironmentUrl();
-
-    const key = `${entityLogicalName}_${attributeName}`;
-
-    const booleanOptions$ = this.cacheService.getItem<BooleanModel>(key);
-
-    if (booleanOptions$.value) {
-      return booleanOptions$.asObservable();
-    }
-
     return this.activeEnvironmentUrl$.pipe(
       switchMap(envUrl => {
         if (!envUrl) return of(null);
+
+        const key = `${this.prepareEnvUrl(envUrl)}_${entityLogicalName}_${attributeName}`;
+
+        const booleanOptions$ = this.cacheService.getItem<BooleanModel>(key);
+    
+        if (booleanOptions$.value) { return booleanOptions$.asObservable(); }
 
         const url = API_ENDPOINTS.boolean.getResourceUrl(envUrl, entityLogicalName, attributeName);
 

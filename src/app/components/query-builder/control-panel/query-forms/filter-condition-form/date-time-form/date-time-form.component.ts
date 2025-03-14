@@ -1,10 +1,11 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { FormControl } from '@angular/forms';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { AttributeData } from '../../../../models/constants/attribute-data';
+import { QueryNode } from 'src/app/components/query-builder/models/query-node';
 
 @Component({
   selector: 'app-date-time-form',
@@ -25,21 +26,23 @@ import { AttributeData } from '../../../../models/constants/attribute-data';
       flex-direction: column;
       padding: 4px 0;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DateTimeFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  private storedValues = new Map<string, { operator: string, value: string }>();
-
-  dateTimeForm: FormGroup;
 
   readonly filterOperators = FilterStaticData.FilterDateTimeOperators;
 
   @Input() attributeValue: string;
+  @Input() selectedNode: QueryNode;
 
-  constructor(private fb: FormBuilder) {
-    super();
-  }
+
+  operatorFormControl = new FormControl('');
+  valueFormControl = new FormControl('');
+
+
+  constructor() { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -53,65 +56,36 @@ export class DateTimeFormComponent extends BaseFormComponent implements OnInit, 
   }
 
   private initializeForm() {
-    this.createFormGroup();
-    this.setupNodeValueHandling();
+    this.setInitialValues();
+
+    this.setupFormToModelBindings();
   }
 
-  private createFormGroup() {
-    this.dateTimeForm = this.fb.group({
-      operator: [''],
-      value: ['']
-    });
-  }
 
-  private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
-    const nodeId = this.selectedNode.id;
-    if (this.storedValues.has(nodeId)) {
-      const values = this.storedValues.get(nodeId);
-      this.dateTimeForm.patchValue({
-        operator: values.operator,
-        value: values.value
-      }, { emitEvent: false });
-    } else {
-      const operator = this.getAttributeValue(AttributeData.Condition.Operator);
-      const value = this.getAttributeValue(AttributeData.Condition.Value);
-      
-      this.dateTimeForm.patchValue({
-        operator: operator || '',
-        value: value || ''
-      }, { emitEvent: false });
-      
-      this.storedValues.set(nodeId, { 
-        operator: operator || '', 
-        value: value || '' 
+  setupFormToModelBindings() {
+    this.operatorFormControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
       });
+
+    this.valueFormControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
+      });      
+  }
+
+  private setInitialValues() {
+    const operator = this.getAttribute(AttributeData.Condition.Operator, this.selectedNode);
+    const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
+
+    if (operator) {
+      this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
     }
-
-    // Subscribe to form control changes
-    this.dateTimeForm.get('operator').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            operator: value
-          });
-          this.updateAttribute(AttributeData.Condition.Operator, value);
-        }
-      });
-
-    this.dateTimeForm.get('value').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            value: value
-          });
-          this.updateAttribute(AttributeData.Condition.Value, value);
-        }
-      });
+    if (value) {
+      this.valueFormControl.setValue(value.value$.value, { emitEvent: false });
+    }
   }
 
   ngOnDestroy() {

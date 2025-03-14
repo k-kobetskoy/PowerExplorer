@@ -1,14 +1,15 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
-import { distinctUntilChanged, map, switchMap, takeUntil, finalize } from 'rxjs/operators';
+import { FormControl } from '@angular/forms';
+import { Observable, of, Subject } from 'rxjs';
+import { distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { AttributeData } from '../../../../models/constants/attribute-data';
 import { QueryNode } from '../../../../models/query-node';
 import { PicklistEntityService } from '../../../../services/entity-services/picklist-entity.service';
 import { PicklistModel } from 'src/app/models/incoming/picklist/picklist-model';
-import { AttributeTypes } from '../../../../models/constants/dataverse/attribute-types';
+import { AttributeType } from '../../../../models/constants/dataverse/attribute-types';
+import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 
 @Component({
   selector: 'app-picklist-form',
@@ -44,27 +45,23 @@ import { AttributeTypes } from '../../../../models/constants/dataverse/attribute
       font-size: 12px;
       margin-top: 4px;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PicklistFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  private storedValues = new Map<string, { operator: string, value: string }>();
-
-  picklistForm: FormGroup;
-  errorMessage$ = new BehaviorSubject<string>('');
 
   readonly filterOperators = FilterStaticData.FilterPickListOperators;
   picklistOptions$: Observable<PicklistModel[]>;
 
   @Input() attributeValue: string;
-  @Input() override selectedNode: QueryNode;
+  @Input() selectedNode: QueryNode;
 
-  constructor(
-    private picklistService: PicklistEntityService,
-    private fb: FormBuilder
-  ) {
-    super();
-  }
+  operatorFormControl = new FormControl('');
+  valueFormControl = new FormControl('');
+
+
+  constructor(private picklistService: PicklistEntityService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -78,17 +75,40 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
   }
 
   private initializeForm() {
-    this.createFormGroup();
+
+    this.setInitialValues();
+
+    this.setupFormToModelBindings();
+
     this.setupPicklistOptions();
-    this.setupNodeValueHandling();
   }
 
-  private createFormGroup() {
-    this.picklistForm = this.fb.group({
-      operator: [''],
-      value: ['']
-    });
+  setupFormToModelBindings() {
+    this.operatorFormControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
+      });
+
+    this.valueFormControl.valueChanges  
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
+      });
   }
+  
+  setInitialValues() {
+    const operator = this.getAttribute(AttributeData.Condition.Operator, this.selectedNode);
+    const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
+
+    if (operator) {
+      this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
+    }
+    if (value) {
+      this.valueFormControl.setValue(value.value$.value, { emitEvent: false });
+    }    
+  }
+
 
   private setupPicklistOptions() {
     const parentEntityNode = this.selectedNode.getParentEntity();
@@ -98,81 +118,26 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
       return;
     }
 
-    const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
-      .pipe(distinctUntilChanged());
-
-    this.picklistOptions$ = parentEntityName$.pipe(
-      switchMap(entityName => {
-        if (!entityName || entityName.trim() === '') {
-          return of([]);
+    this.picklistOptions$ = parentEntityNode.validationResult$.pipe(
+      distinctUntilChanged((prev, curr) => prev.isValid === curr.isValid),
+      takeUntil(this.destroy$),
+      switchMap(validationResult => {
+        if (validationResult.isValid) {
+          return parentEntityNode.attributes$.pipe(
+            distinctUntilChanged((prev, curr) => prev.length === curr.length),
+            switchMap(attributes => {
+              const attribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
+              
+              if (attribute) {
+                return this.picklistService.getOptions(attribute.editorName, this.attributeValue, AttributeType.PICKLIST);
+              }
+              return of([]);
+            })
+          );
         }
-
-        return parentEntityNode.validationPassed$.pipe(
-          switchMap(isValid => {
-            if (!isValid) {
-              return of([]);
-            }
-            
-            const attributeName = this.attributeValue;
-            if (!attributeName) {
-              return of([]);
-            }
-            
-            this.errorMessage$.next('');
-            
-            return this.picklistService.getOptions(entityName, attributeName, AttributeTypes.PICKLIST);              
-          })
-        );
+        return of([]);
       })
     );
-  }
-
-  private setupNodeValueHandling() {
-    const nodeId = this.selectedNode.id;
-    if (this.storedValues.has(nodeId)) {
-      const values = this.storedValues.get(nodeId);
-      this.picklistForm.patchValue({
-        operator: values.operator,
-        value: values.value
-      }, { emitEvent: false });
-    } else {
-      const operator = this.getAttributeValue(AttributeData.Condition.Operator);
-      const value = this.getAttributeValue(AttributeData.Condition.Value);
-      
-      this.picklistForm.patchValue({
-        operator: operator || '',
-        value: value || ''
-      }, { emitEvent: false });
-      
-      this.storedValues.set(nodeId, { 
-        operator: operator || '', 
-        value: value || '' 
-      });
-    }
-
-    this.picklistForm.get('operator').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            operator: value
-          });
-          this.updateAttribute(AttributeData.Condition.Operator, value);
-        }
-      });
-
-    this.picklistForm.get('value').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            value: value
-          });
-          this.updateAttribute(AttributeData.Condition.Value, value);
-        }
-      });
   }
 
   ngOnDestroy() {

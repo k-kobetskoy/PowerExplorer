@@ -1,11 +1,13 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, finalize } from 'rxjs/operators';
+import { FormControl } from '@angular/forms';
+import { Observable, Subject, combineLatest, of } from 'rxjs';
+import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, take, catchError, shareReplay } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { QueryNode } from '../../../models/query-node';
+import { AttributeNames } from '../../../models/constants/attribute-names';
+import { AttributeData } from '../../../models/constants/attribute-data';
 
 @Component({
   selector: 'app-order-form',
@@ -41,12 +43,17 @@ import { QueryNode } from '../../../models/query-node';
 export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
 
-  orderForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
 
-  @Input() override selectedNode: QueryNode;
+  attributeFormControl = new FormControl('');
+  descendingFormControl = new FormControl(false);
 
-  constructor(private attributeService: AttributeEntityService, private fb: FormBuilder) { super(); }
+  attributeInput$: Observable<string>;
+  descendingInput$: Observable<boolean>;
+
+  @Input() selectedNode: QueryNode;
+
+  constructor(private attributeService: AttributeEntityService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -61,52 +68,92 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
 
   private initializeForm() {
     // Create form with existing attribute values
-    this.orderForm = this.fb.group({
-      attribute: [this.getAttributeValue(this.AttributeData.Order.Attribute)],
-      descending: [this.getAttributeValue(this.AttributeData.Order.Desc) === 'true']
-    });
+
+    // Model -> Form input
+    this.setupAttributeModelToFormBindings();
+    this.setupDescendingModelToFormBindings();
+
+    this.attributeInput$ = this.attributeFormControl.valueChanges.pipe(
+      startWith(this.attributeFormControl.value || ''),
+      shareReplay(1)
+    );
+
+    this.descendingInput$ = this.descendingFormControl.valueChanges.pipe(
+      startWith(this.descendingFormControl.value || false),
+      shareReplay(1)
+    );
 
     this.setupAttributeAutocomplete();
-    this.setupFormChangeHandlers();
+
+
+    // Form input -> Model
+    this.setupInputsToModelsBindings();
+  }
+
+  private setupInputsToModelsBindings() {
+    this.attributeInput$.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      this.updateAttribute(AttributeData.Order.Attribute, this.selectedNode, value);
+    });
+
+    this.descendingInput$.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      this.updateAttribute(AttributeData.Order.Desc, this.selectedNode, value.toString());
+    });
+  }
+
+  private setupAttributeModelToFormBindings() {
+    this.selectedNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      takeUntil(this.destroy$),
+      filter(attributes => attributes.length > 0),
+    ).subscribe(attributes => {
+      const attribute = attributes.find(attr => attr.editorName === AttributeNames.orderAttribute);
+      if (attribute) {
+        attribute.value$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged()
+        ).subscribe(value => {
+          this.attributeFormControl.setValue(value, { emitEvent: false });
+        });
+      }
+    });
+  }
+
+  private setupDescendingModelToFormBindings() {
+    const descending = this.getAttribute(AttributeData.Order.Desc, this.selectedNode);
+    if (descending) {
+      this.descendingFormControl.setValue(descending.value$.value === 'true', { emitEvent: false });
+    }
   }
 
   private setupAttributeAutocomplete() {
-    const parentEntityNode = this.selectedNode.getParentEntity();
-
-    if (!parentEntityNode) {
-      console.warn('Parent entity node not found');
+    const parentNode = this.selectedNode.getParentEntity();
+    if (!parentNode || parentNode.validationResult$.pipe(take(1)).subscribe(result => !result.isValid)) {
       this.filteredAttributes$ = of([]);
       return;
     }
 
-    const parentEntityName$ = this.selectedNode.getParentEntityName(parentEntityNode)
-      .pipe(distinctUntilChanged());
+    const parentEntityAttribute$ = parentNode.attributes$.pipe(
+      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      map(attributes => attributes.find(attr => attr.editorName === AttributeNames.entityName)),
+      takeUntil(this.destroy$),
+      switchMap(entityAttribute => {
+        return entityAttribute.value$.pipe(
+          takeUntil(this.destroy$),
+          distinctUntilChanged(),
+          switchMap(entityName => this.attributeService.getAttributes(entityName)),
+          catchError(error => {
+            console.error(`[LinkEntityFormComponent] Error fetching attributes`, error);
+            return of([] as AttributeModel[]);
+          })
+        )
+      })
+    );
 
     this.filteredAttributes$ = combineLatest([
-      this.orderForm.get('attribute').valueChanges.pipe(
-        startWith(this.orderForm.get('attribute').value || '')
-      ),
-      parentEntityName$.pipe(
-        switchMap(entityName => {
-          if (!entityName || entityName.trim() === '') {
-            console.warn('Empty parent entity name');
-            return of([]);
-          }
-
-          return parentEntityNode.validationPassed$.pipe(
-            switchMap(isValid => {
-              if (!isValid) {
-                console.warn(`Parent entity '${entityName}' validation failed`);
-                return of([]);
-              }
-              return this.attributeService.getAttributes(entityName);
-            })
-          );
-        })
-      )
+      this.attributeInput$,
+      parentEntityAttribute$,
     ]).pipe(
-      debounceTime(300),
-      map(([value, attributes]) => this.filterAttributes(value || '', attributes))
+      map(([value, attributes]) => this.filterAttributes(value, attributes))
     );
   }
 
@@ -116,37 +163,6 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );
-  }
-
-  private setupFormChangeHandlers() {
-    this.orderForm.valueChanges
-      .pipe(
-        debounceTime(300),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(formValues => {
-        // Update existing attributes with new values
-        Object.entries(formValues).forEach(([key, value]) => {
-          const stringValue = value !== null && value !== undefined
-            ? (typeof value === 'boolean' ? value.toString() : String(value))
-            : '';
-
-          let attribute;
-          if (key === 'attribute') {
-            attribute = this.AttributeData.Order.Attribute;
-          } else if (key === 'descending') {
-            attribute = this.AttributeData.Order.Desc;
-          }
-
-          if (attribute) {
-            const currentValue = this.getAttributeValue(attribute);
-            if (currentValue !== stringValue) {
-              this.updateAttribute(attribute, stringValue);
-              // No need to call validateNode() - validation will happen reactively
-            }
-          }
-        });
-      });
   }
 
   ngOnDestroy() {

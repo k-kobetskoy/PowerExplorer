@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil } from 'rxjs';
+import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil, BehaviorSubject, catchError, debounceTime } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
-import { AttributeTypes } from '../../../models/constants/dataverse/attribute-types';
+import { AttributeType } from '../../../models/constants/dataverse/attribute-types';
 import { FilterOperatorTypes } from '../../../models/constants/ui/option-set-types';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
@@ -21,20 +21,19 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   private readonly conditionOperator = AttributeData.Condition.Operator;
   private readonly conditionValue = AttributeData.Condition.Value;
 
-  @Input() override selectedNode: QueryNode;
+  @Input() selectedNode: QueryNode;
 
   conditionForm: FormGroup;
   attributes$: Observable<AttributeModel[]>;
   filteredAttributes$: Observable<AttributeModel[]>;
   entityName$: Observable<string>;
-  selectedAttribute$: Observable<AttributeModel>;
+  selectedAttribute$: BehaviorSubject<AttributeModel> = new BehaviorSubject<AttributeModel>(null);
   FilterOperatorTypes = FilterOperatorTypes;
-  previousAttribute: AttributeModel;
 
   constructor(
     private attributeEntityService: AttributeEntityService,
     private fb: FormBuilder
-  ) { 
+  ) {
     super();
   }
 
@@ -45,39 +44,40 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedNode'] && this.selectedNode) {
       this._destroy$.next();
-      this.previousAttribute = null;
       this.initializeForm();
     }
   }
 
   private initializeForm() {
-    // Create form with existing attribute values
-    const attributeValue = this.getAttributeValue(this.conditionAttribute);
-    
+    const attribute = this.getAttribute(this.conditionAttribute, this.selectedNode);
+
+    if(attribute) {
+      this.selectedAttribute$.next(attribute.getAttributeModel());
+    }
+
     this.conditionForm = this.fb.group({
-      attribute: [attributeValue]
+      attribute: [attribute || '']
     });
 
     const parentEntityNode = this.selectedNode.getParentEntity();
 
-    this.entityName$ = parentEntityNode
-      ? this.selectedNode.getParentEntityName(parentEntityNode)
-      : of('');
+    this.attributes$ = parentEntityNode.validationResult$.pipe(
+      distinctUntilChanged((prev, curr) => prev.isValid === curr.isValid),
+      switchMap(validationResult => {
+        if (!validationResult.isValid) { return of([]); }
 
-    this.attributes$ = this.entityName$.pipe(
-      distinctUntilChanged(),
-      switchMap(entityName => {
-        if (!entityName || entityName.trim() === '') { return of([]); }
-    
-        return parentEntityNode.validationPassed$.pipe(
-          switchMap(isValid => {
-            if (!isValid) {
-              return of([]);
-            }
+        return this.selectedNode.getParentEntityName(parentEntityNode).pipe(
+          distinctUntilChanged(),
+          switchMap(entityName => {
             return this.attributeEntityService.getAttributes(entityName);
           })
         );
-      })
+      }),
+      catchError(error => {
+        console.error('Error loading attributes:', error);
+        return of([]);
+      }),
+      takeUntil(this._destroy$)
     );
 
     const initialValue = this.conditionForm.get('attribute').value;
@@ -92,6 +92,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
 
   private setupFiltering(initialValue: string) {
     this.filteredAttributes$ = this.conditionForm.get('attribute').valueChanges.pipe(
+      debounceTime(50),
       startWith(initialValue),
       switchMap(value => value ? this._filter(value) : this.attributes$)
     );
@@ -106,9 +107,8 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
       map(attributes => {
         const attribute = attributes.find(attr => attr.logicalName.toLowerCase() === filterValue);
         if (attribute) {
-          this.handleAttributeChange(attribute);
-          this.selectedAttribute$ = of(attribute);
-          this.previousAttribute = attribute;
+          this.updateAttribute(this.conditionAttribute, this.selectedNode, attribute.logicalName, attribute);
+          this.selectedAttribute$.next(attribute);
         }
 
         return attributes.filter(entity =>
@@ -126,32 +126,27 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
     }
   }
 
-  handleAttributeChange(attribute: AttributeModel): void {
-    if (!this.previousAttribute || attribute.logicalName === this.previousAttribute?.logicalName) return;
-    this.selectedNode.setAttribute(this.conditionOperator, null);
-    this.selectedNode.setAttribute(this.conditionValue, null);
-  }
 
   getFilterOperatorType(attribute: AttributeModel) {
     switch (attribute.attributeType) {
-      case AttributeTypes.INTEGER:
-      case AttributeTypes.DECIMAL:
-      case AttributeTypes.BIG_INT:
-      case AttributeTypes.MONEY:
-      case AttributeTypes.DOUBLE:
+      case AttributeType.INTEGER:
+      case AttributeType.DECIMAL:
+      case AttributeType.BIG_INT:
+      case AttributeType.MONEY:
+      case AttributeType.DOUBLE:
         return FilterOperatorTypes.NUMBER;
-      case AttributeTypes.DATE_TIME:
+      case AttributeType.DATE_TIME:
         return FilterOperatorTypes.DATE_TIME;
-      case AttributeTypes.BOOLEAN:
+      case AttributeType.BOOLEAN:
         return FilterOperatorTypes.BOOLEAN;
-      case AttributeTypes.UNIQUE_IDENTIFIER:
-      case AttributeTypes.LOOKUP:
-      case AttributeTypes.OWNER:
-      case AttributeTypes.CUSTOMER:
+      case AttributeType.UNIQUE_IDENTIFIER:
+      case AttributeType.LOOKUP:
+      case AttributeType.OWNER:
+      case AttributeType.CUSTOMER:
         return FilterOperatorTypes.ID;
-      case AttributeTypes.PICKLIST:
-      case AttributeTypes.STATE:
-      case AttributeTypes.STATUS:
+      case AttributeType.PICKLIST:
+      case AttributeType.STATE:
+      case AttributeType.STATUS:
         return FilterOperatorTypes.PICKLIST;
       default:
         return FilterOperatorTypes.STRING;

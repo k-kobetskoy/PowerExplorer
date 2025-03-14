@@ -1,10 +1,11 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { BaseFormComponent } from '../../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { FormControl } from '@angular/forms';
+import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { AttributeData } from '../../../../models/constants/attribute-data';
+import { QueryNode } from 'src/app/components/query-builder/models/query-node';
 
 @Component({
   selector: 'app-id-form',
@@ -25,22 +26,20 @@ import { AttributeData } from '../../../../models/constants/attribute-data';
       flex-direction: column;
       padding: 4px 0;
     }
-  `]
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IdFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-  private storedValues = new Map<string, { operator: string, value: string }>();
-
-  idForm: FormGroup;
-  loading$ = new BehaviorSubject<boolean>(false);
-
   readonly filterOperators = FilterStaticData.FilterIdOperators;
 
   @Input() attributeValue: string;
+  @Input() selectedNode: QueryNode;
 
-  constructor(private fb: FormBuilder) {
-    super();
-  }
+  operatorFormControl = new FormControl('');
+  valueFormControl = new FormControl('');
+
+  constructor() { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -54,64 +53,34 @@ export class IdFormComponent extends BaseFormComponent implements OnInit, OnDest
   }
 
   private initializeForm() {
-    this.createFormGroup();
-    this.setupNodeValueHandling();
+    this.setInitialValues();
+
+    this.setupFormToModelBindings();
   }
 
-  private createFormGroup() {
-    this.idForm = this.fb.group({
-      operator: [''],
-      value: ['']
-    });
-  }
+  private setInitialValues() {
+    const operator = this.getAttribute(AttributeData.Condition.Operator, this.selectedNode);
+    const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
 
-  private setupNodeValueHandling() {
-    // When node changes, load its stored value or attribute value
-    const nodeId = this.selectedNode.id;
-    if (this.storedValues.has(nodeId)) {
-      const values = this.storedValues.get(nodeId);
-      this.idForm.patchValue({
-        operator: values.operator,
-        value: values.value
-      }, { emitEvent: false });
-    } else {
-      const operator = this.getAttributeValue(AttributeData.Condition.Operator);
-      const value = this.getAttributeValue(AttributeData.Condition.Value);
-      
-      this.idForm.patchValue({
-        operator: operator || '',
-        value: value || ''
-      }, { emitEvent: false });
-      
-      this.storedValues.set(nodeId, { 
-        operator: operator || '', 
-        value: value || '' 
-      });
+    if (operator) {
+      this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
     }
+    if (value) {
+      this.valueFormControl.setValue(value.value$.value, { emitEvent: false });
+    }
+  }
 
-    // Subscribe to form control changes
-    this.idForm.get('operator').valueChanges
+  private setupFormToModelBindings() {
+    this.operatorFormControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            operator: value
-          });
-          this.updateAttribute(AttributeData.Condition.Operator, value);
-        }
+        this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
       });
 
-    this.idForm.get('value').valueChanges
+    this.valueFormControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        if (typeof value === 'string') {
-          this.storedValues.set(this.selectedNode.id, {
-            ...this.storedValues.get(this.selectedNode.id),
-            value: value
-          });
-          this.updateAttribute(AttributeData.Condition.Value, value);
-        }
+        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
       });
   }
 

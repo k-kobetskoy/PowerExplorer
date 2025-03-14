@@ -7,7 +7,7 @@ import { QueryNodeTree } from '../../models/query-node-tree';
 import { EditorView } from '@codemirror/view';
 import { QueryNodeBuilderService } from './query-node-builder.service';
 import { NodeTreeService } from '../node-tree.service';
-import { AttributeFactoryResorlverService } from '../attribute-services/attribute-factory-resorlver.service';
+import { NodeFactoryService } from '../attribute-services/node-factory.service';
 
 import { QueryNode } from '../../models/query-node';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
@@ -50,7 +50,7 @@ export class XmlParseService {
     private parsingHelper: ParsingHelperService,
     private nodeBuilder: QueryNodeBuilderService,
     private nodeTreeService: NodeTreeService,
-    private attributeFactoryResolver: AttributeFactoryResorlverService,
+    private attributeFactoryResolver: NodeFactoryService,
     private eventBus: EventBusService
   ) { }
 

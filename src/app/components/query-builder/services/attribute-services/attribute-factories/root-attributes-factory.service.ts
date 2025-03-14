@@ -1,9 +1,8 @@
 import { AttributeValidators } from '../../../models/attribute-validators';
-import { AttributeValidationTypes } from '../validators/constants/attribute-validation-types';
+import { AttributeValidationTypes } from '../validators/OBSOLETE constants/OBSOLETE attribute-validation-types';
 import { Injectable } from '@angular/core';
 import { IAttributeValidator } from '../abstract/i-attribute-validator';
 import { IAttributeFactory } from '../abstract/i-attribute-validators-factory';
-import { AttributeValidatorRegistryService } from '../attribute-validator-registry.service';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { QueryNode } from '../../../models/query-node';
@@ -13,7 +12,7 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 
 export class RootAttributesFactoryService implements IAttributeFactory {
 
-  constructor(private validators: AttributeValidatorRegistryService) { }
+  constructor() { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
@@ -23,27 +22,27 @@ export class RootAttributesFactoryService implements IAttributeFactory {
 
     switch (attributeName) {
       case attribute.Top.EditorName:
-        return new NodeAttribute(node, validators, attribute.Top, value);
+        return new NodeAttribute(node, validators, attribute.Top, value, parserValidation);
       case attribute.Distinct.EditorName:
-        return new NodeAttribute(node, validators, attribute.Distinct, value);
+        return new NodeAttribute(node, validators, attribute.Distinct, value, parserValidation  );
       case attribute.Aggregate.EditorName:
-        return new NodeAttribute(node, validators, attribute.Aggregate, value);
+        return new NodeAttribute(node, validators, attribute.Aggregate, value, parserValidation);
       case attribute.TotalRecordsCount.EditorName:
-        return new NodeAttribute(node, validators, attribute.TotalRecordsCount, value);
+        return new NodeAttribute(node, validators, attribute.TotalRecordsCount, value, parserValidation);
       case attribute.RecordsPerPage.EditorName:
-        return new NodeAttribute(node, validators, attribute.RecordsPerPage, value);
+        return new NodeAttribute(node, validators, attribute.RecordsPerPage, value, parserValidation);
       case attribute.Page.EditorName:
-        return new NodeAttribute(node, validators, attribute.Page, value);
+        return new NodeAttribute(node, validators, attribute.Page, value, parserValidation);
       case attribute.PagingCookie.EditorName:
-        return new NodeAttribute(node, validators, attribute.PagingCookie, value);
+        return new NodeAttribute(node, validators, attribute.PagingCookie, value, parserValidation);
       case attribute.LateMaterialize.EditorName:
-        return new NodeAttribute(node, validators, attribute.LateMaterialize, value);
+        return new NodeAttribute(node, validators, attribute.LateMaterialize, value, parserValidation);
       case attribute.DataSource.EditorName:
-        return new NodeAttribute(node, validators, attribute.DataSource, value);
+        return new NodeAttribute(node, validators, attribute.DataSource, value, parserValidation);
       case attribute.Options.EditorName:
-        return new NodeAttribute(node, validators, attribute.Options, value);
+        return new NodeAttribute(node, validators, attribute.Options, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName, IsValidName: false }, value);
+        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
