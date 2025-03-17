@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { IAttributeValidator } from '../../abstract/i-attribute-validator';
-import { distinctUntilChanged, map, NEVER, Observable, shareReplay, switchMap, takeUntil } from 'rxjs';
+import { distinctUntilChanged, map, NEVER, Observable, shareReplay, switchMap, takeUntil, tap } from 'rxjs';
 import { VALID_RESULT, ValidationResult } from '../../../validation.service';
 import { NodeAttribute } from '../../../../models/node-attribute';
 import { EntityEntityService } from '../../../entity-services/entity-entity.service';
@@ -42,8 +42,8 @@ export class EntityNameServerValidatorService implements IAttributeValidator {
       shareReplay({
         refCount: true,
         bufferSize: 1,
-        windowTime: 0
-      })
+      }),
+      tap(result=> console.log(`Entity name server validation result: ${result}`))
     );
   }
 }

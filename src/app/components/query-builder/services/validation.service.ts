@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, combineLatest, distinctUntilChanged, map, switchMap, shareReplay, catchError, takeUntil } from 'rxjs';
+import { Observable, of, combineLatest, distinctUntilChanged, map, switchMap, shareReplay, catchError, takeUntil, tap } from 'rxjs';
 import { QueryNode } from '../models/query-node';
 import { NodeAttribute } from '../models/node-attribute';
 
@@ -52,17 +52,16 @@ export class ValidationService {
                 console.error(`Validation pipeline error for ${nodeAttribute.editorName}:`, error);
                 return of(VALID_RESULT);
             }),
-            //TODO: Write why do we need this.
-            //shareReplay(),
-            //TODO: Check if this is needed.
+            // shareReplay is needed to ensure subscribers get the most recent validation result
+            // without triggering multiple validations
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(nodeAttribute.destroyed$)
+            takeUntil(nodeAttribute.destroyed$),
+            
         );
     }
 
     setupNodeValidation(node: QueryNode): Observable<ValidationResult> {
-
-        //Return the one time validation result it has errors.
+        // Return the one time validation result if it has errors
         if (node.validatiors.oneTimeValidators.length > 0) {
             const oneTimeResults = node.validatiors.oneTimeValidators.map(validator => validator.validate(node));
 
@@ -82,9 +81,9 @@ export class ValidationService {
             return of(VALID_RESULT);
         }
 
-        //Attributes validation observable.
+        // Attributes validation observable
         const attributeValidationResults$ = node.attributes$.pipe(
-            distinctUntilChanged((prev, curr) => prev.length === curr.length),
+           // distinctUntilChanged((prev, curr) => prev.length === curr.length),
             switchMap(attributes => {
                 if (!attributes || attributes.length === 0) {
                     return of(VALID_RESULT);
@@ -106,7 +105,7 @@ export class ValidationService {
             })
         );
 
-        // Return attribute validation results if there are no node validators.
+        // Return attribute validation results if there are no node validators
         if(node.validatiors.validators.length === 0) {
             return attributeValidationResults$.pipe(
                 shareReplay({ bufferSize: 1, refCount: true }),
@@ -114,7 +113,7 @@ export class ValidationService {
             );
         }
 
-        //Node validation observable.
+        // Node validation observable
         const nodeValidatorResults$ = node.validatiors.validators.map(validator => 
             validator.validate(node).pipe(
                 catchError(error => {
@@ -150,9 +149,9 @@ export class ValidationService {
                 console.error(`Node validation error for ${node.defaultNodeDisplayValue}:`, error);
                 return of(VALID_RESULT);
             }),
-            //shareReplay(),
-            //TODO: Check if this is needed.
-            shareReplay({ bufferSize: 1, refCount: true }),
+            // shareReplay is used to ensure all subscribers get the same validation result
+            // and to prevent multiple validation runs
+            shareReplay({ bufferSize: 1, refCount: true }), //TODO: Check if this is needed.
             takeUntil(node.destroyed$)
         );
     }

@@ -83,7 +83,6 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
         ];
 
         this.selectedNode.attributes$.pipe(
-            distinctUntilChanged((prev, curr) => prev.length === curr.length),
             takeUntil(this.destroy$),
             filter(attributes => attributes.length > 0),
         ).subscribe(attributes => {

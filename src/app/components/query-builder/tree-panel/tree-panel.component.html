@@ -11,7 +11,10 @@
             </mat-icon>
           </a>
           <div class="node-element-select-area" (click)="selectNode(node)"
-            [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}">
+            [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}"
+            [matTooltip]="(node.validationResult$|async).isValid ? '' : (node.validationResult$|async).errors.join('\n')"
+            [matTooltipDisabled]="(node.validationResult$|async).isValid"
+            matTooltipClass="validation-error-tooltip">
             <mat-icon class="tree-element-icon">
             </mat-icon>
             <p class="small prevent-select">
@@ -26,7 +29,10 @@
         <div appNodeStyle [appPadding]="node.level" class="tree-node">
           <a></a>
           <div class="node-element-select-area" (click)="selectNode(node)"
-            [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}">
+            [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}"
+            [matTooltip]="(node.validationResult$|async).isValid ? '' : (node.validationResult$|async).errors.join('\n')"
+            [matTooltipDisabled]="(node.validationResult$|async).isValid"
+            matTooltipClass="validation-error-tooltip">
             <mat-icon class="tree-element-icon">
             </mat-icon>
             <p class="small prevent-select">

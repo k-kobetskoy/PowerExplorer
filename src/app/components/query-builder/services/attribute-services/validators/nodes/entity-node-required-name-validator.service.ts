@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs';
 import { QueryNode } from 'src/app/components/query-builder/models/query-node';
 import { ValidationResult } from '../../../validation.service';
@@ -18,7 +18,7 @@ export class EntityNodeRequiredNameValidatorService implements INodeValidator {
 
   validate(node: QueryNode): Observable<ValidationResult> {
     return node.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      //distinctUntilChanged((prev, curr) => prev.length === curr.length && prev.every((attr, index) => attr.editorName === curr[index].editorName)),
       map(attributes => {
 
         const nameAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
@@ -27,7 +27,8 @@ export class EntityNodeRequiredNameValidatorService implements INodeValidator {
           isValid: !!nameAttribute,
           errors: nameAttribute ? [] : [`Entity name is required.`]
         };
-      })
+      }), 
+      tap(result=> console.log(result))
     );
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AttributeEntityService } from '../../../entity-services/attribute-entity.service';
 import { IAttributeValidator } from '../../abstract/i-attribute-validator';
-import { catchError, distinctUntilChanged, NEVER, Observable, of, switchMap, map, combineLatest, takeUntil } from 'rxjs';
+import { catchError, distinctUntilChanged, NEVER, Observable, of, switchMap, map, combineLatest, takeUntil, tap } from 'rxjs';
 import { NodeAttribute } from '../../../../models/node-attribute';
 import { ValidationResult } from '../../../validation.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -26,23 +26,20 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
       });
     }
 
+    console.log(`[AttributeNameWithParentEntityServerValidatorService] validate: ${attribute.editorName}`);
+
     return parentEntity.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
+      tap(attributes => {console.log('Attributes from parent entity'); console.log(attributes); }),
       switchMap((attributes: NodeAttribute[]) => {
         const entityNameAttr = attributes.find(attr => attr.editorName === 'name');
-        if (!entityNameAttr) {
-          return of({
-            isValid: false,
-            errors: ['Parent entity is missing a name attribute']
-          });
-        }
 
         return combineLatest([
-          attribute.value$,
+          attribute.value$.pipe(distinctUntilChanged()),
+          entityNameAttr.validationResult$,
           entityNameAttr.value$
         ]).pipe(
           distinctUntilChanged(),
-          switchMap(([attributeName, entityLogicalName]) => {
+          switchMap(([attributeName, isValid, entityLogicalName]) => {
             if (!attributeName) {
               return of({
                 isValid: false,
@@ -50,10 +47,10 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
               });
             }
 
-            if (!entityLogicalName) {
+            if (!isValid.isValid) {
               return of({
                 isValid: false,
-                errors: ['Please set a name for the parent entity first']
+                errors: ['Parent entity is not valid']
               });
             }
 

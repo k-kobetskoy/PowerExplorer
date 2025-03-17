@@ -19,8 +19,7 @@ import { NodeNameValidatorService } from './validators/nodes/one-time-validatior
 import { INodeOneTimeValidator } from './abstract/i-node-one-time-validator';
 import { AttributeNodeAggregateRequiredAliasValidatorService } from './validators/nodes/attribute-node-aggregate-required-alias-validator.service';
 import { AttributeNodeRequiredNameValidatorService } from './validators/nodes/attribute-node-required-name-validator.service';
-import { NodeTreeService } from '../node-tree.service';
-
+import { EntityNameServerValidatorService } from './validators/attributes/entity-name-server-validator.service';
 @Injectable({ providedIn: 'root' })
 
 export class NodeFactoryService {
@@ -36,6 +35,7 @@ export class NodeFactoryService {
     private defaultFactory: DefaultAttributesFactoryService,
     private validationService: ValidationService,
     private entityNodeNameValidator: EntityNodeRequiredNameValidatorService,
+    private entityNameServerValidator: EntityNameServerValidatorService,
     private nodeNameValidator: NodeNameValidatorService,
     private attributeNodeAggregateRequiredAliasValidator: AttributeNodeAggregateRequiredAliasValidatorService,
     private attributeNodeRequiredNameValidator: AttributeNodeRequiredNameValidatorService,
@@ -81,7 +81,6 @@ export class NodeFactoryService {
 
   private createNodeDisplayValueObservable(node: QueryNode): Observable<string> {
     return node.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
       switchMap(attributes => {
         if (attributes.length === 0) {
           return of(node.nodeName);

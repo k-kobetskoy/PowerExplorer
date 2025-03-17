@@ -18,7 +18,6 @@ export class AttributeNodeAggregateRequiredAliasValidatorService implements INod
     const rootNode = node.getRootNode();
 
     return rootNode.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
       switchMap(attributes => {
         const aggregateAttr = attributes.find(attr => attr.editorName === AttributeNames.attributeAggregate);
         

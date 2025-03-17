@@ -102,3 +102,13 @@ h3{
   }  
 }
 
+/* Add styles for validation error tooltips */
+.validation-error-tooltip {
+  color: white !important;
+  font-weight: 500 !important;
+  white-space: pre-line !important; /* Respect new lines in error messages */
+  max-width: 300px !important;
+  margin: 4px !important;
+  padding: 8px 12px !important;
+}
+

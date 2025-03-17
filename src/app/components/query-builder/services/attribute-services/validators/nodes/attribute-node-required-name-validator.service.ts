@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { distinctUntilChanged, map, Observable, Subject, NEVER, takeUntil } from 'rxjs';
+import { map, Observable, Subject, NEVER, takeUntil, tap } from 'rxjs';
 import { VALID_RESULT, ValidationResult } from '../../../validation.service';
 import { QueryNode } from 'src/app/components/query-builder/models/query-node';
 import { INodeValidator } from '../../abstract/i-node-validator';
@@ -15,9 +15,7 @@ export class AttributeNodeRequiredNameValidatorService implements INodeValidator
   constructor() { }
 
   validate(node: QueryNode, destroyed$?: Subject<void>): Observable<ValidationResult> {
-
     return node.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
       map(attributes => {
         
         const nameAttribute = attributes.find(attr => attr.editorName === 'name');
@@ -30,7 +28,7 @@ export class AttributeNodeRequiredNameValidatorService implements INodeValidator
           errors: [`Attribute 'name' is required.`]
         } as ValidationResult;
       }),
-      takeUntil(destroyed$ || NEVER)
+      takeUntil(destroyed$ || NEVER),
     );
   }
 }

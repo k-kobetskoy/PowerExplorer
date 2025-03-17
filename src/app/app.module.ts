@@ -58,6 +58,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { ResultTableComponent } from './components/query-builder/result-table/result-table.component';
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 
 @NgModule({
@@ -103,6 +104,7 @@ import { LoadingInterceptor } from './components/loading-indicator/loading.inter
     AngularSplitModule,
     MatTabsModule,
     MatIconModule,
+    MatTooltipModule,
     FormsModule,
     CdkTreeModule,
     MatProgressSpinnerModule,
