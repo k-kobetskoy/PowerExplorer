@@ -1,47 +1,47 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<form [formGroup]="rootForm">
+<div >
     <mat-form-field>
         <mat-label>Top</mat-label>
-        <input type="number" matInput formControlName="top">
+        <input type="number" matInput [formControl]="topFormControl">
     </mat-form-field>
 
-    <mat-checkbox formControlName="distinct">
+    <mat-checkbox [formControl]="distinctFormControl">
         Distinct
     </mat-checkbox>
 
-    <mat-checkbox formControlName="aggregate">
+    <mat-checkbox [formControl]="aggregateFormControl">
         Aggregate
     </mat-checkbox>
 
-    <mat-checkbox formControlName="returntotalrecordcount">
+    <mat-checkbox [formControl]="totalRecordsCountFormControl">
         Total record count
     </mat-checkbox>
 
-    <mat-checkbox formControlName="latematerialize">
+    <mat-checkbox [formControl]="lateMaterializeFormControl">
         Late materialize
     </mat-checkbox>
 
     <mat-form-field>
         <mat-label>Page size</mat-label>
-        <input type="number" matInput formControlName="count">
+        <input type="number" matInput [formControl]="recordsPerPageFormControl">
     </mat-form-field>
 
     <mat-form-field>
         <mat-label>Page</mat-label>
-        <input type="number" matInput formControlName="page">
+        <input type="number" matInput [formControl]="pageFormControl">
     </mat-form-field>
 
     <mat-form-field>
         <mat-label>Paging cookie</mat-label>
-        <input type="text" matInput formControlName="paging-cookie">
+        <input type="text" matInput [formControl]="pagingCookieFormControl">
     </mat-form-field>
 
     <mat-form-field>
         <mat-label>Data source</mat-label>
-        <mat-select formControlName="datasource">
+        <mat-select [formControl]="dataSourceFormControl">
             <mat-option></mat-option>
             <mat-option value="archive">Archive</mat-option>
         </mat-select>
     </mat-form-field>
-</form>
+</div>

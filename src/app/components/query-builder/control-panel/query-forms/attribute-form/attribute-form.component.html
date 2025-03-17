@@ -8,7 +8,7 @@
                 formControlName="name"
                 [matAutocomplete]="auto"
                 placeholder="Select an attribute">
-            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)">
+            <mat-autocomplete #auto="matAutocomplete" >
                 <mat-option *ngFor="let attr of filteredAttributes$ | async" [value]="attr.logicalName">
                     <div class="option-content">
                         <span class="logical-name">{{attr.logicalName}}</span>
@@ -16,7 +16,7 @@
                     </div>
                 </mat-option>
             </mat-autocomplete>
-            <app-loading-indicator matSuffix [diameter]="20" *ngIf="loading"></app-loading-indicator>
+            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
         </mat-form-field>
 
         <mat-form-field class="form-field">

@@ -6,10 +6,9 @@ import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
-import { ValidationService } from './validation.service';
+import { VALID_RESULT, ValidationResult, ValidationService } from './validation.service';
 
 @Injectable({ providedIn: 'root' })
-
 export class NodeTreeService {
 
   private _nodeTree$: BehaviorSubject<QueryNodeTree> = new BehaviorSubject<QueryNodeTree>(null);
@@ -17,6 +16,8 @@ export class NodeTreeService {
   xmlRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
+
+  isValid$: BehaviorSubject<ValidationResult> = new BehaviorSubject<ValidationResult>(VALID_RESULT);
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -52,7 +53,7 @@ export class NodeTreeService {
   initializeNodeTree() {
     const nodeTree = new QueryNodeTree();
 
-    const rootNode = this.nodeFactory.createNode(QueryNodeData.Root.Name);
+    const rootNode = this.nodeFactory.createNode(QueryNodeData.Root.Name, false, null);
 
     nodeTree.root = rootNode;
 
@@ -65,7 +66,7 @@ export class NodeTreeService {
 
   addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
 
-    let newNode = this.nodeFactory.createNode(newNodeName, true);
+    let newNode = this.nodeFactory.createNode(newNodeName, true, this._nodeTree$.value.root);
 
     if (!this._nodeTree$.value) {
       const nodeTree = new QueryNodeTree();
@@ -102,7 +103,7 @@ export class NodeTreeService {
   addNode(newNodeName: string): QueryNode {
     let parentNode = this._selectedNode$.value;
 
-    let newNode = this.nodeFactory.createNode(newNodeName);
+    let newNode = this.nodeFactory.createNode(newNodeName, false, this._nodeTree$.value.root);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;

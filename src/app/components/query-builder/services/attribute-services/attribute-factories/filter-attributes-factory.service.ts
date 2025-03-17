@@ -7,54 +7,56 @@ import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
-
+import { ValidationService } from '../../validation.service';
+import { IAttributeValidators } from '../abstract/i-attribute-validators';
+import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-validator';
 @Injectable({ providedIn: 'root' })
 
 export class FilterAttributesFactoryService implements IAttributeFactory {
 
-  constructor() { }
+  constructor(private validationService: ValidationService) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
     
-    const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
+    const validators: IAttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
     const attribute = AttributeData.Filter;
 
     switch (attributeName) {
       case attribute.Type.EditorName:
-        return new NodeAttribute(node, validators,  attribute.Type, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators,  attribute.Type, value, parserValidation);
       case AttributeNames.filterIsQuickFind:
-        return new NodeAttribute(node, validators,  attribute.IsQuickFind, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators,  attribute.IsQuickFind, value, parserValidation);
       case AttributeNames.filterBypassQuickFind:
-        return new NodeAttribute(node, validators,  attribute.BypassQuickFind, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators,  attribute.BypassQuickFind, value, parserValidation);
       case AttributeNames.filterOverrideRecordLimit:
-        return new NodeAttribute(node, validators,  attribute.OverrideRecordLimit, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators,  attribute.OverrideRecordLimit, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
-  private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
-    let parsingSyncValidators: IAttributeValidator[] = [];
+  private getAttributeValidators(attributeName: string, parserValidation: boolean): IAttributeValidators {
+    let parsingSyncValidators: IAttributeOneTimeValidator[] = [];
     let parsingAsyncValidators: IAttributeValidator[] = [];
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
       parsingAsyncValidators = this.getParserAsyncValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingAsyncValidators: parsingAsyncValidators, parsingSynchronousValidators: parsingSyncValidators };
+    return { validators: this.getDefaultAsyncValidators(attributeName), oneTimeValidators: parsingSyncValidators };
   }
 
-  private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {
+  private getParserSynchronousValidators(attributeName: string): IAttributeOneTimeValidator[] {
     switch (attributeName) {
       case AttributeNames.filterType:
-        return [this.validators.list(AttributeValidationTypes.listFilterType)]
+        return []
       case AttributeNames.filterIsQuickFind:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       case AttributeNames.filterBypassQuickFind:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       case AttributeNames.filterOverrideRecordLimit:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       default:
         return []
     }

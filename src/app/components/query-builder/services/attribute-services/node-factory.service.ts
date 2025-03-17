@@ -19,7 +19,8 @@ import { NodeNameValidatorService } from './validators/nodes/one-time-validatior
 import { INodeOneTimeValidator } from './abstract/i-node-one-time-validator';
 import { AttributeNodeAggregateRequiredAliasValidatorService } from './validators/nodes/attribute-node-aggregate-required-alias-validator.service';
 import { AttributeNodeRequiredNameValidatorService } from './validators/nodes/attribute-node-required-name-validator.service';
-import { NodeTreeService } from '../../services/node-tree.service';
+import { NodeTreeService } from '../node-tree.service';
+
 @Injectable({ providedIn: 'root' })
 
 export class NodeFactoryService {
@@ -38,7 +39,6 @@ export class NodeFactoryService {
     private nodeNameValidator: NodeNameValidatorService,
     private attributeNodeAggregateRequiredAliasValidator: AttributeNodeAggregateRequiredAliasValidatorService,
     private attributeNodeRequiredNameValidator: AttributeNodeRequiredNameValidatorService,
-    private nodeTreeService: NodeTreeService
   ) { }
 
   getAttributesFactory(tagName: string): IAttributeFactory {
@@ -62,20 +62,18 @@ export class NodeFactoryService {
     }
   }
 
-  createNode(nodeName: string, oneTimeParserValidation: boolean = false): QueryNode {
+  createNode(nodeName: string, oneTimeParserValidation: boolean = false, rootNode: QueryNode): QueryNode {
     const nodeData: INodeData = QueryNodeData.getNodeData(nodeName);
 
     const attributeFactory = this.getAttributesFactory(nodeName);
 
     const nodeValidators = this.getNodeValidators(nodeName, oneTimeParserValidation);
 
-    const node = new QueryNode(nodeData, attributeFactory, nodeValidators);
+    const node = new QueryNode(nodeData, attributeFactory, nodeValidators, rootNode);
 
     node.nodeDisplayValue$ = this.createNodeDisplayValueObservable(node);
 
     node.validationResult$ = this.validationService.setupNodeValidation(node);
-
-    node.setNodeTreeService(this.nodeTreeService);
 
     return node;
   }

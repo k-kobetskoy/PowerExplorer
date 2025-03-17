@@ -4,11 +4,11 @@ import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
 import { IAttributeData } from "./constants/attribute-data";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
-import { NodeTreeService } from "../services/node-tree.service";
 import { ValidationResult } from '../services/validation.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 
 export class QueryNode {
+    rootNode: QueryNode;
     defaultNodeDisplayValue: string;
     order: number;
     attributes$: BehaviorSubject<NodeAttribute[]> = new BehaviorSubject<NodeAttribute[]>([]);
@@ -36,14 +36,14 @@ export class QueryNode {
     hasAggregateOrGroupByAttribute: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
     private readonly attributeFactory: IAttributeFactory;
-    private nodeTreeService: NodeTreeService;
 
     destroyed$ = new Subject<void>();
 
     constructor(
         nodeData: INodeData,
         attributeFactory: IAttributeFactory,
-        nodeValidators: INodeValidators
+        nodeValidators: INodeValidators,
+        rootNode: QueryNode
     ) {
         this.expandable = false;
         this.level = 0;
@@ -62,10 +62,7 @@ export class QueryNode {
 
         this.attributeFactory = attributeFactory;
         this.validatiors = nodeValidators;
-    }
-
-    public setNodeTreeService(nodeTreeService: NodeTreeService) {
-        this.nodeTreeService = nodeTreeService;
+        this.rootNode = rootNode;
     }
 
     getRootNode(): QueryNode {
@@ -73,7 +70,7 @@ export class QueryNode {
             return this;
         }
 
-        return this.nodeTreeService.getNodeTree().value.root;
+        return this.rootNode;
     }
 
     getParentEntity(node: QueryNode = this): QueryNode {

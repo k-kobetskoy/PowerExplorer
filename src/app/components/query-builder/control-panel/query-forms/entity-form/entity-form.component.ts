@@ -24,8 +24,8 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
     private nameAttributeData = AttributeData.Entity.Name;
     private aliasAttributeData = AttributeData.Entity.Alias;
 
-    private nameInputName = this.nameAttributeData.TreeViewName;
-    private aliasInputName = this.aliasAttributeData.TreeViewName;
+    private nameInputName = this.nameAttributeData.EditorName;
+    private aliasInputName = this.aliasAttributeData.EditorName;
 
     constructor(private entityService: EntityEntityService, private fb: FormBuilder) { super(); }
 
@@ -45,8 +45,8 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
         const aliasAttribute = this.getAttribute(this.aliasAttributeData, this.selectedNode);
 
         this.entityForm = this.fb.group({
-            [this.nameInputName]: [nameAttribute || ''],
-            [this.aliasInputName]: [aliasAttribute || '']
+            [this.nameAttributeData.EditorName]: [nameAttribute || ''],
+            [this.aliasAttributeData.EditorName]: [aliasAttribute || '']
         });
 
         // Form input -> model
@@ -117,7 +117,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
     }
 
     private filterEntities(value: string, entities: EntityModel[]): EntityModel[] {
-        const filterValue = value?.toLowerCase() || '';
+        const filterValue = value || '';
         return entities.filter(entity =>
             entity.logicalName.toLowerCase().includes(filterValue) ||
             entity.displayName.toLowerCase().includes(filterValue)

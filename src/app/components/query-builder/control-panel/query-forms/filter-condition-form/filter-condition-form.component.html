@@ -1,29 +1,32 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<form [formGroup]="conditionForm">
-  <mat-form-field>
-    <mat-label>Attrubute</mat-label>
-    <input type="text" matInput formControlName="attribute" [matAutocomplete]="auto"
-      (keyup)="onKeyPressed($event)">
+<mat-form-field>
+  <mat-label>Attrubute</mat-label>
+  <input type="text" matInput [formControl]="attributeFormControl" [matAutocomplete]="auto" (keyup)="onKeyPressed($event)">
 
-    <mat-autocomplete #auto="matAutocomplete">
-      <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
-        {{option.logicalName + ' ' + option.displayName}}
+  <mat-autocomplete #auto="matAutocomplete">
+    <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
+      {{option.logicalName + ' ' + option.displayName}}
 
-      </mat-option>
-      <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
-    </mat-autocomplete>
-  </mat-form-field>
-</form>
+    </mat-option>
+    <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
+  </mat-autocomplete>
+</mat-form-field>
 
 <ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
   <ng-container [ngSwitch]="getFilterOperatorType(attribute)">
-    <app-number-form [selectedNode]="selectedNode " [attributeValue]="attribute.logicalName" *ngSwitchCase='FilterOperatorTypes.NUMBER'></app-number-form>
-    <app-boolean-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName" *ngSwitchCase='FilterOperatorTypes.BOOLEAN'></app-boolean-form>
-    <app-id-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName" *ngSwitchCase='FilterOperatorTypes.ID'></app-id-form>
-    <app-picklist-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName" *ngSwitchCase='FilterOperatorTypes.PICKLIST'></app-picklist-form>
-    <app-date-time-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName" *ngSwitchCase='FilterOperatorTypes.DATE_TIME'></app-date-time-form>
-    <app-string-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName" *ngSwitchCase='FilterOperatorTypes.STRING'></app-string-form>
+    <app-number-form [selectedNode]="selectedNode " [attributeValue]="attribute.logicalName"
+      *ngSwitchCase='FilterOperatorTypes.NUMBER'></app-number-form>
+    <app-boolean-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
+      *ngSwitchCase='FilterOperatorTypes.BOOLEAN'></app-boolean-form>
+    <app-id-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
+      *ngSwitchCase='FilterOperatorTypes.ID'></app-id-form>
+    <app-picklist-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
+      *ngSwitchCase='FilterOperatorTypes.PICKLIST'></app-picklist-form>
+    <app-date-time-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
+      *ngSwitchCase='FilterOperatorTypes.DATE_TIME'></app-date-time-form>
+    <app-string-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
+      *ngSwitchCase='FilterOperatorTypes.STRING'></app-string-form>
   </ng-container>
 </ng-container>
 

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil, BehaviorSubject, catchError, debounceTime } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
@@ -23,19 +23,17 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
 
   @Input() selectedNode: QueryNode;
 
-  conditionForm: FormGroup;
   attributes$: Observable<AttributeModel[]>;
   filteredAttributes$: Observable<AttributeModel[]>;
   entityName$: Observable<string>;
   selectedAttribute$: BehaviorSubject<AttributeModel> = new BehaviorSubject<AttributeModel>(null);
   FilterOperatorTypes = FilterOperatorTypes;
 
+  attributeFormControl = new FormControl('');
+
+
   constructor(
-    private attributeEntityService: AttributeEntityService,
-    private fb: FormBuilder
-  ) {
-    super();
-  }
+    private attributeEntityService: AttributeEntityService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -51,13 +49,9 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   private initializeForm() {
     const attribute = this.getAttribute(this.conditionAttribute, this.selectedNode);
 
-    if(attribute) {
+    if (attribute) {
       this.selectedAttribute$.next(attribute.getAttributeModel());
     }
-
-    this.conditionForm = this.fb.group({
-      attribute: [attribute || '']
-    });
 
     const parentEntityNode = this.selectedNode.getParentEntity();
 
@@ -80,10 +74,10 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
       takeUntil(this._destroy$)
     );
 
-    const initialValue = this.conditionForm.get('attribute').value;
+    const initialValue = this.attributeFormControl.value;
     this.setupFiltering(initialValue);
 
-    this.conditionForm.get('attribute').valueChanges
+    this.attributeFormControl.valueChanges
       .pipe(distinctUntilChanged(), takeUntil(this._destroy$))
       .subscribe(value => {
         this.selectedNode.setAttribute(this.conditionAttribute, value);
@@ -91,7 +85,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   }
 
   private setupFiltering(initialValue: string) {
-    this.filteredAttributes$ = this.conditionForm.get('attribute').valueChanges.pipe(
+    this.filteredAttributes$ = this.attributeFormControl.valueChanges.pipe(
       debounceTime(50),
       startWith(initialValue),
       switchMap(value => value ? this._filter(value) : this.attributes$)
@@ -121,7 +115,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
 
   onKeyPressed($event: KeyboardEvent) {
     if (($event.key === 'Delete' || $event.key === 'Backspace') &&
-      this.conditionForm.get('attribute').value === '') {
+      this.attributeFormControl.value === '') {
       this.selectedNode.setAttribute(this.conditionAttribute, null);
     }
   }

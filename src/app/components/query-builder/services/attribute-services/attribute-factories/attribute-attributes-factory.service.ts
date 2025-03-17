@@ -16,6 +16,7 @@ import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-val
 import { AttributeAggregateGroupByValidatorService } from '../validators/attributes/attribute-aggregate-groupby-validator.service';
 import { AttributeDateGroupingNameValidatorService } from '../validators/attributes/parser/attribute-dategrouping-name-validator.service';
 import { AttributeAggregateConditionFetchAggregateValidatorService } from '../validators/attributes/attribute-aggregate-condition-fetch-aggregate-validator.service';
+import { ValidationService } from '../../validation.service';
 @Injectable({ providedIn: 'root' })
 
 export class AttributeAttributesFactoryService implements IAttributeFactory {
@@ -28,7 +29,8 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
     private nodeAttributesNamesValidatorService: NodeAttributesNamesValidatorService,
     private attributeDateGroupingNameValidator: AttributeDateGroupingNameValidatorService,
     private attributeAggregateConditionFetchAggregateValidatorService: AttributeAggregateConditionFetchAggregateValidatorService,
-    private attributeAggregateGroupByValidatorService: AttributeAggregateGroupByValidatorService
+    private attributeAggregateGroupByValidatorService: AttributeAggregateGroupByValidatorService,
+    private validationService: ValidationService
   ) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
@@ -39,21 +41,21 @@ export class AttributeAttributesFactoryService implements IAttributeFactory {
 
     switch (attributeName) {
       case attribute.Name.EditorName:
-        return new NodeAttribute(node, validators, attribute.Name, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Name, value, parserValidation);
       case attribute.Alias.EditorName:
-        return new NodeAttribute(node, validators, attribute.Alias, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Alias, value, parserValidation);
       case attribute.Aggregate.EditorName:
-        return new NodeAttribute(node, validators, attribute.Aggregate, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Aggregate, value, parserValidation);
       case attribute.GroupBy.EditorName:
-        return new NodeAttribute(node, validators, attribute.GroupBy, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.GroupBy, value, parserValidation);
       case attribute.Distinct.EditorName:
-        return new NodeAttribute(node, validators, attribute.Distinct, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Distinct, value, parserValidation);
       case attribute.UserTimeZone.EditorName:
-        return new NodeAttribute(node, validators, attribute.UserTimeZone, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.UserTimeZone, value, parserValidation);
       case attribute.DateGrouping.EditorName:
-        return new NodeAttribute(node, validators, attribute.DateGrouping, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.DateGrouping, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 

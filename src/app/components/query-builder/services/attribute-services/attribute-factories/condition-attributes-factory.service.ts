@@ -7,60 +7,56 @@ import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
-
+import { ValidationService } from '../../validation.service';
+import { IAttributeValidators } from '../abstract/i-attribute-validators';
+import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-validator';
 @Injectable({ providedIn: 'root' })
 
 export class ConditionAttributesFactoryService implements IAttributeFactory {
 
-  constructor() { }
+  constructor(private validationService: ValidationService) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
-    const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
+    const validators: IAttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
     const attribute = AttributeData.Condition;
 
     switch (attributeName) {
       case attribute.Entity.EditorName:
-        return new NodeAttribute(node, validators, attribute.Entity, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Entity, value, parserValidation);
       case attribute.Attribute.EditorName:
-        return new NodeAttribute(node, validators, attribute.Attribute, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Attribute, value, parserValidation);
       case attribute.Operator.EditorName:
-        return new NodeAttribute(node, validators, attribute.Operator, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Operator, value, parserValidation);
       case attribute.Value.EditorName:
-        return new NodeAttribute(node, validators, attribute.Value, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Value, value, parserValidation);
       case attribute.ValueOf.EditorName:
-        return new NodeAttribute(node, validators, attribute.ValueOf, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.ValueOf, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
-  private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
-    let parsingSyncValidators: IAttributeValidator[] = [];
+  private getAttributeValidators(attributeName: string, parserValidation: boolean): IAttributeValidators {
+    let parsingSyncValidators: IAttributeOneTimeValidator[] = [];
 
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
+    return { validators: this.getDefaultAsyncValidators(attributeName), oneTimeValidators: parsingSyncValidators };
   }
 
-  private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {
+  private getParserSynchronousValidators(attributeName: string): IAttributeOneTimeValidator[] {
     switch (attributeName) {
       case AttributeNames.conditionEntity:
         return []  //TODO: implement
       case AttributeNames.conditionValue:
-        return [
-          this.validators.type(AttributeValidationTypes.conditionValueTypes) 
-        ]
+        return []
       case AttributeNames.conditionOperator:
-        return [
-          this.validators.list(AttributeValidationTypes.conditionValueList) 
-        ]
+        return []
       case AttributeNames.conditionValueOf:
-        return [
-          this.validators.server(AttributeValidationTypes.serverValueOfAttribute), // should check if the ValueOf is of the same type as the condition attribute
-        ]
+        return []  // should check if the ValueOf is of the same type as the condition attribute
       default:
         return []
     }
@@ -71,7 +67,7 @@ export class ConditionAttributesFactoryService implements IAttributeFactory {
       case AttributeNames.conditionEntity:
         return []  //TODO: implement
       case AttributeNames.conditionAttribute:
-        return [this.validators.server(AttributeValidationTypes.serverParentEntityAttribute)]
+        return []
       default:
         return []
     }

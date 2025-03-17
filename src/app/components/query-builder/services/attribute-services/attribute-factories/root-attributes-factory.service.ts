@@ -7,55 +7,56 @@ import { AttributeNames } from '../../../models/constants/attribute-names';
 import { NodeAttribute } from '../../../models/node-attribute';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
-
+import { IAttributeValidators } from '../abstract/i-attribute-validators';
+import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-validator';
+import { ValidationService } from '../../validation.service';
 @Injectable({ providedIn: 'root' })
 
 export class RootAttributesFactoryService implements IAttributeFactory {
 
-  constructor() { }
+  constructor(private validationService: ValidationService) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
-    const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
+    const validators: IAttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
     const attribute = AttributeData.Root;
 
     switch (attributeName) {
       case attribute.Top.EditorName:
-        return new NodeAttribute(node, validators, attribute.Top, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Top, value, parserValidation);
       case attribute.Distinct.EditorName:
-        return new NodeAttribute(node, validators, attribute.Distinct, value, parserValidation  );
+        return new NodeAttribute(this.validationService, node, validators, attribute.Distinct, value, parserValidation  );
       case attribute.Aggregate.EditorName:
-        return new NodeAttribute(node, validators, attribute.Aggregate, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Aggregate, value, parserValidation);
       case attribute.TotalRecordsCount.EditorName:
-        return new NodeAttribute(node, validators, attribute.TotalRecordsCount, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.TotalRecordsCount, value, parserValidation);
       case attribute.RecordsPerPage.EditorName:
-        return new NodeAttribute(node, validators, attribute.RecordsPerPage, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.RecordsPerPage, value, parserValidation);
       case attribute.Page.EditorName:
-        return new NodeAttribute(node, validators, attribute.Page, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Page, value, parserValidation);
       case attribute.PagingCookie.EditorName:
-        return new NodeAttribute(node, validators, attribute.PagingCookie, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.PagingCookie, value, parserValidation);
       case attribute.LateMaterialize.EditorName:
-        return new NodeAttribute(node, validators, attribute.LateMaterialize, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.LateMaterialize, value, parserValidation);
       case attribute.DataSource.EditorName:
-        return new NodeAttribute(node, validators, attribute.DataSource, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.DataSource, value, parserValidation);
       case attribute.Options.EditorName:
-        return new NodeAttribute(node, validators, attribute.Options, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Options, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
 
-  private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
-    let parsingSyncValidators: IAttributeValidator[] = [];
+  private getAttributeValidators(attributeName: string, parserValidation: boolean): IAttributeValidators {
+    let parsingSyncValidators: IAttributeOneTimeValidator[] = [];
     let parsingAsyncValidators: IAttributeValidator[] = [];
     if (parserValidation) {
-      parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
       parsingAsyncValidators = this.getParserAsyncValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingAsyncValidators: parsingAsyncValidators, parsingSynchronousValidators: parsingSyncValidators };
+    return { validators: this.getDefaultAsyncValidators(attributeName), oneTimeValidators: parsingSyncValidators };
   }
 
   private getDefaultAsyncValidators(attributeName: string): IAttributeValidator[] {
@@ -69,19 +70,19 @@ export class RootAttributesFactoryService implements IAttributeFactory {
   private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {
     switch (attributeName) {
       case AttributeNames.rootTop:
-        return [this.validators.type(AttributeValidationTypes.typeNumber)]
+        return []
       case AttributeNames.rootDistinct:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       case AttributeNames.rootAggregate:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       case AttributeNames.rootTotalRecordsCount:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       case AttributeNames.rootLateMaterialize:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       case AttributeNames.rootTotalRecordsCount:
-        return [this.validators.type(AttributeValidationTypes.typeNumber)]
+        return []
       case AttributeNames.rootPage:
-        return [this.validators.type(AttributeValidationTypes.typeNumber)]
+        return []
       default:
         return []
     }

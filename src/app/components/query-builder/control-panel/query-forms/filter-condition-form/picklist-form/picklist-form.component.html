@@ -1,6 +1,6 @@
 <div class="form-container">
 
-  <form [formGroup]="picklistForm">
+  <div>
     <mat-form-field class="form-field">
       <mat-label>Operator</mat-label>
       <mat-select formControlName="operator">
@@ -22,10 +22,7 @@
           </div>
         </mat-option>
       </mat-select>
-      <mat-error *ngIf="errorMessage$ | async as error">
-        {{error}}
-      </mat-error>
       <app-loading-indicator matSuffix [diameter]="20" loadingKey="picklistOptions"></app-loading-indicator>
     </mat-form-field>
-  </form>
+  </div>
 </div>

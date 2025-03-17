@@ -1,10 +1,11 @@
 import { BehaviorSubject, Subject, Observable, map, takeUntil, distinctUntilChanged, take } from 'rxjs';
 import { AttributeDisplayValues as AttributeDisplayValues } from './attribute-display-values';
 import { QueryNode } from './query-node';
-import { AttributeData, IAttributeData } from './constants/attribute-data';
+import { IAttributeData } from './constants/attribute-data';
 import { ValidationResult, ValidationService } from '../services/validation.service';
 import { IAttributeValidators } from '../services/attribute-services/abstract/i-attribute-validators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
+import { QueryNodeData } from './constants/query-node-data';
 
 export class NodeAttribute {
     parentNode: QueryNode;
@@ -65,5 +66,14 @@ export class NodeAttribute {
     dispose() {
         this.destroyed$.next();
         this.destroyed$.complete();
+    }
+
+
+    getRootNode(): QueryNode {
+        if (this.parentNode.nodeName === QueryNodeData.Root.Name) {
+            return this.parentNode;
+        }
+
+        return this.parentNode.rootNode;
     }
 }

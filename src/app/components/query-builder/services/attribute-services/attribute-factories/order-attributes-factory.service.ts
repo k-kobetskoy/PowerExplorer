@@ -7,44 +7,46 @@ import { NodeAttribute } from '../../../models/node-attribute';
 import { AttributeValidators } from '../../../models/attribute-validators';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { ValidationService } from '../../validation.service';
+import { IAttributeValidators } from '../abstract/i-attribute-validators';
+import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-validator';
 
 @Injectable({ providedIn: 'root' })
-
 export class OrderAttributesFactoryService implements IAttributeFactory {
 
-  constructor() { }
+  constructor(private validationService: ValidationService) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
 
-    const validators: AttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
+    const validators: IAttributeValidators = this.getAttributeValidators(attributeName, parserValidation);
 
     const attribute = AttributeData.Order;
 
     switch (attributeName) {
       case attribute.Attribute.EditorName:
-        return new NodeAttribute(node, validators, attribute.Attribute, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Attribute, value, parserValidation);
       case attribute.Alias.EditorName:
-        return new NodeAttribute(node, validators, attribute.Alias, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Alias, value, parserValidation);
       case attribute.Desc.EditorName:
-        return new NodeAttribute(node, validators, attribute.Desc, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Desc, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 
-  private getAttributeValidators(attributeName: string, parserValidation: boolean): AttributeValidators {
-    let parsingSyncValidators: IAttributeValidator[] = [];
+  private getAttributeValidators(attributeName: string, parserValidation: boolean): IAttributeValidators {
+    let parsingSyncValidators: IAttributeOneTimeValidator[] = [];
     if (parserValidation) {
       parsingSyncValidators = this.getParserSynchronousValidators(attributeName);
     }
 
-    return { defaultAsyncValidators: this.getDefaultAsyncValidators(attributeName), parsingSynchronousValidators: parsingSyncValidators };
+    return { validators: this.getDefaultAsyncValidators(attributeName), oneTimeValidators: parsingSyncValidators };
   }
 
-  private getParserSynchronousValidators(attributeName: string): IAttributeValidator[] {
+  private getParserSynchronousValidators(attributeName: string): IAttributeOneTimeValidator[] {
     switch (attributeName) {
       case AttributeNames.orderDescending:
-        return [this.validators.type(AttributeValidationTypes.typeBoolean)]
+        return []
       default:
         return []
     }
@@ -53,7 +55,7 @@ export class OrderAttributesFactoryService implements IAttributeFactory {
   private getParserAsyncValidators(attributeName: string): IAttributeValidator[] {
     switch (attributeName) {
       case AttributeNames.orderAttribute:
-        return [this.validators.condition(AttributeValidationTypes.orderFetchAggregateFalse)]
+        return []
       default:
         return []
     }
@@ -62,9 +64,9 @@ export class OrderAttributesFactoryService implements IAttributeFactory {
   private getDefaultAsyncValidators(attributeName: string): IAttributeValidator[] {
     switch (attributeName) {
       case AttributeNames.orderAttribute:
-        return [this.validators.server(AttributeValidationTypes.serverParentEntityAttribute)]
+        return []
       case AttributeNames.orderAlias:
-        return [this.validators.string(AttributeValidationTypes.alias)]
+        return []
       default:
         return []
     }

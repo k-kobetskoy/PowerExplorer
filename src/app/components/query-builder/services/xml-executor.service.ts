@@ -37,10 +37,7 @@ export class XmlExecutorService extends BaseRequestService {
   constructor(
     private nodeTreeService: NodeTreeService,
     private attributeEntityService: AttributeEntityService
-  ) {
-    super();
-    this.getActiveEnvironmentUrl();
-  }
+  ) { super(); }
 
   executeXmlRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions = {}): Observable<Object[]> {
     if (!xml || !entityNode) {
@@ -109,13 +106,13 @@ export class XmlExecutorService extends BaseRequestService {
           })
         );
       }),
-      tap(result=>console.log(result)),
+      tap(result => console.log(result)),
       switchMap(result => {
         if (!result?.value?.length) {
           return of([]);
         }
-        
-        const entityName = entityNode.attributes$.value.filter(attr=>attr.editorName==='name')[0].value$.value;
+
+        const entityName = entityNode.attributes$.value.filter(attr => attr.editorName === 'name')[0].value$.value;
 
         return this.attributeEntityService.getAttributes(entityName).pipe(
           map(attributes => {
@@ -151,14 +148,14 @@ export class XmlExecutorService extends BaseRequestService {
     if (!data?.length) return [];
 
     console.log('Normalizing data with types and annotations');
-    
+
     // Get all keys from the first item, including annotation keys
     const firstItem = data[0];
     const allKeys = Object.keys(firstItem).filter(key => key !== '@odata.etag');
-    
+
     // Group keys by base field name (without annotations)
     const fieldGroups = new Map<string, string[]>();
-    
+
     allKeys.forEach(key => {
       // Check if this is an annotation key
       if (key.includes('@')) {
@@ -174,24 +171,24 @@ export class XmlExecutorService extends BaseRequestService {
         }
       }
     });
-    
+
     console.log(`Found ${fieldGroups.size} unique fields with their annotations`);
-    
+
     return data.map(item => {
       const normalizedItem: TypedResultItem = {};
-      
+
       // Process each field group (base field + its annotations)
       fieldGroups.forEach((annotationKeys, baseKey) => {
         // Handle lookup fields (they start with underscore and end with _value)
         let fieldKey = baseKey;
         let isLookup = false;
-        
+
         if (baseKey.startsWith('_') && baseKey.endsWith('_value')) {
           isLookup = true;
           // Try to get the logical name from associatednavigationproperty annotation
           const navPropKey = `${baseKey}@Microsoft.Dynamics.CRM.associatednavigationproperty`;
           let logicalName = '';
-          
+
           if (item[navPropKey]) {
             // Use associatednavigationproperty if available
             logicalName = String(item[navPropKey]).toLowerCase();
@@ -199,20 +196,20 @@ export class XmlExecutorService extends BaseRequestService {
             // Extract from the field name: _fieldname_value -> fieldname
             logicalName = baseKey.substring(1, baseKey.length - 6).toLowerCase();
           }
-          
+
           fieldKey = logicalName;
         }
-        
+
         // Get attribute info if available
         const attributeInfo = attributeMap.get(baseKey) || attributeMap.get(fieldKey);
-        
+
         // Create the field info object
         const fieldInfo: FieldTypeInfo = {
           value: item[baseKey],
           type: attributeInfo?.attributeType || (isLookup ? 'Lookup' : 'String'),
           displayName: attributeInfo?.displayName || undefined
         };
-        
+
         // Add all annotations to the field info
         annotationKeys.forEach(annotationKey => {
           const annotationName = annotationKey.split('@')[1];
@@ -220,7 +217,7 @@ export class XmlExecutorService extends BaseRequestService {
             // For formatted value, use a consistent property name
             if (annotationName === 'OData.Community.Display.V1.FormattedValue') {
               fieldInfo['FormattedValue'] = item[annotationKey];
-            } 
+            }
             // For lookup-specific annotations
             else if (annotationName === 'Microsoft.Dynamics.CRM.associatednavigationproperty') {
               fieldInfo['associatednavigationproperty'] = item[annotationKey];
@@ -234,10 +231,10 @@ export class XmlExecutorService extends BaseRequestService {
             }
           }
         });
-        
+
         normalizedItem[fieldKey] = fieldInfo;
       });
-      
+
       return normalizedItem;
     });
   }

@@ -31,8 +31,8 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
   }
 
   private setupButtonState(): void {
-    this.buttonDisabled$ = this.nodeTreeProcessor.isExecutable$.pipe(
-      map(isExecutable => !isExecutable),
+    this.buttonDisabled$ = this.nodeTreeProcessor.isValid$.pipe(
+      map(isValid => !isValid),
       takeUntil(this.destroy$)
     );
   }

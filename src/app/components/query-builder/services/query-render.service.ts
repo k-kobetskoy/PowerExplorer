@@ -72,11 +72,7 @@ export class QueryRenderService implements OnDestroy {
       debounceTime(150)
     ).subscribe(xml => {
       // Update the XML but don't trigger execution
-      this.nodeTreeService.xmlRequest$.next(xml);
-      
-      // Update the executable state based on XML validity
-      const isValidXml = xml && xml.trim().length > 0;
-      this.nodeTreeService.isExecutable$.next(isValidXml);
+      this.nodeTreeService.xmlRequest$.next(xml);    
     });
   }
 

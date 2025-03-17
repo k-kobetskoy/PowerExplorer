@@ -10,7 +10,7 @@ import { IAttributeOneTimeValidator } from '../abstract/i-attribute-one-time-val
 import { AttributeAliasValueValidatorService } from '../validators/attributes/attribute-alias-value-validator.service';
 import { EntityNameServerValidatorService } from '../validators/attributes/entity-name-server-validator.service';
 import { NodeAttributesNamesValidatorService } from '../validators/attributes/one-time-validators/node-attributes-names-validator.service';
-
+import { ValidationService } from '../../validation.service';
 @Injectable({ providedIn: 'root' })
 
 export class EntityAttributesFacoryService implements IAttributeFactory {
@@ -18,7 +18,8 @@ export class EntityAttributesFacoryService implements IAttributeFactory {
   constructor(
     private aliasValueValidatorService: AttributeAliasValueValidatorService,
     private entityNameServerValidatorService: EntityNameServerValidatorService,
-    private nodeAttributesNamesValidatorService: NodeAttributesNamesValidatorService
+    private nodeAttributesNamesValidatorService: NodeAttributesNamesValidatorService,
+    private validationService: ValidationService
   ) { }
 
   createAttribute(attributeName: string, node: QueryNode, parserValidation: boolean, value?: string): NodeAttribute {
@@ -29,11 +30,11 @@ export class EntityAttributesFacoryService implements IAttributeFactory {
 
     switch (attributeName) {
       case attribute.Name.EditorName:
-        return new NodeAttribute(node, validators, attribute.Name, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Name, value, parserValidation);
       case attribute.Alias.EditorName:
-        return new NodeAttribute(node, validators, attribute.Alias, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, attribute.Alias, value, parserValidation);
       default:
-        return new NodeAttribute(node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
+        return new NodeAttribute(this.validationService, node, validators, { Order: 99, EditorName: attributeName }, value, parserValidation);
     }
   }
 

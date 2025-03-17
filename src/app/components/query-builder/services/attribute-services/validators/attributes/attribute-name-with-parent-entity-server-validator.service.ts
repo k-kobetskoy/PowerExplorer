@@ -60,7 +60,7 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
             const attrName = attributeName.toString().trim();
             const entityName = entityLogicalName.toString().trim();
 
-            return this.attributeService.getAttributes(entityName, parentEntity).pipe(
+            return this.attributeService.getAttributes(entityName).pipe(
               map((attributes: AttributeModel[]) => {
                 if (!attributes || attributes.length === 0) {
                   return {
