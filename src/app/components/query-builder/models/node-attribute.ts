@@ -70,7 +70,7 @@ export class NodeAttribute {
 
 
     getRootNode(): QueryNode {
-        if (this.parentNode.nodeName === QueryNodeData.Root.Name) {
+        if (this.parentNode.nodeName === QueryNodeData.Fetch.Name) {
             return this.parentNode;
         }
 

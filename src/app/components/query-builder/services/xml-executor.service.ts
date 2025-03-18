@@ -8,6 +8,7 @@ import { NodeTreeService } from './node-tree.service';
 import { AttributeEntityService } from './entity-services/attribute-entity.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { QueryNode } from '../models/query-node';
+import { ErrorDialogService } from 'src/app/services/error-dialog.service';
 
 interface FetchXmlQueryOptions {
   maxPageSize?: number;
@@ -36,12 +37,18 @@ export class XmlExecutorService extends BaseRequestService {
 
   constructor(
     private nodeTreeService: NodeTreeService,
-    private attributeEntityService: AttributeEntityService
+    private attributeEntityService: AttributeEntityService,
+    private errorDialogService: ErrorDialogService
   ) { super(); }
 
   executeXmlRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions = {}): Observable<Object[]> {
     if (!xml || !entityNode) {
       console.error('XML and entity name are required');
+      this.errorDialogService.showError({
+        title: 'Invalid Query',
+        message: 'XML and entity information are required',
+        details: 'Please ensure you have a valid query with entity information before executing'
+      });
       return of([]);
     }
 
@@ -91,6 +98,11 @@ export class XmlExecutorService extends BaseRequestService {
       switchMap(envUrl => {
         if (!envUrl) {
           console.error('No active environment URL found');
+          this.errorDialogService.showError({
+            title: 'Connection Error',
+            message: 'No active environment URL found',
+            details: 'Please connect to an environment before executing the query'
+          });
           return of(null);
         }
 
@@ -102,6 +114,7 @@ export class XmlExecutorService extends BaseRequestService {
         return this.httpClient.get<XmlExecuteResultModel>(url, requestOptions).pipe(
           catchError((error: HttpErrorResponse) => {
             console.error('Error executing XML request:', error.message);
+            this.errorDialogService.showHttpError(error);
             return of(null);
           })
         );

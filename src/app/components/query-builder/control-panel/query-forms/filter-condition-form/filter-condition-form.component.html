@@ -15,18 +15,30 @@
 
 <ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
   <ng-container [ngSwitch]="getFilterOperatorType(attribute)">
-    <app-number-form [selectedNode]="selectedNode " [attributeValue]="attribute.logicalName"
-      *ngSwitchCase='FilterOperatorTypes.NUMBER'></app-number-form>
-    <app-boolean-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
-      *ngSwitchCase='FilterOperatorTypes.BOOLEAN'></app-boolean-form>
-    <app-id-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
-      *ngSwitchCase='FilterOperatorTypes.ID'></app-id-form>
-    <app-picklist-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
-      *ngSwitchCase='FilterOperatorTypes.PICKLIST'></app-picklist-form>
-    <app-date-time-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
-      *ngSwitchCase='FilterOperatorTypes.DATE_TIME'></app-date-time-form>
-    <app-string-form [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"
-      *ngSwitchCase='FilterOperatorTypes.STRING'></app-string-form>
+    <app-number-form 
+      *ngSwitchCase='FilterOperatorTypes.NUMBER'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-number-form>
+    <app-boolean-form 
+      *ngSwitchCase='FilterOperatorTypes.BOOLEAN'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-boolean-form>
+    <app-id-form 
+      *ngSwitchCase='FilterOperatorTypes.ID'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-id-form>
+    <app-picklist-form 
+      *ngSwitchCase='FilterOperatorTypes.PICKLIST'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-picklist-form>
+    <app-date-time-form 
+      *ngSwitchCase='FilterOperatorTypes.DATE_TIME'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-date-time-form>
+    <app-string-form 
+      *ngSwitchCase='FilterOperatorTypes.STRING'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-string-form>
   </ng-container>
 </ng-container>
 

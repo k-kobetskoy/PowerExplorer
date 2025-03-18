@@ -34,6 +34,7 @@ import { LinkEntityFormComponent } from './components/query-builder/control-pane
 import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
 import { QueryTreeButtonBlockComponent } from './components/query-builder/query-tree-button-block/query-tree-button-block.component';
 import { ValidationService } from './components/query-builder/services/validation.service';
+import { ErrorDialogComponent } from './components/error-dialog/error-dialog.component';
 
 import { MsalRedirectComponent } from '@azure/msal-angular';
 import { MsalConfigDynamicModule } from './msal-config-dynamic.module';
@@ -92,7 +93,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     LinkEntityFormComponent,
     OrderFormComponent,
     QueryTreeButtonBlockComponent,
-    ResultTableComponent
+    ResultTableComponent,
+    ErrorDialogComponent
   ],
   bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
     BrowserAnimationsModule,

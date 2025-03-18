@@ -18,9 +18,8 @@ export class QueryNodeData {
         TagName: 'attribute',
         Attributes:
             [
-                AttributeNames.orderAttribute,
-                AttributeNames.orderDescending,
-                AttributeNames.orderAlias
+                AttributeNames.attributeName,
+                AttributeNames.attributeAlias
             ],
         AttributesCount: 3,
     };
@@ -96,10 +95,10 @@ export class QueryNodeData {
             ],
         AttributesCount: 3,
     };
-    static readonly Root: INodeData = {
+    static readonly Fetch: INodeData = {
         Order: 0,
         Actions: ['Entity'],
-        Name: 'Root',
+        Name: 'Fetch',
         TagName: 'fetch',
         Attributes:
             [
@@ -155,7 +154,7 @@ export class QueryNodeData {
         'filter': QueryNodeData.Filter.Name, 
         'link-entity': QueryNodeData.Link.Name,
         'entity': QueryNodeData.Entity.Name,
-        'fetch': QueryNodeData.Root.Name
+        'fetch': QueryNodeData.Fetch.Name
     };    
 
     static getNodeData(nodeName: string): INodeData {

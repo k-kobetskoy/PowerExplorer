@@ -116,7 +116,7 @@ export class OrderAttributeData {
         new BaseAttributeData('descending', AttributeTreeViewDisplayStyle.onlyName, 3, 'Desc');
 }
 
-export class RootAttributeData {
+export class FetchAttributeData {
     static readonly Top: IAttributeData =
         new BaseAttributeData('top', AttributeTreeViewDisplayStyle.nameWithValue, 1, 'Top');
 
@@ -158,7 +158,7 @@ export class AttributeData {
 
     static readonly Order: typeof OrderAttributeData = OrderAttributeData;
 
-    static readonly Root: typeof RootAttributeData = RootAttributeData;
+    static readonly Root: typeof FetchAttributeData = FetchAttributeData;
 
     static readonly NodesNames: string[] = [
         'Value',
@@ -168,7 +168,7 @@ export class AttributeData {
         'Filter',
         'Link Entity',
         'Entity',
-        'Root'
+        'Fetch'
     ];
 
     static readonly AggregateFuncNames: string[] =[

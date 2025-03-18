@@ -1,7 +1,8 @@
 import { QueryNode } from "./query-node";
-
+import { Subject } from "rxjs";
 export class QueryNodeTree implements Iterable<QueryNode> {
     root: QueryNode
+    destroyed$: Subject<void> = new Subject<void>();
 
     [Symbol.iterator](): Iterator<QueryNode, any, undefined> {
 

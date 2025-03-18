@@ -19,6 +19,8 @@ export class NodeAttributesNamesValidatorService implements IAttributeOneTimeVal
 
     const allowedAttributes = QueryNodeData.getNodeAttributes(attribute.parentNode.nodeName);
 
+    console.log('allowedAttributes', allowedAttributes);
+
     return {
       isValid: allowedAttributes.includes(attribute.editorName),
       errors: allowedAttributes.includes(attribute.editorName) ? [] : [`Invalid attribute name: ${attribute.editorName}`]

@@ -1,10 +1,7 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { BaseFormComponent } from '../../base-form.component';
-import { FormControl, FormBuilder } from '@angular/forms';
-import { BehaviorSubject, Subject, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Component } from '@angular/core';
+import { BehaviorSubject, takeUntil } from 'rxjs';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
-import { AttributeData } from '../../../../models/constants/attribute-data';
-import { QueryNode } from '../../../../models/query-node';
+import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 
 @Component({
   selector: 'app-string-form',
@@ -54,62 +51,28 @@ import { QueryNode } from '../../../../models/query-node';
     }
   `]
 })
-export class StringFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
-  private destroy$ = new Subject<void>();
-
-  operatorFormControl = new FormControl('');
-  valueFormControl = new FormControl('');
-
+export class StringFormComponent extends OperatorValueBaseFormComponent {
   showWildcardInfo$ = new BehaviorSubject<boolean>(false);
 
   readonly filterOperators = FilterStaticData.FilterStringOperators;
 
-  @Input() attributeValue: string;
-  @Input() selectedNode: QueryNode;
-
   constructor() { super(); }
 
-  ngOnInit() {
-    this.initializeForm();
+  protected override initializeForm() {
+    super.initializeForm();
+    
+    // Subscribe to operator changes for wildcard info
+    this.setupWildcardInfo();
   }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['selectedNode'] && this.selectedNode) {
-      this.destroy$.next();
-      this.initializeForm();
-    }
-  }
-
-  private initializeForm() {
-    const operator = this.getAttribute(AttributeData.Condition.Operator, this.selectedNode);
-    const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
-
-    if (operator) {
-      this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
-    }
-    if (value) {
-      this.valueFormControl.setValue(value.value$.value, { emitEvent: false });
-    }
-
-    // Subscribe to form control changes
+  
+  private setupWildcardInfo() {
+    // Add the wildcard info subscription
     this.operatorFormControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
-
-        // Show wildcard info for 'Like' and 'Not Like' operators
-        this.showWildcardInfo$.next(['like', 'not-like'].includes(value.toLowerCase()));
+        if (value) {
+          this.showWildcardInfo$.next(['like', 'not-like'].includes(value.toLowerCase()));
+        }
       });
-
-    this.valueFormControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
-      });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

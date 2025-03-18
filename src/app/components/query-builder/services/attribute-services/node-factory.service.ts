@@ -11,7 +11,7 @@ import { INodeData, QueryNodeData } from '../../models/constants/query-node-data
 import { DefaultAttributesFactoryService } from './attribute-factories/default-attributes-factory.service';
 import { QueryNode } from '../../models/query-node';
 import { ValidationService } from '../../services/validation.service';
-import { Observable, distinctUntilChanged, switchMap, of, combineLatest, map, takeUntil } from 'rxjs';
+import { Observable,  switchMap, of, combineLatest, map, takeUntil } from 'rxjs';
 import { INodeValidators } from './abstract/i-node-validators';
 import { EntityNodeRequiredNameValidatorService } from './validators/nodes/entity-node-required-name-validator.service';
 import { INodeValidator } from './abstract/i-node-validator';
@@ -55,7 +55,7 @@ export class NodeFactoryService {
         return this.linkFactory
       case QueryNodeData.Order.Name:
         return this.orderFactory
-      case QueryNodeData.Root.Name:
+      case QueryNodeData.Fetch.Name:
         return this.rootFactory
       default:
         return this.defaultFactory

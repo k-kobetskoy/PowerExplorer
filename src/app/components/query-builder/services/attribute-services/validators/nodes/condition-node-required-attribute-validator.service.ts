@@ -20,14 +20,13 @@ export class EntityNodeRequiredNameValidatorService implements INodeValidator {
     return node.attributes$.pipe(
       map(attributes => {
 
-        const nameAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
+        const attribute = attributes.find(attr => attr.editorName === AttributeNames.conditionAttribute);
 
         return {
-          isValid: !!nameAttribute,
-          errors: nameAttribute ? [] : [`Entity name is required.`]
+          isValid: !!attribute,
+          errors: attribute ? [] : [`Condition attribute is required.`]
         };
-      }), 
-      tap(result=> console.log(result))
+      })
     );
   }
 }

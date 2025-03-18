@@ -2,7 +2,7 @@
     
     <ng-container [ngSwitch]="selected.nodeName">
         <app-entity-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Entity.Name'></app-entity-form>
-        <app-root-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Root.Name' ></app-root-form>
+        <app-root-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Fetch.Name' ></app-root-form>
         <app-attribute-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Attribute.Name'></app-attribute-form>
         <app-filter-form [selectedNode]="selected"  *ngSwitchCase='nodeTypes.Filter.Name'></app-filter-form>
         <app-filter-condition-form [selectedNode]="selected" *ngSwitchCase='nodeTypes.Condition.Name'></app-filter-condition-form>

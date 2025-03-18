@@ -1,0 +1,8 @@
+<h1 mat-dialog-title>{{data.title}}</h1>
+<div mat-dialog-content>
+  <p>{{data.message}}</p>
+  <p *ngIf="data.details" class="error-details">{{data.details}}</p>
+</div>
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="close()">Close</button>
+</div> 

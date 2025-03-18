@@ -1,15 +1,13 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { BaseFormComponent } from '../../base-form.component';
-import { FormControl } from '@angular/forms';
-import { Observable, of, Subject } from 'rxjs';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
-import { AttributeData } from '../../../../models/constants/attribute-data';
 import { QueryNode } from '../../../../models/query-node';
 import { PicklistEntityService } from '../../../../services/entity-services/picklist-entity.service';
 import { PicklistModel } from 'src/app/models/incoming/picklist/picklist-model';
 import { AttributeType } from '../../../../models/constants/dataverse/attribute-types';
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
+import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 
 @Component({
   selector: 'app-picklist-form',
@@ -48,67 +46,16 @@ import { AttributeNames } from 'src/app/components/query-builder/models/constant
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PicklistFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
-  private destroy$ = new Subject<void>();
-
+export class PicklistFormComponent extends OperatorValueBaseFormComponent {
   readonly filterOperators = FilterStaticData.FilterPickListOperators;
   picklistOptions$: Observable<PicklistModel[]>;
 
-  @Input() attributeValue: string;
-  @Input() selectedNode: QueryNode;
-
-  operatorFormControl = new FormControl('');
-  valueFormControl = new FormControl('');
-
-
   constructor(private picklistService: PicklistEntityService) { super(); }
 
-  ngOnInit() {
-    this.initializeForm();
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['selectedNode'] && this.selectedNode) {
-      this.destroy$.next();
-      this.initializeForm();
-    }
-  }
-
-  private initializeForm() {
-
-    this.setInitialValues();
-
-    this.setupFormToModelBindings();
-
+  protected override initializeForm() {
+    super.initializeForm();
     this.setupPicklistOptions();
   }
-
-  setupFormToModelBindings() {
-    this.operatorFormControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
-      });
-
-    this.valueFormControl.valueChanges  
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
-      });
-  }
-  
-  setInitialValues() {
-    const operator = this.getAttribute(AttributeData.Condition.Operator, this.selectedNode);
-    const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
-
-    if (operator) {
-      this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
-    }
-    if (value) {
-      this.valueFormControl.setValue(value.value$.value, { emitEvent: false });
-    }    
-  }
-
 
   private setupPicklistOptions() {
     const parentEntityNode = this.selectedNode.getParentEntity();
@@ -138,10 +85,5 @@ export class PicklistFormComponent extends BaseFormComponent implements OnInit, 
         return of([]);
       })
     );
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 }

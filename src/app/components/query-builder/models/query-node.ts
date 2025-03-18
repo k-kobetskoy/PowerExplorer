@@ -14,8 +14,8 @@ export class QueryNode {
     attributes$: BehaviorSubject<NodeAttribute[]> = new BehaviorSubject<NodeAttribute[]>([]);
     attributesCount: number;
     expandable: boolean;
-    nodeName: string;
-    tagName: string;
+    nodeName: string; // Fetch, Entity, Condition, Attribute, Filter, Link, Order
+    tagName: string; // fetch, entity, condition, attribute, filter, link, order
     id?: string;
     actions?: string[];
     level?: number;
@@ -66,7 +66,7 @@ export class QueryNode {
     }
 
     getRootNode(): QueryNode {
-        if (this.nodeName === QueryNodeData.Root.Name) {
+        if (this.nodeName === QueryNodeData.Fetch.Name) {
             return this;
         }
 
@@ -74,7 +74,7 @@ export class QueryNode {
     }
 
     getParentEntity(node: QueryNode = this): QueryNode {
-        if (node.nodeName === QueryNodeData.Root.Name) {
+        if (node.nodeName === QueryNodeData.Fetch.Name) {
             return null;
         }
 
@@ -131,6 +131,18 @@ export class QueryNode {
     findAttribute(attributeName: string): NodeAttribute | undefined {
         const attribute = this.attributes$.value.find(a => a.editorName === attributeName);
         return attribute;
+    }
+
+    removeAttribute(attributeName: string): void {
+        const attributes = this.attributes$.value;
+        const index = attributes.findIndex(a => a.editorName === attributeName);
+        
+        if (index !== -1) {
+            const attributeToRemove = attributes[index];
+            attributeToRemove.dispose(); // Clean up subscriptions
+            attributes.splice(index, 1);
+            this.attributes$.next(attributes);
+        }
     }
 
     getOrCreateAttribute(attributeName: string): NodeAttribute | undefined {

@@ -6,8 +6,7 @@ import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
-import { VALID_RESULT, ValidationResult, ValidationService } from './validation.service';
-
+import { ValidationResult, ValidationService } from './validation.service';
 @Injectable({ providedIn: 'root' })
 export class NodeTreeService {
 
@@ -17,7 +16,7 @@ export class NodeTreeService {
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
-  isValid$: BehaviorSubject<ValidationResult> = new BehaviorSubject<ValidationResult>(VALID_RESULT);
+  validationResult$: Observable<ValidationResult>;
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -32,12 +31,14 @@ export class NodeTreeService {
   constructor(
     private _eventBus: EventBusService,
     private nodeFactory: NodeFactoryService,
-    private validationService: ValidationService
+    private validationService: ValidationService,
   ) {
     
     this.initializeNodeTree();
     
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
+
+    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$);    
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -51,9 +52,13 @@ export class NodeTreeService {
   }
 
   initializeNodeTree() {
+    if(this._nodeTree$.value) {
+      return;
+    }
+
     const nodeTree = new QueryNodeTree();
 
-    const rootNode = this.nodeFactory.createNode(QueryNodeData.Root.Name, false, null);
+    const rootNode = this.nodeFactory.createNode(QueryNodeData.Fetch.Name, false, null);
 
     nodeTree.root = rootNode;
 
@@ -66,7 +71,9 @@ export class NodeTreeService {
 
   addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
 
-    let newNode = this.nodeFactory.createNode(newNodeName, true, this._nodeTree$.value.root);
+    const rootNode = this._nodeTree$.value?.root;
+
+    let newNode = this.nodeFactory.createNode(newNodeName, true, rootNode);
 
     if (!this._nodeTree$.value) {
       const nodeTree = new QueryNodeTree();
@@ -252,5 +259,8 @@ export class NodeTreeService {
     if (nextNode && nextNode.level > node.level) {
       this.cleanupNodeAndChildren(nextNode);
     }
+
+    this._nodeTree$.value.destroyed$.next();
+    this._nodeTree$.value.destroyed$.complete();
   }
 }
