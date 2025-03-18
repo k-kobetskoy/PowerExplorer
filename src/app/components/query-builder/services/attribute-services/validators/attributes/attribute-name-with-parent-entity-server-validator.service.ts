@@ -22,16 +22,20 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
     if (!parentEntity) {
       return of({
         isValid: false,
-        errors: ['Please add this attribute to a valid entity']
+        errors: ['Please setup a parent entity']
       });
     }
 
-    console.log(`[AttributeNameWithParentEntityServerValidatorService] validate: ${attribute.editorName}`);
-
     return parentEntity.attributes$.pipe(
-      tap(attributes => {console.log('Attributes from parent entity'); console.log(attributes); }),
       switchMap((attributes: NodeAttribute[]) => {
         const entityNameAttr = attributes.find(attr => attr.editorName === 'name');
+
+        if (!entityNameAttr) {
+          return of({
+            isValid: false,
+            errors: ['Please setup a parent entity']
+          });
+        }
 
         return combineLatest([
           attribute.value$.pipe(distinctUntilChanged()),

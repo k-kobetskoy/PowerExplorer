@@ -52,8 +52,7 @@ export class ValidationService {
                 console.error(`Validation pipeline error for ${nodeAttribute.editorName}:`, error);
                 return of(VALID_RESULT);
             }),
-            // shareReplay is needed to ensure subscribers get the most recent validation result
-            // without triggering multiple validations
+       
             shareReplay({ bufferSize: 1, refCount: true }),
             takeUntil(nodeAttribute.destroyed$),
             
@@ -149,8 +148,6 @@ export class ValidationService {
                 console.error(`Node validation error for ${node.defaultNodeDisplayValue}:`, error);
                 return of(VALID_RESULT);
             }),
-            // shareReplay is used to ensure all subscribers get the same validation result
-            // and to prevent multiple validation runs
             shareReplay({ bufferSize: 1, refCount: true }), //TODO: Check if this is needed.
             takeUntil(node.destroyed$)
         );
