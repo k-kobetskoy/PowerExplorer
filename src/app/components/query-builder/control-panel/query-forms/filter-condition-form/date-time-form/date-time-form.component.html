@@ -11,12 +11,18 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field class="form-field">
-      <mat-label>Value</mat-label>
-      <input matInput
-             type="datetime-local"
-             [formControl]="valueFormControl"
-             placeholder="Choose a date and time">
-    </mat-form-field>
+    <ng-container *ngIf="!(showMultiValueInput$ | async)">
+      <mat-form-field class="form-field">
+        <mat-label>Value</mat-label>
+        <input matInput type="datetime-local" [formControl]="valueFormControl" placeholder="Choose a date and time">
+      </mat-form-field>
+    </ng-container>
+
+    <!-- Use the dedicated multi-value-form component -->
+    <app-multi-value-form *ngIf="showMultiValueInput$ | async" [selectedNode]="selectedNode"
+      [attributeValue]="attributeValue" [hideOperator]="true">
+    </app-multi-value-form>
+
+
   </div>
 </div>

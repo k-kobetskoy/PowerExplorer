@@ -1,6 +1,6 @@
 import { Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Component, AfterViewInit, ChangeDetectionStrategy, OnDestroy as ngOnDestroy, DoCheck } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { Subject } from 'rxjs';
+import { Subject, BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 import { AttributeData } from '../../models/constants/attribute-data';
@@ -15,6 +15,10 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
 
     operatorFormControl = new FormControl('');
     valueFormControl = new FormControl('');
+    
+    // Add multi-value control for all child components
+    multiValueControl = new FormControl('');
+    showMultiValueInput$ = new BehaviorSubject<boolean>(false);
 
     @Input() attributeValue: string;
     @Input() selectedNode: QueryNode;
@@ -28,6 +32,11 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
 
     ngOnInit() {
         this.initializeForm();
+        
+        // Setup multi-value functionality if service is available
+        if (this.multiValueNodesService) {
+            this.setupMultiValueHandling();
+        }
     }
 
     ngAfterViewInit() {
@@ -55,6 +64,14 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
 
         this.setupModelToFormBindings();
         this.setupFormToModelBindings();
+        
+        // Initialize multi-value state
+        if (this.multiValueNodesService && this.isMultiValueOperator(this.operatorFormControl.value)) {
+            this.showMultiValueInput$.next(true);
+            this.multiValueControl.setValue('', { emitEvent: false });
+        } else {
+            this.showMultiValueInput$.next(false);
+        }
     }
 
     private applyCurrentValues() {
@@ -114,7 +131,6 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
                 if (value !== undefined) {
                     // First clear any existing value nodes to ensure clean state
                     if (this.multiValueNodesService) {
-                        console.log('Operator changed, clearing any existing value nodes');
                         this.multiValueNodesService.clearValueNodes(this.selectedNode);
                     }
                     
@@ -148,6 +164,48 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
                 }
             });
     }
+    
+    // Setup multi-value handling for all components
+    private setupMultiValueHandling() {
+        // Listen to operator changes to handle switching between single and multi-value
+        this.operatorFormControl.valueChanges
+            .pipe(
+                takeUntil(this.destroy$)
+            )
+            .subscribe(value => {
+                // Toggle multi-value input visibility based on operator
+                this.showMultiValueInput$.next(this.isMultiValueOperator(value));
+                
+                if (this.isMultiValueOperator(value)) {
+                    // Start with an empty input when switching to multi-value operator
+                    this.multiValueControl.setValue('', { emitEvent: false });
+                }
+            });
+    }
+    
+    // Method to be called when the multi-value input loses focus
+    onMultiValueBlur(): void {
+        if (this.multiValueNodesService && this.isMultiValueOperator(this.operatorFormControl.value)) {
+            this.processMultiValues();
+        }
+    }
+    
+    // Method to be called when Enter is pressed in the multi-value input
+    onMultiValueEnter(event: Event): void {
+        event.preventDefault();
+        if (this.multiValueNodesService && this.isMultiValueOperator(this.operatorFormControl.value)) {
+            this.processMultiValues();
+        }
+    }
+    
+    // Process multi-values and create value nodes
+    protected processMultiValues(): void {
+        if (this.multiValueNodesService) {
+            this.multiValueNodesService.processMultiValues(this.selectedNode, this.multiValueControl.value);
+            // Clear the input field after processing values
+            this.multiValueControl.setValue('', { emitEvent: false });
+        }
+    }
 
     // Check if the operator is a multi-value operator
     protected isMultiValueOperator(operatorValue: string): boolean {
@@ -174,9 +232,9 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
         }
     }
 
-    // Handle multi-value input processing
+    // Handle multi-value input processing - not used directly, handled by processMultiValues
     protected handleMultiValueInput(inputValue: string) {
-        // Default implementation - to be overridden by child classes
+        // Default implementation - now handled by processMultiValues
     }
 
     ngOnDestroy() {

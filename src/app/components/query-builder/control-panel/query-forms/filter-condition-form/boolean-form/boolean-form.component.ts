@@ -6,6 +6,7 @@ import { BooleanModel } from 'src/app/models/incoming/boolean/boolean-model';
 import { BooleanEntityService } from '../../../../services/entity-services/boolean-entity.service';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
+import { MultiValueNodesService } from 'src/app/components/query-builder/services/multi-value-nodes.service';
 
 @Component({
   selector: 'app-boolean-form',
@@ -35,7 +36,9 @@ export class BooleanFormComponent extends OperatorValueBaseFormComponent {
   readonly filterOperators = FilterStaticData.FilterBooleanOperators;
 
   constructor(
-    private booleanService: BooleanEntityService) { super(); }
+    private booleanService: BooleanEntityService, multiValueNodesSvc: MultiValueNodesService) { 
+      super(multiValueNodesSvc); 
+    }
 
   protected override initializeForm() {
     super.initializeForm();

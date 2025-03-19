@@ -1,5 +1,6 @@
 <div class="form-container">
-  <mat-form-field class="form-field">
+  <!-- Only show the operator dropdown when not embedded in another form -->
+  <mat-form-field class="form-field" *ngIf="!hideOperator">
     <mat-label>Operator</mat-label>
     <mat-select [formControl]="operatorFormControl">
       <mat-option *ngFor="let option of filterOperators" [value]="option.value">

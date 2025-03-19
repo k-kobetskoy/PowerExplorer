@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
+import { MultiValueNodesService } from 'src/app/components/query-builder/services/multi-value-nodes.service';
 
 @Component({
   selector: 'app-id-form',
@@ -27,5 +28,7 @@ import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.c
 export class IdFormComponent extends OperatorValueBaseFormComponent {
   readonly filterOperators = FilterStaticData.FilterIdOperators;
 
-  constructor() { super(); }
+  constructor(multiValueNodesSvc: MultiValueNodesService) { 
+    super(multiValueNodesSvc); 
+  }
 }

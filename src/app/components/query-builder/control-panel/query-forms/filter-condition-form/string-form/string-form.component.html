@@ -11,7 +11,7 @@
   </mat-form-field>
 
   <!-- Display standard input for normal operators -->
-  <ng-container *ngIf="!(isMultiValueOperator(operatorFormControl.value))">
+  <ng-container *ngIf="!(showMultiValueInput$ | async)">
     <mat-form-field class="form-field">
       <mat-label>Value</mat-label>
       <input matInput
@@ -27,22 +27,11 @@
     </mat-form-field>
   </ng-container>
 
-  <!-- Display multi-value input for special operators -->
-  <ng-container *ngIf="isMultiValueOperator(operatorFormControl.value)">
-    <mat-form-field class="form-field">
-      <mat-label>Values</mat-label>
-      <input matInput
-             type="text"
-             [formControl]="multiValueControl"
-             placeholder="Enter comma-separated values"
-             (blur)="onMultiValueBlur()"
-             (keydown.enter)="onMultiValueEnter($event)">
-      <mat-hint>
-        <div class="hint-info">
-          <mat-icon>info</mat-icon>
-          <span>Enter multiple values separated by commas. Press Enter or tab when done.</span>
-        </div>
-      </mat-hint>
-    </mat-form-field>
-  </ng-container>
+
+  <app-multi-value-form 
+    *ngIf="showMultiValueInput$ | async"
+    [selectedNode]="selectedNode"
+    [attributeValue]="attributeValue"
+    [hideOperator]="true">
+  </app-multi-value-form>
 </div>

@@ -8,6 +8,7 @@ import { PicklistModel } from 'src/app/models/incoming/picklist/picklist-model';
 import { AttributeType } from '../../../../models/constants/dataverse/attribute-types';
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
+import { MultiValueNodesService } from 'src/app/components/query-builder/services/multi-value-nodes.service';
 
 @Component({
   selector: 'app-picklist-form',
@@ -50,7 +51,8 @@ export class PicklistFormComponent extends OperatorValueBaseFormComponent {
   readonly filterOperators = FilterStaticData.FilterPickListOperators;
   picklistOptions$: Observable<PicklistModel[]>;
 
-  constructor(private picklistService: PicklistEntityService) { super(); }
+  constructor(private picklistService: PicklistEntityService, multiValueNodesSvc: MultiValueNodesService) 
+  { super(multiValueNodesSvc); }
 
   protected override initializeForm() {
     super.initializeForm();

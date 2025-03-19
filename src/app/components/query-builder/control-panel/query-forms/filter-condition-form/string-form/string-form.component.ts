@@ -2,10 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { BehaviorSubject, takeUntil } from 'rxjs';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
-import { FormControl } from '@angular/forms';
 import { MultiValueNodesService } from '../../../../services/multi-value-nodes.service';
-import { distinctUntilChanged } from 'rxjs/operators';
-import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 
 @Component({
   selector: 'app-string-form',
@@ -58,24 +55,15 @@ import { AttributeNames } from 'src/app/components/query-builder/models/constant
 })
 export class StringFormComponent extends OperatorValueBaseFormComponent {
   showWildcardInfo$ = new BehaviorSubject<boolean>(false);
-  multiValueControl = new FormControl('');
-
   readonly filterOperators = FilterStaticData.FilterStringOperators;
 
-  constructor(private multiValueNodesSvc: MultiValueNodesService) {
+  constructor(multiValueNodesSvc: MultiValueNodesService) {
     super(multiValueNodesSvc);
   }
 
   protected override initializeForm() {
     super.initializeForm();
-
     this.setupWildcardInfo();
-
-    this.setupMultiValueBinding();
-
-    if (this.isMultiValueOperator(this.operatorFormControl.value)) {
-      this.loadExistingMultiValues();
-    }
   }
 
   private setupWildcardInfo() {
@@ -86,50 +74,5 @@ export class StringFormComponent extends OperatorValueBaseFormComponent {
           this.showWildcardInfo$.next(['like', 'not-like'].includes(value.toLowerCase()));
         }
       });
-  }
-
-  private setupMultiValueBinding() {
-    // Listen to operator changes to handle switching between single and multi-value
-    this.operatorFormControl.valueChanges
-      .pipe(
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(value => {
-        if (this.isMultiValueOperator(value)) {
-          this.multiValueControl.setValue('', { emitEvent: false });
-          this.handleMultiValueOperator();
-        } else {
-          this.ensureValueAttribute();
-        }
-      });
-  }
-
-  private loadExistingMultiValues() {
-    if (this.isMultiValueOperator(this.operatorFormControl.value)) {
-      this.multiValueControl.setValue('', { emitEvent: false });
-    }
-  }
-
-  protected override handleMultiValueOperator() {
-    this.selectedNode.removeAttribute(AttributeNames.conditionValue);
-  }
-
-  onMultiValueBlur(): void {
-    if (this.isMultiValueOperator(this.operatorFormControl.value)) {
-      this.processMultiValues();
-    }
-  }
-
-  onMultiValueEnter(event: Event): void {
-    event.preventDefault();
-    if (this.isMultiValueOperator(this.operatorFormControl.value)) {
-      this.processMultiValues();
-    }
-  }
-
-  private processMultiValues(): void {
-    this.multiValueNodesSvc.processMultiValues(this.selectedNode, this.multiValueControl.value);
-    this.multiValueControl.setValue('', { emitEvent: false });
   }
 }

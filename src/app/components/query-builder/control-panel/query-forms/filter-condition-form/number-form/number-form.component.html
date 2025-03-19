@@ -11,12 +11,23 @@
       </mat-select>
     </mat-form-field>
 
-    <mat-form-field class="form-field">
-      <mat-label>Value</mat-label>
-      <input matInput
-             type="text"
-             [formControl]="valueFormControl"
-             placeholder="Enter numeric value">
-    </mat-form-field>
+    <!-- Display standard input for normal operators -->
+    <ng-container *ngIf="!(showMultiValueInput$ | async)">
+      <mat-form-field class="form-field">
+        <mat-label>Value</mat-label>
+        <input matInput
+               type="text"
+               [formControl]="valueFormControl"
+               placeholder="Enter numeric value">
+      </mat-form-field>
+    </ng-container>
+
+    <!-- Use the dedicated multi-value-form component -->
+    <app-multi-value-form 
+      *ngIf="showMultiValueInput$ | async"
+      [selectedNode]="selectedNode"
+      [attributeValue]="attributeValue"
+      [hideOperator]="true">
+    </app-multi-value-form>
   </div>
 </div>

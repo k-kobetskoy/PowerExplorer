@@ -13,9 +13,11 @@ import { FilterStaticData } from '../../../../models/constants/ui/filter-static-
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MultiValueFormComponent extends OperatorValueBaseFormComponent implements OnInit, OnDestroy {
-    multiValueControl = new FormControl('');
+    override multiValueControl = new FormControl('');
     operatorType$ = new BehaviorSubject<string>('');
 
+    @Input() hideOperator = false;
+    
     filterOperators = FilterStaticData.FilterStringOperators;
 
     constructor(private multiValueNodesSvc: MultiValueNodesService) {
@@ -48,20 +50,20 @@ export class MultiValueFormComponent extends OperatorValueBaseFormComponent impl
             });
     }
 
-    onMultiValueBlur(): void {
+    override onMultiValueBlur(): void {
         if (this.isMultiValueOperator(this.operatorFormControl.value)) {
             this.processMultiValues();
         }
     }
 
-    onMultiValueEnter(event: Event): void {
+    override onMultiValueEnter(event: Event): void {
         event.preventDefault();
         if (this.isMultiValueOperator(this.operatorFormControl.value)) {
             this.processMultiValues();
         }
     }
 
-    private processMultiValues(): void {
+    override processMultiValues(): void {
         this.multiValueNodesSvc.processMultiValues(this.selectedNode, this.multiValueControl.value);
         this.multiValueControl.setValue('', { emitEvent: false });
     }
