@@ -1,9 +1,10 @@
-import { Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Component, AfterViewInit, ChangeDetectionStrategy, OnDestroy as ngOnDestroy, DoCheck } from '@angular/core';
+import { Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Component, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 import { AttributeData } from '../../models/constants/attribute-data';
+import { FilterStaticData } from '../../models/constants/ui/filter-static-data';
 import { QueryNode } from '../../models/query-node';
 import { BaseFormComponent } from './base-form.component';
 import { MultiValueNodesService } from '../../services/multi-value-nodes.service';
@@ -13,6 +14,7 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
     protected destroy$ = new Subject<void>();
     private previousAttributeValue: string;
 
+   // operatorFormControl = new FormControl(FilterStaticData.FilterBooleanOperators[0].value);
     operatorFormControl = new FormControl('');
     valueFormControl = new FormControl('');
     
@@ -58,14 +60,14 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
     }
 
     protected initializeForm() {
+
         if (!this.selectedNode) return;
 
-        this.applyCurrentValues();
-
         this.setupModelToFormBindings();
-        this.setupFormToModelBindings();
+        this.setupFormToModelBindings();      
         
-        // Initialize multi-value state
+        
+
         if (this.multiValueNodesService && this.isMultiValueOperator(this.operatorFormControl.value)) {
             this.showMultiValueInput$.next(true);
             this.multiValueControl.setValue('', { emitEvent: false });
@@ -79,7 +81,8 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
         const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
 
         if (!operator) {
-            this.operatorFormControl.setValue(null, { emitEvent: false });
+            this.operatorFormControl.setValue(FilterStaticData.FilterBooleanOperators[0].value, { emitEvent: false });
+            this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, FilterStaticData.FilterBooleanOperators[0].value);
         }
         else if (operator.value$.value && operator.value$.value !== this.operatorFormControl.value) {
             this.operatorFormControl.setValue(operator.value$.value, { emitEvent: false });
