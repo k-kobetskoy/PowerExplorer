@@ -232,7 +232,6 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
         }
     }
 
-    // Handle multi-value input processing - not used directly, handled by processMultiValues
     protected handleMultiValueInput(inputValue: string) {
         // Default implementation - now handled by processMultiValues
     }

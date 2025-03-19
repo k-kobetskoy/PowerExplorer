@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
+import { distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { QueryNode } from '../../../../models/query-node';
 import { PicklistEntityService } from '../../../../services/entity-services/picklist-entity.service';
@@ -51,8 +51,10 @@ export class PicklistFormComponent extends OperatorValueBaseFormComponent {
   readonly filterOperators = FilterStaticData.FilterPickListOperators;
   picklistOptions$: Observable<PicklistModel[]>;
 
-  constructor(private picklistService: PicklistEntityService, multiValueNodesSvc: MultiValueNodesService) 
-  { super(multiValueNodesSvc); }
+  constructor(
+    private picklistService: PicklistEntityService, 
+    multiValueNodesSvc: MultiValueNodesService) 
+    { super(multiValueNodesSvc); }
 
   protected override initializeForm() {
     super.initializeForm();
@@ -68,24 +70,27 @@ export class PicklistFormComponent extends OperatorValueBaseFormComponent {
     }
 
     this.picklistOptions$ = parentEntityNode.validationResult$.pipe(
-      distinctUntilChanged((prev, curr) => prev.isValid === curr.isValid),
-      takeUntil(this.destroy$),
       switchMap(validationResult => {
+        
         if (validationResult.isValid) {
           return parentEntityNode.attributes$.pipe(
-            distinctUntilChanged((prev, curr) => prev.length === curr.length),
             switchMap(attributes => {
-              const attribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
-              
-              if (attribute) {
-                return this.picklistService.getOptions(attribute.editorName, this.attributeValue, AttributeType.PICKLIST);
+              const entityAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
+              if (entityAttribute) {                
+                return entityAttribute.value$.pipe(
+                  distinctUntilChanged(),
+                  switchMap(entityName => {
+                    return this.picklistService.getOptions(entityName, this.attributeValue, AttributeType.PICKLIST);
+                  })
+                );
               }
               return of([]);
             })
           );
         }
         return of([]);
-      })
+      }),
+      takeUntil(this.destroy$)      
     );
   }
 }

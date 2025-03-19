@@ -31,6 +31,10 @@
       *ngSwitchCase='FilterOperatorTypes.PICKLIST'
       [selectedNode]="selectedNode" 
       [attributeValue]="attribute.logicalName"></app-picklist-form>
+    <app-status-form 
+      *ngSwitchCase='FilterOperatorTypes.STATUS'
+      [selectedNode]="selectedNode" 
+      [attributeValue]="attribute.logicalName"></app-status-form>
     <app-date-time-form 
       *ngSwitchCase='FilterOperatorTypes.DATE_TIME'
       [selectedNode]="selectedNode" 

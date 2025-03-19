@@ -1,0 +1,37 @@
+<div class="form-container">
+
+  <div>
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select [formControl]="operatorFormControl">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- Display standard input for normal operators -->
+    <ng-container *ngIf="!(showMultiValueInput$ | async)">
+      <mat-form-field class="form-field">
+        <mat-label>Value</mat-label>
+        <mat-select [formControl]="valueFormControl">
+          <mat-option *ngFor="let option of statusOptions$ | async" [value]="option.value">
+            <div class="option-content">
+              <span class="option-label">{{option.label}}</span>
+              <span class="option-value">{{option.value}}</span>
+            </div>
+          </mat-option>
+        </mat-select>
+        <app-loading-indicator matSuffix [diameter]="20" loadingKey="statusOptions"></app-loading-indicator>
+      </mat-form-field>
+    </ng-container>
+
+    <!-- Use the dedicated multi-value-form component -->
+    <app-multi-value-form *ngIf="showMultiValueInput$ | async" [selectedNode]="selectedNode"
+      [attributeValue]="attributeValue" [hideOperator]="true">
+    </app-multi-value-form>
+
+  </div>
+</div>

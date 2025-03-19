@@ -171,9 +171,10 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
       case AttributeType.CUSTOMER:
         return FilterOperatorTypes.ID;
       case AttributeType.PICKLIST:
+        return FilterOperatorTypes.PICKLIST;
       case AttributeType.STATE:
       case AttributeType.STATUS:
-        return FilterOperatorTypes.PICKLIST;
+        return FilterOperatorTypes.STATUS;
       default:
         return FilterOperatorTypes.STRING;
     }

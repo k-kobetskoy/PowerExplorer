@@ -35,7 +35,17 @@ export const API_ENDPOINTS = {
     },
     boolean: {
         getResourceUrl(apiUrl: string, entityLogicalName: string, attributeName: string) {
-            return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')/Microsoft.Dynamics.CRM.BooleanAttributeMetadata/OptionSet`;
+            return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')/Microsoft.Dynamics.CRM.BooleanAttributeMetadata/OptionSet?$select=Options`;
+        }
+    },
+    statecode: {
+        getResourceUrl(apiUrl: string, entityLogicalName: string, attributeName: string) {
+            return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')/Microsoft.Dynamics.CRM.StateAttributeMetadata/OptionSet?$select=Options`;
+        }
+    },
+    statuscode: {
+        getResourceUrl(apiUrl: string, entityLogicalName: string, attributeName: string) {
+            return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet?$select=Options`;
         }
     },
     execute: {

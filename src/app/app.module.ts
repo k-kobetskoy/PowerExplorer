@@ -62,6 +62,7 @@ import { ResultTableComponent } from './components/query-builder/result-table/re
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MultiValueFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/multi-value-form/multi-value-form.component';
+import { StatusFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/status-form/status-form.component';
 
 
 @NgModule({
@@ -98,7 +99,8 @@ import { MultiValueFormComponent } from './components/query-builder/control-pane
     QueryTreeButtonBlockComponent,
     ResultTableComponent,
     ErrorDialogComponent,
-    MultiValueFormComponent
+    MultiValueFormComponent,
+    StatusFormComponent
   ],
   bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
     BrowserAnimationsModule,
