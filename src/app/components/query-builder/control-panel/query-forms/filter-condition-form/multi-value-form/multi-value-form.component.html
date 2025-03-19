@@ -1,0 +1,28 @@
+<div class="form-container">
+  <mat-form-field class="form-field">
+    <mat-label>Operator</mat-label>
+    <mat-select [formControl]="operatorFormControl">
+      <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+        <div class="option-content">
+          <span>{{option.name}}</span>
+        </div>
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="form-field">
+    <mat-label>Values</mat-label>
+    <input matInput
+           type="text"
+           [formControl]="multiValueControl"
+           placeholder="Enter comma-separated values"
+           (blur)="onMultiValueBlur()"
+           (keydown.enter)="onMultiValueEnter($event)">
+    <mat-hint>
+      <div class="hint-info">
+        <mat-icon>info</mat-icon>
+        <span>Enter multiple values separated by commas. Press Enter or tab when done.</span>
+      </div>
+    </mat-hint>
+  </mat-form-field>
+</div> 

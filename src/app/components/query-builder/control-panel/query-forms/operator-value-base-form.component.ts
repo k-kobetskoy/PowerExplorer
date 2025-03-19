@@ -18,6 +18,9 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
     @Input() attributeValue: string;
     @Input() selectedNode: QueryNode;
 
+    // List of operators that require multi-value handling
+    protected multiValueOperators = ['in', 'not-in', 'between', 'not-between'];
+
     ngOnInit() {
         this.initializeForm();
     }
@@ -105,6 +108,14 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
             .subscribe(value => {
                 if (value !== undefined) {
                     this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
+                    
+                    // Handle multi-value operators
+                    if (this.isMultiValueOperator(value)) {
+                        this.handleMultiValueOperator();
+                    } else {
+                        // For single-value operators, ensure we have a value attribute
+                        this.ensureValueAttribute();
+                    }
                 }
             });
 
@@ -115,9 +126,39 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
             )
             .subscribe(value => {
                 if (value !== undefined) {
-                    this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
+                    const currentOperator = this.operatorFormControl.value;
+                    
+                    if (this.isMultiValueOperator(currentOperator)) {
+                        this.handleMultiValueInput(value);
+                    } else {
+                        this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, value);
+                    }
                 }
             });
+    }
+
+    // Check if the operator is a multi-value operator
+    protected isMultiValueOperator(operatorValue: string): boolean {
+        return this.multiValueOperators.includes(operatorValue?.toLowerCase());
+    }
+
+    // Handle changing to a multi-value operator
+    protected handleMultiValueOperator() {
+        // Remove single value attribute when switching to multi-value operator
+        this.selectedNode.removeAttribute(AttributeNames.conditionValue);
+    }
+
+    // Ensure value attribute exists for single-value operators
+    protected ensureValueAttribute() {
+        const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
+        if (!value) {
+            this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, '');
+        }
+    }
+
+    // Handle multi-value input processing
+    protected handleMultiValueInput(inputValue: string) {
+        // Default implementation - to be overridden by child classes
     }
 
     ngOnDestroy() {

@@ -61,6 +61,7 @@ import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { ResultTableComponent } from './components/query-builder/result-table/result-table.component';
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MultiValueFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/multi-value-form/multi-value-form.component';
 
 
 @NgModule({
@@ -96,7 +97,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     ValueFormComponent,
     QueryTreeButtonBlockComponent,
     ResultTableComponent,
-    ErrorDialogComponent
+    ErrorDialogComponent,
+    MultiValueFormComponent
   ],
   bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
     BrowserAnimationsModule,
