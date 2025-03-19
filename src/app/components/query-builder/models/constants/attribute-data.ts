@@ -6,7 +6,8 @@ export interface IAttributeData {
     EditorName: string,
     TreeViewName?: string,
     TreeViewDisplayStyle?: AttributeTreeViewDisplayStyle,
-    IsValidName?: boolean
+    IsValidName?: boolean,
+    IgnoreFalseValues?: boolean
 }
 
 export class BaseAttributeData implements IAttributeData {
@@ -15,8 +16,9 @@ export class BaseAttributeData implements IAttributeData {
     IsValidName?: boolean;
     EditorName: string;
     TreeViewName?: string;
-
+    IgnoreFalseValues?: boolean;
     constructor(
+        ignoreFalseValues: boolean,
         editorName: string,
         treeViewDisplayStyle: AttributeTreeViewDisplayStyle = AttributeTreeViewDisplayStyle.none,
         order: number = 99,
@@ -27,6 +29,7 @@ export class BaseAttributeData implements IAttributeData {
         this.TreeViewName = treeViewName;
         this.Order = order;
         this.IsValidName = isValidName ??= true;
+        this.IgnoreFalseValues = ignoreFalseValues;
     }
 }
 
@@ -36,116 +39,116 @@ export interface IAttributeType {
 
 export class EntityAttributeData {
     static readonly Name: IAttributeData =
-        new BaseAttributeData('name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Entity');
+        new BaseAttributeData(false,'name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Entity');
 
     static readonly Alias: IAttributeData =
-        new BaseAttributeData('alias', AttributeTreeViewDisplayStyle.alias, 2, 'Alias');
+        new BaseAttributeData(false,'alias', AttributeTreeViewDisplayStyle.alias, 2, 'Alias');
 }
 
 export class AttributeAttriubuteData {
     static readonly Name: IAttributeData =
-        new BaseAttributeData('name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'AttributeName');
+        new BaseAttributeData(false, 'name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'AttributeName');
 
     static readonly Alias: IAttributeData =
-        new BaseAttributeData('alias', AttributeTreeViewDisplayStyle.alias, 2, 'Alias');
+        new BaseAttributeData(false, 'alias', AttributeTreeViewDisplayStyle.alias, 2, 'Alias');
 
     static readonly Aggregate: IAttributeData =
-        new BaseAttributeData('aggregate', AttributeTreeViewDisplayStyle.nameWithValue, 3, 'Agg');
+        new BaseAttributeData(true,'aggregate', AttributeTreeViewDisplayStyle.nameWithValue, 3, 'Agg');
 
     static readonly GroupBy: IAttributeData =
-        new BaseAttributeData('groupby', AttributeTreeViewDisplayStyle.onlyName, 4, 'GrpBy');
+        new BaseAttributeData(true, 'groupby', AttributeTreeViewDisplayStyle.onlyName, 4, 'GrpBy');
 
-    static readonly Distinct: IAttributeData = new BaseAttributeData('distinct', AttributeTreeViewDisplayStyle.onlyName, 5, 'Dst');
-    static readonly UserTimeZone: IAttributeData = new BaseAttributeData('usertimezone', AttributeTreeViewDisplayStyle.none, 6, '');
-    static readonly DateGrouping: IAttributeData = new BaseAttributeData('dategrouping', AttributeTreeViewDisplayStyle.none, 7, '');
+    static readonly Distinct: IAttributeData = new BaseAttributeData(true, 'distinct', AttributeTreeViewDisplayStyle.onlyName, 5, 'Dst');
+    static readonly UserTimeZone: IAttributeData = new BaseAttributeData(true, 'usertimezone', AttributeTreeViewDisplayStyle.none, 6, '');
+    static readonly DateGrouping: IAttributeData = new BaseAttributeData(true, 'dategrouping', AttributeTreeViewDisplayStyle.none, 7, '');
 }
 
 export class ConditionAttributeData {
     static readonly Entity: IAttributeData =
-        new BaseAttributeData('entityname', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Entity');
+        new BaseAttributeData(false, 'entityname', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Entity');
 
     static readonly Attribute: IAttributeData =
-        new BaseAttributeData('attribute', AttributeTreeViewDisplayStyle.onlyValue, 2, 'Attribute');
+        new BaseAttributeData(false, 'attribute', AttributeTreeViewDisplayStyle.onlyValue, 2, 'Attribute');
 
     static readonly Operator: IAttributeData =
-        new BaseAttributeData('operator', AttributeTreeViewDisplayStyle.onlyValue, 3, 'Operator');
+        new BaseAttributeData(false, 'operator', AttributeTreeViewDisplayStyle.onlyValue, 3, 'Operator');
 
     static readonly Value: IAttributeData =
-        new BaseAttributeData('value', AttributeTreeViewDisplayStyle.onlyValue, 4, 'Value');
+        new BaseAttributeData(false, 'value', AttributeTreeViewDisplayStyle.onlyValue, 4, 'Value');
 
     static readonly ValueOf: IAttributeData =
-        new BaseAttributeData('valueof', AttributeTreeViewDisplayStyle.onlyValue, 5, 'ValueOf');
+        new BaseAttributeData(false, 'valueof', AttributeTreeViewDisplayStyle.onlyValue, 5, 'ValueOf');
 }
 
 export class FilterAttributeData {
     static readonly Type: IAttributeData =
-        new BaseAttributeData('type', AttributeTreeViewDisplayStyle.onlyValue, 1, 'FilterType');
+        new BaseAttributeData(true,'type', AttributeTreeViewDisplayStyle.onlyValue, 1, 'FilterType');
 
-    static readonly IsQuickFind: IAttributeData = new BaseAttributeData('isquickfindfields', AttributeTreeViewDisplayStyle.none, 2, '');
-    static readonly OverrideRecordLimit: IAttributeData = new BaseAttributeData('overridequickfindrecordlimitenabled', AttributeTreeViewDisplayStyle.none, 3, '');
-    static readonly BypassQuickFind: IAttributeData = new BaseAttributeData('overridequickfindrecordlimitdisabled', AttributeTreeViewDisplayStyle.none, 4, '');
+    static readonly IsQuickFind: IAttributeData = new BaseAttributeData(true,'isquickfindfields', AttributeTreeViewDisplayStyle.none, 2, '');
+    static readonly OverrideRecordLimit: IAttributeData = new BaseAttributeData(true,'overridequickfindrecordlimitenabled', AttributeTreeViewDisplayStyle.none, 3, '');
+    static readonly BypassQuickFind: IAttributeData = new BaseAttributeData(true,'overridequickfindrecordlimitdisabled', AttributeTreeViewDisplayStyle.none, 4, '');
 }
 
 export class LinkAttributeData {
     static readonly Entity: IAttributeData =
-        new BaseAttributeData('name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'LinkEntity');
+        new BaseAttributeData(false,'name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'LinkEntity');
 
     static readonly Alias: IAttributeData =
-        new BaseAttributeData('alias', AttributeTreeViewDisplayStyle.alias, 2, 'LinkAlias');
+        new BaseAttributeData(false,'alias', AttributeTreeViewDisplayStyle.alias, 2, 'LinkAlias');
 
     static readonly Intersect: IAttributeData =
-        new BaseAttributeData('intersect', AttributeTreeViewDisplayStyle.onlyName, 4, 'M:M');
+        new BaseAttributeData(true, 'intersect', AttributeTreeViewDisplayStyle.onlyName, 4, 'M:M');
 
     static readonly Type: IAttributeData =
-        new BaseAttributeData('link-type', AttributeTreeViewDisplayStyle.onlyValue, 3, 'LinkType');
+        new BaseAttributeData(true, 'link-type', AttributeTreeViewDisplayStyle.onlyValue, 3, 'LinkType');
 
-    static readonly From: IAttributeData = new BaseAttributeData('from', AttributeTreeViewDisplayStyle.none, 5, '');
-    static readonly To: IAttributeData = new BaseAttributeData('to', AttributeTreeViewDisplayStyle.none, 6, '');
-    static readonly Visible: IAttributeData = new BaseAttributeData('visible', AttributeTreeViewDisplayStyle.none, 7, '');
-    static readonly ShowOnlyLookups: IAttributeData = new BaseAttributeData('showonlylookups', AttributeTreeViewDisplayStyle.none, 8, '');
+    static readonly From: IAttributeData = new BaseAttributeData(false,'from', AttributeTreeViewDisplayStyle.none, 5, '');
+    static readonly To: IAttributeData = new BaseAttributeData(false,'to', AttributeTreeViewDisplayStyle.none, 6, '');
+    static readonly Visible: IAttributeData = new BaseAttributeData(true, 'visible', AttributeTreeViewDisplayStyle.none, 7, '');
+    static readonly ShowOnlyLookups: IAttributeData = new BaseAttributeData(true, 'showonlylookups', AttributeTreeViewDisplayStyle.none, 8, '');
 }
 
 export class OrderAttributeData {
     static readonly Attribute: IAttributeData =
-        new BaseAttributeData('attribute', AttributeTreeViewDisplayStyle.onlyValue, 1, 'OrderAttribute');
+        new BaseAttributeData(false,'attribute', AttributeTreeViewDisplayStyle.onlyValue, 1, 'OrderAttribute');
 
     static readonly Alias: IAttributeData =
-        new BaseAttributeData('alias', AttributeTreeViewDisplayStyle.alias, 2, 'OrderAlias');
+        new BaseAttributeData(false,'alias', AttributeTreeViewDisplayStyle.alias, 2, 'OrderAlias');
 
     static readonly Desc: IAttributeData =
-        new BaseAttributeData('descending', AttributeTreeViewDisplayStyle.onlyName, 3, 'Desc');
+        new BaseAttributeData(true,'descending', AttributeTreeViewDisplayStyle.onlyName, 3, 'Desc');
 }
 
 export class FetchAttributeData {
     static readonly Top: IAttributeData =
-        new BaseAttributeData('top', AttributeTreeViewDisplayStyle.nameWithValue, 1, 'Top');
+        new BaseAttributeData(true,'top', AttributeTreeViewDisplayStyle.nameWithValue, 1, 'Top');
 
     static readonly Distinct: IAttributeData =
-        new BaseAttributeData('distinct', AttributeTreeViewDisplayStyle.onlyName, 5, 'Dst');
+        new BaseAttributeData(true,'distinct', AttributeTreeViewDisplayStyle.onlyName, 5, 'Dst');
 
     static readonly Aggregate: IAttributeData =
-        new BaseAttributeData('aggregate', AttributeTreeViewDisplayStyle.onlyName, 4, 'Agg');
+        new BaseAttributeData(true,'aggregate', AttributeTreeViewDisplayStyle.onlyName, 4, 'Agg');
 
     static readonly TotalRecordsCount: IAttributeData =
-        new BaseAttributeData('returntotalrecordcount', AttributeTreeViewDisplayStyle.onlyName, 3, 'Trc');
+        new BaseAttributeData(true,'returntotalrecordcount', AttributeTreeViewDisplayStyle.onlyName, 3, 'Trc');
 
     static readonly RecordsPerPage: IAttributeData =
-        new BaseAttributeData('count', AttributeTreeViewDisplayStyle.nameWithValue, 2, 'Cnt');
+        new BaseAttributeData(true,'count', AttributeTreeViewDisplayStyle.nameWithValue, 2, 'Cnt');
 
     static readonly Page: IAttributeData =
-        new BaseAttributeData('page', AttributeTreeViewDisplayStyle.nameWithValue, 6, 'Pg');
+        new BaseAttributeData(true,'page', AttributeTreeViewDisplayStyle.nameWithValue, 6, 'Pg');
 
     static readonly LateMaterialize: IAttributeData = 
-        new BaseAttributeData('latematerialize', AttributeTreeViewDisplayStyle.none, 7, '');
+        new BaseAttributeData(true,'latematerialize', AttributeTreeViewDisplayStyle.none, 7, '');
     
-    static readonly PagingCookie: IAttributeData = new BaseAttributeData('paging-cookie', AttributeTreeViewDisplayStyle.none, 8, '');
-    static readonly DataSource: IAttributeData = new BaseAttributeData('datasource', AttributeTreeViewDisplayStyle.none, 9, '');
-    static readonly Options: IAttributeData = new BaseAttributeData('options', AttributeTreeViewDisplayStyle.none, 10, '');
+    static readonly PagingCookie: IAttributeData = new BaseAttributeData(true,'paging-cookie', AttributeTreeViewDisplayStyle.none, 8, '');
+    static readonly DataSource: IAttributeData = new BaseAttributeData(true,'datasource', AttributeTreeViewDisplayStyle.none, 9, '');
+    static readonly Options: IAttributeData = new BaseAttributeData(true,'options', AttributeTreeViewDisplayStyle.none, 10, '');
 }
 
 export class ValueAttributeData {
     static readonly InnerText: IAttributeData =
-        new BaseAttributeData('valuenodeinnertext', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Value Content');
+        new BaseAttributeData(false,'valuenodeinnertext', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Value Content');
 }
 
 export class AttributeData {

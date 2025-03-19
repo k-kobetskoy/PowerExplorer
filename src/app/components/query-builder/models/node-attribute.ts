@@ -53,11 +53,12 @@ export class NodeAttribute {
             this.value$.next(value);
         }
 
-        this.attributeDisplayValues = new AttributeDisplayValues(
+        this.attributeDisplayValues = new AttributeDisplayValues(            
             this.value$,
             attributeData.EditorName,
             attributeData.TreeViewName,
             attributeData.TreeViewDisplayStyle,
+            attributeData.IgnoreFalseValues ?? false
         );
 
         this.validationResult$ = this.validationService.setupNodeAttributeValidation(this);

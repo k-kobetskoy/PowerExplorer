@@ -6,8 +6,13 @@ export class AttributeDisplayValues {
     treeViewDisplayValue$: Observable<string>;
     editorViewDisplayValue$: Observable<string>;
 
-    constructor(attributeValue$: BehaviorSubject<string>, editorViewDisplayName: string, treeViewDisplayName?: string, treeViewDisplayStyle: string = AttributeTreeViewDisplayStyle.none) {
-        // Only display on tree view if we have a tree view name AND the display style is not 'none'
+    constructor(
+        attributeValue$: BehaviorSubject<string>,
+        editorViewDisplayName: string,
+        treeViewDisplayName?: string,
+        treeViewDisplayStyle: string = AttributeTreeViewDisplayStyle.none,
+        ignoreFalseValues: boolean = false) {
+
         this.displayOnTreeView = treeViewDisplayStyle !== AttributeTreeViewDisplayStyle.none;
 
         // Initialize with empty observable by default
@@ -16,29 +21,66 @@ export class AttributeDisplayValues {
         switch (treeViewDisplayStyle) {
             case AttributeTreeViewDisplayStyle.onlyName:
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
-                    distinctUntilChanged(), 
+                    distinctUntilChanged(),
                     map(value => {
-                        // Only show the name if value is truthy and not 'false'
-                        return value && value !== 'false' ? `${treeViewDisplayName}` : '';
+                        if (value.toString().trim().length === 0) {
+                            return '';
+                        }
+
+                        if (ignoreFalseValues) {
+                            return value !== 'false' ? `${treeViewDisplayName}` : '';
+                        }
+
+                        return `${treeViewDisplayName}`;
                     })
                 );
                 break;
             case AttributeTreeViewDisplayStyle.nameWithValue:
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
-                    distinctUntilChanged(), 
-                    map(value => value && value !== 'false' ? `${treeViewDisplayName}:${value}` : '')
+                    distinctUntilChanged(),
+                    map(value => {
+                        if (value.toString().trim().length === 0) {
+                            return '';
+                        }
+
+                        if (ignoreFalseValues) {
+                            return value !== 'false' ? `${treeViewDisplayName}:${value}` : '';
+                        }
+
+                        return `${treeViewDisplayName}:${value}`;
+                    })
                 );
                 break;
             case AttributeTreeViewDisplayStyle.onlyValue:
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
-                    distinctUntilChanged(), 
-                    map(value => value && value !== 'false' ? `${value}` : '')
+                    distinctUntilChanged(),
+                    map(value => {
+                        if (value.toString().trim().length === 0) {
+                            return '';
+                        }
+
+                        if (ignoreFalseValues) {
+                            return value !== 'false' ? `${value}` : '';
+                        }
+
+                        return `${value}`;
+                    })
                 );
                 break;
             case AttributeTreeViewDisplayStyle.alias:
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
-                    distinctUntilChanged(), 
-                    map(value => value && value !== 'false' ? `(${value})` : '')
+                    distinctUntilChanged(),
+                    map(value => {
+                        if (value.toString().trim().length === 0) {
+                            return '';
+                        }
+
+                        if (ignoreFalseValues) {
+                            return value !== 'false' ? `(${value})` : '';
+                        }
+
+                        return `(${value})`;
+                    })
                 );
                 break;
             case AttributeTreeViewDisplayStyle.none:
@@ -48,8 +90,20 @@ export class AttributeDisplayValues {
         }
 
         this.editorViewDisplayValue$ = attributeValue$.pipe(
-            distinctUntilChanged(), 
-            map(value => value && value !== 'false' && value !== '0' ? `${editorViewDisplayName}="${value}"` : '')
+            distinctUntilChanged(),
+            map(value => this.getEditorViewDisplayValue(value, editorViewDisplayName, ignoreFalseValues))
         );
+    }
+
+    getEditorViewDisplayValue(value: string, editorViewDisplayName: string, ignoreFalseValues: boolean): string {
+        if (value.length === 0) {
+            return '';
+        }
+
+        if (ignoreFalseValues) {
+            return value !== 'false' && value !== '0' ? `${editorViewDisplayName}="${value}"` : '';
+        }
+
+        return `${editorViewDisplayName}="${value}"`;
     }
 }

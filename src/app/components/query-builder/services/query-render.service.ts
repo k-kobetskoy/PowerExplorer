@@ -70,7 +70,7 @@ export class QueryRenderService implements OnDestroy {
         return of('');
       }),
       takeUntil(this.destroy$),
-      debounceTime(150)
+      debounceTime(30)
     ).subscribe(xml => {
 
       this.nodeTreeService.xmlRequest$.next(xml);    
@@ -175,11 +175,8 @@ export class QueryRenderService implements OnDestroy {
         attr.attributeDisplayValues.editorViewDisplayValue$
       ]).pipe(
         map(([value, displayValue]) => {
-          // Skip default values
-          if (value === 'false' || value === '0') {
-            return '';
-          }
-          return value ? displayValue : '';
+          // Check if value exists and is not empty string (avoids treating "0" as falsy)
+          return value !== undefined && value !== '' ? displayValue : '';
         })
       )
     );
