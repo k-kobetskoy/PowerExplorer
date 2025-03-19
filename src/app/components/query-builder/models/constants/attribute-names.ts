@@ -46,5 +46,7 @@ export const AttributeNames = {
     orderDescending: 'descending',
     orderAlias: 'alias',
 
+    valueInnerText: 'valuenodeinnertext',
+
 } as const;
 export type AttributeNames = (typeof AttributeNames)[keyof typeof AttributeNames];

@@ -32,6 +32,7 @@ import { PicklistFormComponent } from './components/query-builder/control-panel/
 import { StringFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/string-form/string-form.component';
 import { LinkEntityFormComponent } from './components/query-builder/control-panel/query-forms/link-entity-form/link-entity-form.component';
 import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
+import { ValueFormComponent } from './components/query-builder/control-panel/query-forms/value-form/value-form.component';
 import { QueryTreeButtonBlockComponent } from './components/query-builder/query-tree-button-block/query-tree-button-block.component';
 import { ValidationService } from './components/query-builder/services/validation.service';
 import { ErrorDialogComponent } from './components/error-dialog/error-dialog.component';
@@ -92,6 +93,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     StringFormComponent,
     LinkEntityFormComponent,
     OrderFormComponent,
+    ValueFormComponent,
     QueryTreeButtonBlockComponent,
     ResultTableComponent,
     ErrorDialogComponent

@@ -72,7 +72,7 @@ export class QueryRenderService implements OnDestroy {
       takeUntil(this.destroy$),
       debounceTime(150)
     ).subscribe(xml => {
-      // Update the XML but don't trigger execution
+
       this.nodeTreeService.xmlRequest$.next(xml);    
     });
   }
@@ -105,6 +105,38 @@ export class QueryRenderService implements OnDestroy {
       }
     }
 
+    // Special handling for value nodes to properly subscribe to the text content changes
+    if (node.tagName === 'value') {
+      const textAttribute = node.attributes$.value.find(attr => 
+        attr.editorName === ValueAttributeData.InnerText.EditorName
+      );
+      
+      if (textAttribute) {
+        // Combine the node attributes with the text value to ensure reactivity
+        return combineLatest([
+          node.attributes$.pipe(
+            switchMap(attributes => this.formatAttributes(attributes))
+          ),
+          textAttribute.value$
+        ]).pipe(
+          map(([attributesString, textValue]) => {
+            console.log('Value node content updated:', textValue);
+            const indent = this.getIndent(node.level);
+            const otherAttributes = attributesString
+              .replace(new RegExp(`\\b${ValueAttributeData.InnerText.EditorName}="[^"]*"\\s*`, 'g'), '')
+              .trim();
+            
+            if (otherAttributes) {
+              return `${indent}<${node.tagName} ${otherAttributes}>${textValue || ''}</${node.tagName}>`;
+            } else {
+              return `${indent}<${node.tagName}>${textValue || ''}</${node.tagName}>`;
+            }
+          })
+        );
+      }
+    }
+
+    // Standard handling for other nodes
     return node.attributes$.pipe(
       switchMap(attributes => this.formatAttributes(attributes).pipe(
         map(attributesString => this.createNodeString(node, attributesString))
@@ -115,27 +147,9 @@ export class QueryRenderService implements OnDestroy {
   private createNodeString(node: QueryNode, attributesString: string): string {
     const indent = this.getIndent(node.level);
     
-    // Special handling for value nodes with text content
-    if (node.tagName === 'value') {
-      const textAttribute = node.attributes$.value.find(attr => 
-        attr.editorName === ValueAttributeData.InnerText.EditorName
-      );
-      
-      if (textAttribute && textAttribute.value$.value) {
-        // Get all other attributes (not text-related)
-        const otherAttributes = attributesString
-          .replace(new RegExp(`\\b${ValueAttributeData.InnerText.EditorName}="[^"]*"\\s*`, 'g'), '')
-          .trim();
-        
-        if (otherAttributes) {
-          return `${indent}<${node.tagName} ${otherAttributes}>${textAttribute.value$.value}</${node.tagName}>`;
-        } else {
-          return `${indent}<${node.tagName}>${textAttribute.value$.value}</${node.tagName}>`;
-        }
-      }
-    }
+    // Special handling for value nodes with text content is now in renderNodeTag
+    // This method now only handles standard nodes
     
-    // Standard handling for other nodes
     return node.expandable
       ? this.createExpandableNodeString(node, attributesString, indent)
       : this.createSelfClosingNodeString(node, attributesString, indent);

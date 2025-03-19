@@ -14,8 +14,8 @@ export class QueryNode {
     attributes$: BehaviorSubject<NodeAttribute[]> = new BehaviorSubject<NodeAttribute[]>([]);
     attributesCount: number;
     expandable: boolean;
-    nodeName: string; // Fetch, Entity, Condition, Attribute, Filter, Link, Order
-    tagName: string; // fetch, entity, condition, attribute, filter, link, order
+    nodeName: string; // Fetch, Entity, Condition, Attribute, Filter, Link, Order, Value
+    tagName: string; // fetch, entity, condition, attribute, filter, link, order, value
     id?: string;
     actions?: string[];
     level?: number;

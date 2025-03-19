@@ -132,8 +132,6 @@ export class NodeTreeService {
     if (newNodeName === QueryNodeData.Filter.Name) {
       const conditionNode = this.addNode(QueryNodeData.Condition.Name);
       this.selectedNode$ = conditionNode;
-    // } else if (newNodeName === QueryNodeData.Condition.Name) {
-    //   this.checkAndAddValueNodesForCondition(newNode);
     }
 
     return newNode;
@@ -167,30 +165,6 @@ export class NodeTreeService {
     
     return valueNode;
   }
-
-  // checkAndAddValueNodesForCondition(conditionNode: QueryNode): void {
-  //   const operatorAttr = conditionNode.findAttribute('operator');
-  //   if (operatorAttr) {
-  //     operatorAttr.value$.subscribe(operator => {
-  //       if (operator === 'in') {
-  //         let hasValueNodes = false;
-  //         let current = conditionNode.next;
-          
-  //         while (current && current.level > conditionNode.level) {
-  //           if (current.nodeName === QueryNodeData.Value.Name) {
-  //             hasValueNodes = true;
-  //             break;
-  //           }
-  //           current = current.next;
-  //         }
-          
-  //         if (!hasValueNodes) {
-  //           this.addValueNode(conditionNode);
-  //         }
-  //       }
-  //     });
-  //   }
-  // }
 
   getNodeAbove(newNodeOrder: number, parentNode: QueryNode): QueryNode {
     if (!parentNode) {

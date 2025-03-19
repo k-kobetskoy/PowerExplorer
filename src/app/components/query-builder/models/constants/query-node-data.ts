@@ -120,8 +120,10 @@ export class QueryNodeData {
         Actions: [],
         Name: 'Value',
         TagName: 'value',
-        Attributes: [],
-        AttributesCount: 2,
+        Attributes: [
+            AttributeNames.valueInnerText
+        ],
+        AttributesCount: 1,
     };
 
     static readonly NodesNames: string[] = [
