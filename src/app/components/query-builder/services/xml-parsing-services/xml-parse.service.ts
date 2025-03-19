@@ -1,6 +1,6 @@
 import { SyntaxNodeRef } from '@lezer/common';
 import { ParsingHelperService } from './parsing-helper.service';
-import { Injectable, Inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { syntaxTree } from '@codemirror/language';
 import { Diagnostic } from "@codemirror/lint";
 import { QueryNodeTree } from '../../models/query-node-tree';
@@ -8,8 +8,7 @@ import { EditorView } from '@codemirror/view';
 import { QueryNodeBuilderService } from './query-node-builder.service';
 import { NodeTreeService } from '../node-tree.service';
 import { NodeFactoryService } from '../attribute-services/node-factory.service';
-
-import { QueryNode } from '../../models/query-node';
+import { ValueAttributeData } from '../../models/constants/attribute-data';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 
@@ -98,6 +97,23 @@ export class XmlParseService {
         }
         const attrValue = this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to);
         this.nodeBuilder.setAttributeValue(this.removeQuotes(attrValue), iteratingNode.from, iteratingNode.to);
+        break;
+      case PARSER_NODE_NAMES.text:
+        // Handle text content specifically for value nodes
+        if (this.currentParentNode && this.currentParentNode.nodeName === 'Value') {
+          const textContent = this.parsingHelper.getNodeAsString(view, iteratingNode.from, iteratingNode.to).trim();
+          if (textContent) {
+            const attributeFactory = this.attributeFactoryResolver.getAttributesFactory('Value');
+            const nodeAttribute = attributeFactory.createAttribute(
+              ValueAttributeData.InnerText.EditorName, 
+              this.currentParentNode, 
+              true, 
+              textContent
+            );
+                        
+            this.currentParentNode.addAttribute(nodeAttribute);
+          }
+        }
         break;
       case PARSER_NODE_NAMES.endTag:
         if (this.isCloseTag) {

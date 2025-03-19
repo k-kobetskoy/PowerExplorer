@@ -143,6 +143,10 @@ export class FetchAttributeData {
     static readonly Options: IAttributeData = new BaseAttributeData('options', AttributeTreeViewDisplayStyle.none, 10, '');
 }
 
+export class ValueAttributeData {
+    static readonly InnerText: IAttributeData =
+        new BaseAttributeData('valuenodeinnertext', AttributeTreeViewDisplayStyle.onlyValue, 1, 'Value Content');
+}
 
 export class AttributeData {
 
@@ -159,6 +163,8 @@ export class AttributeData {
     static readonly Order: typeof OrderAttributeData = OrderAttributeData;
 
     static readonly Root: typeof FetchAttributeData = FetchAttributeData;
+    
+    static readonly Value: typeof ValueAttributeData = ValueAttributeData;
 
     static readonly NodesNames: string[] = [
         'Value',

@@ -31,7 +31,31 @@ export class LinterProviderService {
       });
 
       if (xmlValidationErrors.length > 0) {
-        return xmlValidationErrors;
+        // Filter out unwanted text errors that are inside value tags
+        const filteredErrors = xmlValidationErrors.filter(error => {
+          if (error.message === 'Unwanted text') {
+            // Get text before and after the error position
+            const contextBefore = view.state.sliceDoc(
+              Math.max(0, error.from - 30), 
+              error.from
+            );
+            const contextAfter = view.state.sliceDoc(
+              error.to, 
+              Math.min(view.state.doc.length, error.to + 30)
+            );
+            
+            // Check if this text is inside value tags
+            const isInValueTag = 
+              contextBefore.toLowerCase().includes('<value') && 
+              contextAfter.toLowerCase().includes('</value');
+              
+            // If it's in a value tag, filter out the error
+            return !isInValueTag;
+          }
+          return true;
+        });
+        
+        return filteredErrors;
       }
 
       return xmlParseErrors;

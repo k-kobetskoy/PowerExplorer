@@ -5,6 +5,7 @@ import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
+import { ValueAttributeData } from '../models/constants/attribute-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
 import { ValidationResult, ValidationService } from './validation.service';
 @Injectable({ providedIn: 'root' })
@@ -131,10 +132,65 @@ export class NodeTreeService {
     if (newNodeName === QueryNodeData.Filter.Name) {
       const conditionNode = this.addNode(QueryNodeData.Condition.Name);
       this.selectedNode$ = conditionNode;
+    // } else if (newNodeName === QueryNodeData.Condition.Name) {
+    //   this.checkAndAddValueNodesForCondition(newNode);
     }
 
     return newNode;
   }
+
+  addValueNode(parentConditionNode: QueryNode, value: string = ''): QueryNode {
+    const valueNode = this.nodeFactory.createNode(QueryNodeData.Value.Name, false, this._nodeTree$.value.root);
+    
+    let nodeAbove = this.getNodeAbove(valueNode.order, parentConditionNode);
+    let bottomNode = nodeAbove.next;
+
+    nodeAbove.next = valueNode;
+    valueNode.next = bottomNode;
+
+    valueNode.level = parentConditionNode.level + 1;
+    valueNode.parent = parentConditionNode;
+
+    if (value) {
+      const attributeFactory = this.nodeFactory.getAttributesFactory(QueryNodeData.Value.Name);
+      const textAttribute = attributeFactory.createAttribute(
+        ValueAttributeData.InnerText.EditorName, 
+        valueNode, 
+        false, 
+        value
+      );
+      valueNode.addAttribute(textAttribute);
+    }
+
+    this.expandNode(parentConditionNode);
+    this._eventBus.emit({ name: AppEvents.NODE_ADDED });
+    
+    return valueNode;
+  }
+
+  // checkAndAddValueNodesForCondition(conditionNode: QueryNode): void {
+  //   const operatorAttr = conditionNode.findAttribute('operator');
+  //   if (operatorAttr) {
+  //     operatorAttr.value$.subscribe(operator => {
+  //       if (operator === 'in') {
+  //         let hasValueNodes = false;
+  //         let current = conditionNode.next;
+          
+  //         while (current && current.level > conditionNode.level) {
+  //           if (current.nodeName === QueryNodeData.Value.Name) {
+  //             hasValueNodes = true;
+  //             break;
+  //           }
+  //           current = current.next;
+  //         }
+          
+  //         if (!hasValueNodes) {
+  //           this.addValueNode(conditionNode);
+  //         }
+  //       }
+  //     });
+  //   }
+  // }
 
   getNodeAbove(newNodeOrder: number, parentNode: QueryNode): QueryNode {
     if (!parentNode) {

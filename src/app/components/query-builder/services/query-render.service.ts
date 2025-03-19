@@ -6,6 +6,7 @@ import { NodeTreeService } from './node-tree.service';
 import { QueryNode } from '../models/query-node';
 import { NodeAttribute } from '../models/node-attribute';
 import { XmlParseService } from './xml-parsing-services/xml-parse.service';
+import { ValueAttributeData } from '../models/constants/attribute-data';
 
 @Injectable({ providedIn: 'root' })
 export class QueryRenderService implements OnDestroy {
@@ -92,8 +93,16 @@ export class QueryRenderService implements OnDestroy {
   }
 
   private renderNodeTag(node: QueryNode): Observable<string> {
+    // Only add closing tags for expandable nodes that are not value nodes with text content
     if (node.expandable) {
-      this.closingTags.unshift(this.createClosingTag(node));
+      // For value nodes with text, we'll handle them differently in createExpandableNodeString
+      const isValueNodeWithText = node.tagName === 'value' && 
+        node.attributes$.value.some(attr => attr.editorName === ValueAttributeData.InnerText.EditorName);
+      
+      // Only push closing tag if not a value node with text (those are self-contained)
+      if (!isValueNodeWithText) {
+        this.closingTags.unshift(this.createClosingTag(node));
+      }
     }
 
     return node.attributes$.pipe(
@@ -106,6 +115,27 @@ export class QueryRenderService implements OnDestroy {
   private createNodeString(node: QueryNode, attributesString: string): string {
     const indent = this.getIndent(node.level);
     
+    // Special handling for value nodes with text content
+    if (node.tagName === 'value') {
+      const textAttribute = node.attributes$.value.find(attr => 
+        attr.editorName === ValueAttributeData.InnerText.EditorName
+      );
+      
+      if (textAttribute && textAttribute.value$.value) {
+        // Get all other attributes (not text-related)
+        const otherAttributes = attributesString
+          .replace(new RegExp(`\\b${ValueAttributeData.InnerText.EditorName}="[^"]*"\\s*`, 'g'), '')
+          .trim();
+        
+        if (otherAttributes) {
+          return `${indent}<${node.tagName} ${otherAttributes}>${textAttribute.value$.value}</${node.tagName}>`;
+        } else {
+          return `${indent}<${node.tagName}>${textAttribute.value$.value}</${node.tagName}>`;
+        }
+      }
+    }
+    
+    // Standard handling for other nodes
     return node.expandable
       ? this.createExpandableNodeString(node, attributesString, indent)
       : this.createSelfClosingNodeString(node, attributesString, indent);
@@ -116,7 +146,16 @@ export class QueryRenderService implements OnDestroy {
       return of('');
     }
 
-    const attributeObservables$ = attributes.map(attr => 
+    // Filter out the inner text attribute for value nodes - those are handled specially
+    const filteredAttributes = attributes.filter(attr => 
+      !(attr.parentNode.tagName === 'value' && attr.editorName === ValueAttributeData.InnerText.EditorName)
+    );
+
+    if (filteredAttributes.length === 0) {
+      return of('');
+    }
+
+    const attributeObservables$ = filteredAttributes.map(attr => 
       combineLatest([
         attr.value$,
         attr.attributeDisplayValues.editorViewDisplayValue$

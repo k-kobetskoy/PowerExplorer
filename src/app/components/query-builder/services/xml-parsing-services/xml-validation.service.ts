@@ -40,6 +40,7 @@ export const TAG_NODES = {
 export class XmlValidationService {
   // Track error positions to avoid duplicates
   private reportedErrorPositions: Set<string> = new Set();
+  private currentView: EditorView | null = null;
 
   constructor(private parsingHelper: ParsingHelperService) { }
 
@@ -47,6 +48,7 @@ export class XmlValidationService {
     // Reset error tracking for each validation run
     if (iteratingNode.node.parent === null) {
       this.reportedErrorPositions = new Set();
+      this.currentView = view;
     }
 
     switch (iteratingNode.name) {
@@ -246,11 +248,12 @@ export class XmlValidationService {
     });
   }
   
-  // Helper to get line number from position
+
   private getLineFromPosition(pos: number): number {
-    // This is a simple approximation - in a real implementation,
-    // you would use the editor's line information
-    return Math.floor(pos / 40); // Assuming average line length of 40 chars
+    if (this.currentView) {
+      return this.currentView.state.doc.lineAt(pos).number;
+    }
+    return 0;
   }
 
   validateElementNodes(tagsValidationStack: { mandatoryNodes: string[]; from: number; to: number; }[], diagnostics: Diagnostic[]) {

@@ -7,6 +7,7 @@ import { AttributeAttributesFactoryService } from './attribute-factories/attribu
 import { FilterAttributesFactoryService } from './attribute-factories/filter-attributes-factory.service';
 import { LinkAttributesFactoryService } from './attribute-factories/link-attributes-factory.service';
 import { OrderAttributesFactoryService } from './attribute-factories/order-attributes-factory.service';
+import { ValueAttributesFactoryService } from './attribute-factories/value-attributes-factory.service';
 import { INodeData, QueryNodeData } from '../../models/constants/query-node-data';
 import { DefaultAttributesFactoryService } from './attribute-factories/default-attributes-factory.service';
 import { QueryNode } from '../../models/query-node';
@@ -32,6 +33,7 @@ export class NodeFactoryService {
     private filterFactory: FilterAttributesFactoryService,
     private linkFactory: LinkAttributesFactoryService,
     private orderFactory: OrderAttributesFactoryService,
+    private valueFactory: ValueAttributesFactoryService,
     private defaultFactory: DefaultAttributesFactoryService,
     private validationService: ValidationService,
     private entityNodeNameValidator: EntityNodeRequiredNameValidatorService,
@@ -57,6 +59,8 @@ export class NodeFactoryService {
         return this.orderFactory
       case QueryNodeData.Fetch.Name:
         return this.rootFactory
+      case QueryNodeData.Value.Name:
+        return this.valueFactory
       default:
         return this.defaultFactory
     }
