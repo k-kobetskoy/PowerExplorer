@@ -58,32 +58,27 @@ import { AttributeNames } from 'src/app/components/query-builder/models/constant
 })
 export class StringFormComponent extends OperatorValueBaseFormComponent {
   showWildcardInfo$ = new BehaviorSubject<boolean>(false);
-  // Add multi-value control for comma-separated values
   multiValueControl = new FormControl('');
 
   readonly filterOperators = FilterStaticData.FilterStringOperators;
 
-  constructor(private multiValueNodesService: MultiValueNodesService) { 
-    super(); 
+  constructor(private multiValueNodesSvc: MultiValueNodesService) {
+    super(multiValueNodesSvc);
   }
 
   protected override initializeForm() {
     super.initializeForm();
-    
-    // Subscribe to operator changes for wildcard info
+
     this.setupWildcardInfo();
-    
-    // Set up multi-value binding
+
     this.setupMultiValueBinding();
-    
-    // Load existing multi-values if present
+
     if (this.isMultiValueOperator(this.operatorFormControl.value)) {
       this.loadExistingMultiValues();
     }
   }
-  
+
   private setupWildcardInfo() {
-    // Add the wildcard info subscription
     this.operatorFormControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
@@ -92,10 +87,8 @@ export class StringFormComponent extends OperatorValueBaseFormComponent {
         }
       });
   }
-  
+
   private setupMultiValueBinding() {
-    // We no longer process value changes immediately - only on blur/enter
-    
     // Listen to operator changes to handle switching between single and multi-value
     this.operatorFormControl.valueChanges
       .pipe(
@@ -104,58 +97,39 @@ export class StringFormComponent extends OperatorValueBaseFormComponent {
       )
       .subscribe(value => {
         if (this.isMultiValueOperator(value)) {
-          console.log('String form: Switched to multi-value operator:', value);
+          this.multiValueControl.setValue('', { emitEvent: false });
           this.handleMultiValueOperator();
         } else {
           this.ensureValueAttribute();
         }
       });
   }
-  
+
   private loadExistingMultiValues() {
-    console.log('String form: Loading existing multi-values for node:', this.selectedNode);
-    const currentValues = this.multiValueNodesService.getMultiValueString(this.selectedNode);
-    console.log('String form: Current multi-values:', currentValues);
-    
-    if (this.multiValueControl.value !== currentValues) {
-      this.multiValueControl.setValue(currentValues, { emitEvent: false });
+    if (this.isMultiValueOperator(this.operatorFormControl.value)) {
+      this.multiValueControl.setValue('', { emitEvent: false });
     }
   }
-  
+
   protected override handleMultiValueOperator() {
-    console.log('String form: Handling multi-value operator');
-    
-    // Remove single value attribute
     this.selectedNode.removeAttribute(AttributeNames.conditionValue);
-    
-    // Ensure the multi-value input is in sync with existing value nodes
-    this.loadExistingMultiValues();
   }
 
-  // Handle input blur event
   onMultiValueBlur(): void {
     if (this.isMultiValueOperator(this.operatorFormControl.value)) {
-      console.log('String form: Multi-value input blur - processing values:', this.multiValueControl.value);
       this.processMultiValues();
     }
   }
 
-  // Handle Enter key press
   onMultiValueEnter(event: Event): void {
     event.preventDefault();
     if (this.isMultiValueOperator(this.operatorFormControl.value)) {
-      console.log('String form: Multi-value input Enter key - processing values:', this.multiValueControl.value);
       this.processMultiValues();
     }
   }
 
-  // Process the multi-values
   private processMultiValues(): void {
-    this.multiValueNodesService.processMultiValues(this.selectedNode, this.multiValueControl.value);
-    
-    // Refresh the value after processing to ensure consistent UI state
-    setTimeout(() => {
-      this.loadExistingMultiValues();
-    }, 100);
+    this.multiValueNodesSvc.processMultiValues(this.selectedNode, this.multiValueControl.value);
+    this.multiValueControl.setValue('', { emitEvent: false });
   }
 }

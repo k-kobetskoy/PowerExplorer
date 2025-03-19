@@ -6,6 +6,7 @@ import { AttributeNames } from 'src/app/components/query-builder/models/constant
 import { AttributeData } from '../../models/constants/attribute-data';
 import { QueryNode } from '../../models/query-node';
 import { BaseFormComponent } from './base-form.component';
+import { MultiValueNodesService } from '../../services/multi-value-nodes.service';
 
 @Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 export class OperatorValueBaseFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
@@ -20,6 +21,10 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
 
     // List of operators that require multi-value handling
     protected multiValueOperators = ['in', 'not-in', 'between', 'not-between'];
+
+    constructor(protected multiValueNodesService?: MultiValueNodesService) {
+        super();
+    }
 
     ngOnInit() {
         this.initializeForm();
@@ -107,6 +112,13 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
             )
             .subscribe(value => {
                 if (value !== undefined) {
+                    // First clear any existing value nodes to ensure clean state
+                    if (this.multiValueNodesService) {
+                        console.log('Operator changed, clearing any existing value nodes');
+                        this.multiValueNodesService.clearValueNodes(this.selectedNode);
+                    }
+                    
+                    // Update the operator attribute
                     this.updateAttribute(AttributeData.Condition.Operator, this.selectedNode, value);
                     
                     // Handle multi-value operators
@@ -150,6 +162,12 @@ export class OperatorValueBaseFormComponent extends BaseFormComponent implements
 
     // Ensure value attribute exists for single-value operators
     protected ensureValueAttribute() {
+        // First, clear any value nodes from previous multi-value operator
+        if (this.multiValueNodesService) {
+            this.multiValueNodesService.clearValueNodes(this.selectedNode);
+        }
+        
+        // Then ensure value attribute exists
         const value = this.getAttribute(AttributeData.Condition.Value, this.selectedNode);
         if (!value) {
             this.updateAttribute(AttributeData.Condition.Value, this.selectedNode, '');
