@@ -54,23 +54,26 @@ export class BooleanFormComponent extends OperatorValueBaseFormComponent {
     }
 
     this.booleanOptions$ = parentEntityNode.validationResult$.pipe(
-      distinctUntilChanged((prev, curr) => prev.isValid === curr.isValid),
-      takeUntil(this.destroy$),
       switchMap(validationResult => {
         if (validationResult.isValid) {
           return parentEntityNode.attributes$.pipe(
-            distinctUntilChanged((prev, curr) => prev.length === curr.length),
-            switchMap(attributes => {
-              const attribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
-              if (attribute) {
-                return this.booleanService.getBooleanValues(attribute.editorName, this.attributeValue);
+            switchMap(attributes => {              
+              const entityAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
+              if (entityAttribute) {
+                return entityAttribute.value$.pipe(
+                  distinctUntilChanged(),
+                  switchMap(entityName => {
+                    return this.booleanService.getBooleanValues(entityName, this.attributeValue);
+                  })
+                );
               }
               return of(<BooleanModel>{});
             })
           );
         }
         return of(<BooleanModel>{});
-      })
+      }),
+      takeUntil(this.destroy$)
     );
   }
 }
