@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, switchMap, catchError, combineLatest, forkJoin, tap } from 'rxjs';
+import { Observable, map, of, switchMap, catchError, tap } from 'rxjs';
 import { BaseRequestService } from './entity-services/abstract/base-request.service';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { XmlExecuteResultModel } from 'src/app/models/incoming/xml-execute-result/xml-execute-result-model';
@@ -197,20 +197,21 @@ export class XmlExecutorService extends BaseRequestService {
         let isLookup = false;
 
         if (baseKey.startsWith('_') && baseKey.endsWith('_value')) {
-          isLookup = true;
-          // Try to get the logical name from associatednavigationproperty annotation
-          const navPropKey = `${baseKey}@Microsoft.Dynamics.CRM.associatednavigationproperty`;
-          let logicalName = '';
+          // isLookup = true;
+          // // Try to get the logical name from associatednavigationproperty annotation
+          // const navPropKey = `${baseKey}@Microsoft.Dynamics.CRM.associatednavigationproperty`;
+          // let logicalName = '';
 
-          if (item[navPropKey]) {
-            // Use associatednavigationproperty if available
-            logicalName = String(item[navPropKey]).toLowerCase();
-          } else {
-            // Extract from the field name: _fieldname_value -> fieldname
-            logicalName = baseKey.substring(1, baseKey.length - 6).toLowerCase();
-          }
+          // if (item[navPropKey]) {
+          //   // Use associatednavigationproperty if available
+          //   logicalName = String(item[navPropKey]).toLowerCase();
+          // } else {
+          //   // Extract from the field name: _fieldname_value -> fieldname
+          //   logicalName = baseKey.substring(1, baseKey.length - 6).toLowerCase();
+          // }
 
-          fieldKey = logicalName;
+          // fieldKey = logicalName;
+          return;
         }
 
         // Get attribute info if available
