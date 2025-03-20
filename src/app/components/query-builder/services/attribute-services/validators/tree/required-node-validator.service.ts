@@ -21,7 +21,7 @@ constructor() { }
         return { isValid: false, errors: ['Root node is required'] } as ValidationResult;
       }
 
-      if (rootNode.nodeName !== QueryNodeData.Fetch.Name) {
+      if (rootNode.nodeName !== QueryNodeData.Fetch.NodeName) {
         return { isValid: false, errors: ['Root node is required'] } as ValidationResult;
       }
 
@@ -31,7 +31,7 @@ constructor() { }
         return { isValid: false, errors: ['Entity node is required'] } as ValidationResult;
       }
 
-      if (entityNode.nodeName !== QueryNodeData.Entity.Name) {
+      if (entityNode.nodeName !== QueryNodeData.Entity.NodeName) {
         return { isValid: false, errors: ['Entity node is required'] } as ValidationResult;
       }    
 

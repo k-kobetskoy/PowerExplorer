@@ -105,7 +105,7 @@ export class LinkAttributeData {
     static readonly From: IAttributeData = new BaseAttributeData(false,'from', AttributeTreeViewDisplayStyle.none, 5, '');
     static readonly To: IAttributeData = new BaseAttributeData(false,'to', AttributeTreeViewDisplayStyle.none, 6, '');
     static readonly Visible: IAttributeData = new BaseAttributeData(true, 'visible', AttributeTreeViewDisplayStyle.none, 7, '');
-    static readonly ShowOnlyLookups: IAttributeData = new BaseAttributeData(true, 'showonlylookups', AttributeTreeViewDisplayStyle.none, 8, '');
+    static readonly FetchAllEntities: IAttributeData = new BaseAttributeData(true, 'fetchallentities', AttributeTreeViewDisplayStyle.none, 8, '');
 }
 
 export class OrderAttributeData {

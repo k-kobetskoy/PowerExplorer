@@ -1,17 +1,17 @@
 import { Injectable } from '@angular/core';
-import { AttributeEntityService } from '../../../entity-services/attribute-entity.service';
 import { IAttributeValidator } from '../../abstract/i-attribute-validator';
-import { catchError, distinctUntilChanged, NEVER, Observable, of, switchMap, map, combineLatest, takeUntil, tap } from 'rxjs';
-import { NodeAttribute } from '../../../../models/node-attribute';
-import { ValidationResult } from '../../../validation.service';
+import { AttributeEntityService } from '../../../entity-services/attribute-entity.service';
+import { catchError, combineLatest, distinctUntilChanged, map, Observable, of, switchMap, takeUntil } from 'rxjs';
+import { NodeAttribute } from 'src/app/components/query-builder/models/node-attribute';
+import { VALID_RESULT, ValidationResult } from '../../../validation.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
-import { VALID_RESULT } from '../../../validation.service';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
+export class ToAttributeLinkEntityServerValidatorService implements IAttributeValidator {
 
-export class AttributeNameWithParentEntityServerValidatorService implements IAttributeValidator {
-
-  constructor(private attributeService: AttributeEntityService) { }
+constructor(private attributeService: AttributeEntityService) { }
 
   validate(attribute: NodeAttribute): Observable<ValidationResult> {
     const parentEntity = attribute.parentNode.getParentEntity();
@@ -25,20 +25,19 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
     return parentEntity.attributes$.pipe(
       switchMap((attributes: NodeAttribute[]) => {
         const entityNameAttr = attributes.find(attr => attr.editorName === 'name');
-
+  
         if (!entityNameAttr) {
           return of({
             isValid: false,
             errors: ['Please setup a parent entity']
           });
         }
-
+  
         return combineLatest([
           attribute.value$.pipe(distinctUntilChanged()),
           entityNameAttr.validationResult$,
-          entityNameAttr.value$
-        ]).pipe(
-          distinctUntilChanged(),
+          entityNameAttr.value$.pipe(distinctUntilChanged())
+        ]).pipe(          
           switchMap(([attributeName, isValid, entityLogicalName]) => {
             if (!attributeName) {
               return of({
@@ -46,17 +45,17 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
                 errors: ['Please enter an attribute name']
               });
             }
-
+  
             if (!isValid.isValid) {
               return of({
                 isValid: false,
                 errors: ['Parent entity is not valid']
               });
             }
-
+  
             const attrName = attributeName.toString().trim();
             const entityName = entityLogicalName.toString().trim();
-
+  
             return this.attributeService.getAttributes(entityName).pipe(
               map((attributes: AttributeModel[]) => {
                 if (!attributes || attributes.length === 0) {
@@ -65,10 +64,10 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
                     errors: [`Please verify the entity name.`]
                   };
                 }
-
+  
                 const attributeWithProvidedName = attributes.find(attr =>
                   attr.logicalName.toLowerCase() === attrName.toLowerCase());
-
+  
                 return attributeWithProvidedName
                   ? VALID_RESULT
                   : {
@@ -96,5 +95,5 @@ export class AttributeNameWithParentEntityServerValidatorService implements IAtt
         });
       })
     );
-  }
+  }  
 }

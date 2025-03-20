@@ -3,6 +3,7 @@ import { Observable, switchMap, of, map, tap } from 'rxjs';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { BaseRequestService } from './abstract/base-request.service';
 import { StateResponseModel, StateModel } from 'src/app/models/incoming/status/state-response-model';
+import { CacheKeys } from 'src/app/config/cache-keys';
 
 @Injectable({ providedIn: 'root' })
 export class StatusEntityService extends BaseRequestService {
@@ -14,7 +15,7 @@ export class StatusEntityService extends BaseRequestService {
       switchMap(envUrl => {
         if (!envUrl) return of(null);
 
-        const key = `${this.prepareEnvUrl(envUrl)}_${entityLogicalName}_${stateOrStatusCodeName}`;
+        const key = `${this.prepareEnvUrl(envUrl)}_${entityLogicalName}_${stateOrStatusCodeName}_${CacheKeys.StateStatus}`;
 
         const statueOrStatusCodeOptions$ = this.cacheService.getItem<StateModel[]>(key);
 

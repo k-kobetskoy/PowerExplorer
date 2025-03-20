@@ -4,7 +4,7 @@ import { switchMap, of, map, tap, Observable } from 'rxjs';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { PicklistResponseModel } from 'src/app/models/incoming/picklist/picklist-response-model';
 import { PicklistModel } from 'src/app/models/incoming/picklist/picklist-model';
-
+import { CacheKeys } from 'src/app/config/cache-keys';
 @Injectable({ providedIn: 'root' })
 export class PicklistEntityService extends BaseRequestService {
 
@@ -15,7 +15,7 @@ export class PicklistEntityService extends BaseRequestService {
       switchMap(envUrl => {
         if (!envUrl) return of([]);
 
-        const key = `${this.prepareEnvUrl(envUrl)}_${entityLogicalName}_${attributeName}`;
+        const key = `${this.prepareEnvUrl(envUrl)}_${entityLogicalName}_${attributeName}_${CacheKeys.Options}`;
 
         const options$ = this.cacheService.getItem<PicklistModel[]>(key);
 

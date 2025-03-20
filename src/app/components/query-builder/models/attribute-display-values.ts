@@ -1,12 +1,13 @@
-import { BehaviorSubject, distinctUntilChanged, map, Observable, of } from "rxjs";
+import { BehaviorSubject, distinctUntilChanged, map, Observable, of, takeUntil } from "rxjs";
 import { AttributeTreeViewDisplayStyle } from "./constants/attribute-tree-view-display-style";
-
+import { NodeAttribute } from "./node-attribute";
 export class AttributeDisplayValues {
     displayOnTreeView: boolean;
     treeViewDisplayValue$: Observable<string>;
     editorViewDisplayValue$: Observable<string>;
 
     constructor(
+        nodeAttribute: NodeAttribute,
         attributeValue$: BehaviorSubject<string>,
         editorViewDisplayName: string,
         treeViewDisplayName?: string,
@@ -32,7 +33,7 @@ export class AttributeDisplayValues {
                         }
 
                         return `${treeViewDisplayName}`;
-                    })
+                    }), takeUntil(nodeAttribute.destroyed$)
                 );
                 break;
             case AttributeTreeViewDisplayStyle.nameWithValue:
@@ -48,7 +49,7 @@ export class AttributeDisplayValues {
                         }
 
                         return `${treeViewDisplayName}:${value}`;
-                    })
+                    }), takeUntil(nodeAttribute.destroyed$)
                 );
                 break;
             case AttributeTreeViewDisplayStyle.onlyValue:
@@ -64,7 +65,7 @@ export class AttributeDisplayValues {
                         }
 
                         return `${value}`;
-                    })
+                    }), takeUntil(nodeAttribute.destroyed$)
                 );
                 break;
             case AttributeTreeViewDisplayStyle.alias:
@@ -80,7 +81,7 @@ export class AttributeDisplayValues {
                         }
 
                         return `(${value})`;
-                    })
+                    }), takeUntil(nodeAttribute.destroyed$)
                 );
                 break;
             case AttributeTreeViewDisplayStyle.none:
@@ -91,7 +92,8 @@ export class AttributeDisplayValues {
 
         this.editorViewDisplayValue$ = attributeValue$.pipe(
             distinctUntilChanged(),
-            map(value => this.getEditorViewDisplayValue(value, editorViewDisplayName, ignoreFalseValues))
+            map(value => this.getEditorViewDisplayValue(value, editorViewDisplayName, ignoreFalseValues)),
+            takeUntil(nodeAttribute.destroyed$)
         );
     }
 

@@ -14,7 +14,7 @@ export class FilterValidator implements IAttributeValidator {
 
     private validateFilterStructure(node: QueryNode): Observable<ValidationResult> {
         // Check if filter has at least one condition
-        const hasCondition = node.next && node.next.nodeName === QueryNodeData.Condition.Name;
+        const hasCondition = node.next && node.next.nodeName === QueryNodeData.Condition.NodeName;
 
         return of({
             isValid: Boolean(hasCondition),

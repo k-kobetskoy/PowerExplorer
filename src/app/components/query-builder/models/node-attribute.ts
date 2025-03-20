@@ -23,11 +23,11 @@ export class NodeAttribute {
         let attributeModel: AttributeModel | null = null;
 
         this.validationResult$.pipe(take(1))
-        .subscribe(validationResult => {
-            if (validationResult.isValid) {
-                attributeModel = this.attributeModel$.value;
-            }
-        });
+            .subscribe(validationResult => {
+                if (validationResult.isValid) {
+                    attributeModel = this.attributeModel$.value;
+                }
+            });
 
         return attributeModel;
     }
@@ -53,7 +53,8 @@ export class NodeAttribute {
             this.value$.next(value);
         }
 
-        this.attributeDisplayValues = new AttributeDisplayValues(            
+        this.attributeDisplayValues = new AttributeDisplayValues(
+            this,
             this.value$,
             attributeData.EditorName,
             attributeData.TreeViewName,
@@ -71,7 +72,7 @@ export class NodeAttribute {
 
 
     getRootNode(): QueryNode {
-        if (this.parentNode.nodeName === QueryNodeData.Fetch.Name) {
+        if (this.parentNode.nodeName === QueryNodeData.Fetch.NodeName) {
             return this.parentNode;
         }
 

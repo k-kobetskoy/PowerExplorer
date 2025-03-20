@@ -37,31 +37,32 @@ export class NodeFactoryService {
     private defaultFactory: DefaultAttributesFactoryService,
     private validationService: ValidationService,
     private entityNodeNameValidator: EntityNodeRequiredNameValidatorService,
-    private entityNameServerValidator: EntityNameServerValidatorService,
     private nodeNameValidator: NodeNameValidatorService,
     private attributeNodeAggregateRequiredAliasValidator: AttributeNodeAggregateRequiredAliasValidatorService,
     private attributeNodeRequiredNameValidator: AttributeNodeRequiredNameValidatorService,
   ) { }
 
-  getAttributesFactory(tagName: string): IAttributeFactory {
-    switch (tagName) {
-      case QueryNodeData.Condition.Name:
+  getAttributesFactory(nodeName: string): IAttributeFactory {
+    
+    switch (nodeName) {
+      case QueryNodeData.Condition.NodeName:
         return this.conditionFactory
-      case QueryNodeData.Attribute.Name:
+      case QueryNodeData.Attribute.NodeName:
         return this.attributeFactory
-      case QueryNodeData.Filter.Name:
+      case QueryNodeData.Filter.NodeName:
         return this.filterFactory
-      case QueryNodeData.Entity.Name:
+      case QueryNodeData.Entity.NodeName:
         return this.entityFactory
-      case QueryNodeData.Link.Name:
+      case QueryNodeData.Link.NodeName:
         return this.linkFactory
-      case QueryNodeData.Order.Name:
+      case QueryNodeData.Order.NodeName:
         return this.orderFactory
-      case QueryNodeData.Fetch.Name:
+      case QueryNodeData.Fetch.NodeName:
         return this.rootFactory
-      case QueryNodeData.Value.Name:
+      case QueryNodeData.Value.NodeName:
         return this.valueFactory
       default:
+        console.warn(`No specific factory found for node name: ${nodeName}, using default factory`);
         return this.defaultFactory
     }
   }
@@ -140,9 +141,9 @@ export class NodeFactoryService {
 
   private getValidators(nodeName: string): INodeValidator[] {
     switch (nodeName) {
-      case QueryNodeData.Entity.Name:
+      case QueryNodeData.Entity.NodeName:
         return [this.entityNodeNameValidator];
-      case QueryNodeData.Attribute.Name:
+      case QueryNodeData.Attribute.NodeName:
         return [this.attributeNodeRequiredNameValidator, this.attributeNodeAggregateRequiredAliasValidator];
       default:
         return [];

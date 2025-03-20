@@ -4,7 +4,7 @@ export interface INodeData
 {
     Order: number,
     Actions: string[],
-    Name: string,
+    NodeName: string,
     TagName: string,
     Attributes: string[],
     AttributesCount: number
@@ -14,7 +14,7 @@ export class QueryNodeData {
     static readonly Attribute: INodeData = {
         Order: 3,
         Actions: [],
-        Name: 'Attribute',
+        NodeName: 'Attribute',
         TagName: 'attribute',
         Attributes:
             [
@@ -26,7 +26,7 @@ export class QueryNodeData {
     static readonly Condition: INodeData = {
         Order: 2,
         Actions: ['Value'],
-        Name: 'Condition',
+        NodeName: 'Condition',
         TagName: 'condition',
         Attributes:
             [
@@ -41,7 +41,7 @@ export class QueryNodeData {
     static readonly Entity: INodeData = {
         Order: 1,
         Actions: ['Attribute', 'Filter', 'Order', 'Link'],
-        Name: 'Entity',
+        NodeName: 'Entity',
         TagName: 'entity',
         Attributes:
             [
@@ -53,7 +53,7 @@ export class QueryNodeData {
     static readonly Filter: INodeData = {
         Order: 6,
         Actions: ['Condition', 'Filter'],
-        Name: 'Filter',
+        NodeName: 'Filter',
         TagName: 'filter',
         Attributes:
             [
@@ -67,7 +67,7 @@ export class QueryNodeData {
     static readonly Link: INodeData = {
         Order: 5,
         Actions: ['Attribute', 'Filter', 'Order', 'Link'],
-        Name: 'Link Entity',
+        NodeName: 'Link Entity',
         TagName: 'link-entity',
         Attributes:
             [
@@ -85,7 +85,7 @@ export class QueryNodeData {
     static readonly Order: INodeData = {
         Order: 2,
         Actions: [],
-        Name: 'Order',
+        NodeName: 'Order',
         TagName: 'order',
         Attributes:
             [
@@ -98,7 +98,7 @@ export class QueryNodeData {
     static readonly Fetch: INodeData = {
         Order: 0,
         Actions: ['Entity'],
-        Name: 'Fetch',
+        NodeName: 'Fetch',
         TagName: 'fetch',
         Attributes:
             [
@@ -118,7 +118,7 @@ export class QueryNodeData {
     static readonly Value: INodeData = {
         Order: 2,
         Actions: [],
-        Name: 'Value',
+        NodeName: 'Value',
         TagName: 'value',
         Attributes: [
             AttributeNames.valueInnerText
@@ -149,17 +149,21 @@ export class QueryNodeData {
     ];
 
     static readonly TagNamesToNodeNames: { [key: string]: string } = {
-        'value': QueryNodeData.Value.Name,
-        'order': QueryNodeData.Order.Name,
-        'attribute': QueryNodeData.Attribute.Name,
-        'condition': QueryNodeData.Condition.Name,
-        'filter': QueryNodeData.Filter.Name, 
-        'link-entity': QueryNodeData.Link.Name,
-        'entity': QueryNodeData.Entity.Name,
-        'fetch': QueryNodeData.Fetch.Name
+        'value': QueryNodeData.Value.NodeName,
+        'order': QueryNodeData.Order.NodeName,
+        'attribute': QueryNodeData.Attribute.NodeName,
+        'condition': QueryNodeData.Condition.NodeName,
+        'filter': QueryNodeData.Filter.NodeName, 
+        'link-entity': QueryNodeData.Link.NodeName,
+        'entity': QueryNodeData.Entity.NodeName,
+        'fetch': QueryNodeData.Fetch.NodeName
     };    
 
     static getNodeData(nodeName: string): INodeData {
+        if (nodeName === 'Link Entity' || nodeName === 'Link') {
+            return this.Link;
+        }
+        
         if (nodeName && this[nodeName]) {
             return this[nodeName];
         }
@@ -168,7 +172,7 @@ export class QueryNodeData {
         return {
             Order: 99,
             Actions: [],
-            Name: nodeName || 'Unknown',
+            NodeName: nodeName || 'Unknown',
             TagName: nodeName?.toLowerCase() || 'unknown',
             Attributes: [],
             AttributesCount: 1

@@ -48,9 +48,14 @@ export const API_ENDPOINTS = {
             return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes(LogicalName='${attributeName}')/Microsoft.Dynamics.CRM.StatusAttributeMetadata/OptionSet?$select=Options`;
         }
     },
+    link: {
+        getResourceUrl(apiUrl: string, entityLogicalName: string) {
+            return `${apiUrl}/api/data/v9.2/EntityDefinitions(LogicalName='${entityLogicalName}')?$select=LogicalName&$expand=OneToManyRelationships,ManyToOneRelationships`;
+        }
+    },
     execute: {
         getResourceUrl(apiUrl: string, entitySetName: string, xml: string) {
             return `${apiUrl}/api/data/v9.2/${entitySetName}?fetchXml=${xml}`;
         }
-    }
+    }    
 };

@@ -14,7 +14,7 @@ export class QueryNode {
     attributes$: BehaviorSubject<NodeAttribute[]> = new BehaviorSubject<NodeAttribute[]>([]);
     attributesCount: number;
     expandable: boolean;
-    nodeName: string; // Fetch, Entity, Condition, Attribute, Filter, Link, Order, Value
+    nodeName: string; // Fetch, Entity+, Condition +, Attribute +, Filter +/-, Link, Order, Value +
     tagName: string; // fetch, entity, condition, attribute, filter, link, order, value
     id?: string;
     actions?: string[];
@@ -51,8 +51,8 @@ export class QueryNode {
         this.isExpanded = true;
         this.next = null;
 
-        this.defaultNodeDisplayValue = nodeData.Name;
-        this.nodeName = nodeData.Name;
+        this.defaultNodeDisplayValue = nodeData.NodeName;
+        this.nodeName = nodeData.NodeName;
         this.tagName = nodeData.TagName;
         this.order = nodeData.Order;
         this.actions = nodeData.Actions;
@@ -66,7 +66,7 @@ export class QueryNode {
     }
 
     getRootNode(): QueryNode {
-        if (this.nodeName === QueryNodeData.Fetch.Name) {
+        if (this.nodeName === QueryNodeData.Fetch.NodeName) {
             return this;
         }
 
@@ -74,7 +74,7 @@ export class QueryNode {
     }
 
     getParentEntity(node: QueryNode = this): QueryNode {
-        if (node.nodeName === QueryNodeData.Fetch.Name) {
+        if (node.nodeName === QueryNodeData.Fetch.NodeName) {
             return null;
         }
 
@@ -84,7 +84,7 @@ export class QueryNode {
             return null; // Return null instead of throwing an error
         }
 
-        if (parent?.nodeName === QueryNodeData.Entity.Name || parent?.nodeName === QueryNodeData.Link.Name) {
+        if (parent?.nodeName === QueryNodeData.Entity.NodeName || parent?.nodeName === QueryNodeData.Link.NodeName) {
             return parent;
         } else {
             return this.getParentEntity(parent);

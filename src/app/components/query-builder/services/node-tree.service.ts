@@ -59,7 +59,7 @@ export class NodeTreeService {
 
     const nodeTree = new QueryNodeTree();
 
-    const rootNode = this.nodeFactory.createNode(QueryNodeData.Fetch.Name, false, null);
+    const rootNode = this.nodeFactory.createNode(QueryNodeData.Fetch.NodeName, false, null);
 
     nodeTree.root = rootNode;
 
@@ -67,7 +67,7 @@ export class NodeTreeService {
 
     this._selectedNode$.next(rootNode);
 
-    this.addNode(QueryNodeData.Entity.Name);
+    this.addNode(QueryNodeData.Entity.NodeName);
   }
 
   addNodeFromParsing(newNodeName: string, parentNode: QueryNode = null): QueryNode {
@@ -109,9 +109,18 @@ export class NodeTreeService {
   }
 
   addNode(newNodeName: string): QueryNode {
+    console.log('Node Tree Service - Adding new node with name:', newNodeName);
+    
+    // Map "Link" action to "Link Entity" node name
+    if (newNodeName === 'Link') {
+      newNodeName = 'Link Entity';
+      console.log('Mapped "Link" action to "Link Entity" node name');
+    }
+    
     let parentNode = this._selectedNode$.value;
 
     let newNode = this.nodeFactory.createNode(newNodeName, false, this._nodeTree$.value.root);
+    console.log('Node created with nodeName:', newNode.nodeName);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;
@@ -129,8 +138,8 @@ export class NodeTreeService {
     this.selectedNode$ = newNode;
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
 
-    if (newNodeName === QueryNodeData.Filter.Name) {
-      const conditionNode = this.addNode(QueryNodeData.Condition.Name);
+    if (newNodeName === QueryNodeData.Filter.NodeName) {
+      const conditionNode = this.addNode(QueryNodeData.Condition.NodeName);
       this.selectedNode$ = conditionNode;
     }
 
@@ -138,7 +147,7 @@ export class NodeTreeService {
   }
 
   addValueNode(parentConditionNode: QueryNode, value: string = ''): QueryNode {
-    const valueNode = this.nodeFactory.createNode(QueryNodeData.Value.Name, false, this._nodeTree$.value.root);
+    const valueNode = this.nodeFactory.createNode(QueryNodeData.Value.NodeName, false, this._nodeTree$.value.root);
     
     let nodeAbove = this.getNodeAbove(valueNode.order, parentConditionNode);
     let bottomNode = nodeAbove.next;
@@ -150,7 +159,7 @@ export class NodeTreeService {
     valueNode.parent = parentConditionNode;
 
     if (value) {
-      const attributeFactory = this.nodeFactory.getAttributesFactory(QueryNodeData.Value.Name);
+      const attributeFactory = this.nodeFactory.getAttributesFactory(QueryNodeData.Value.NodeName);
       const textAttribute = attributeFactory.createAttribute(
         ValueAttributeData.InnerText.EditorName, 
         valueNode, 

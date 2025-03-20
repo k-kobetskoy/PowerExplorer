@@ -1,17 +1,18 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, finalize, filter, catchError, take, shareReplay } from 'rxjs/operators';
+import { FormControl } from '@angular/forms';
+import { Observable, Subject, combineLatest, of, shareReplay, tap } from 'rxjs';
+import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, catchError, take } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { LinkTypeOptions } from '../../../models/constants/ui/link-type-options';
-import { AttributeType } from '../../../models/constants/dataverse/attribute-types';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { AttributeNames } from '../../../models/constants/attribute-names';
+import { LinkEntityService } from '../../../services/entity-services/link-entity.service';
+import { LinkEntityResponseModel } from 'src/app/models/incoming/link/link-entity-response-model';
 @Component({
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',
@@ -47,6 +48,33 @@ import { AttributeNames } from '../../../models/constants/attribute-names';
       font-size: 0.85em;
       color: rgba(0, 0, 0, 0.6);
     }
+
+    /* New styles for relationship dropdown */
+    .relationship-option {
+      display: flex;
+      flex-direction: column;
+      padding: 4px 0;
+    }
+
+    .entity-name {
+      font-weight: 500;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .relation-name {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+      margin-top: 2px;
+    }
+
+    .info-message {
+      margin-bottom: 15px; 
+      padding: 10px; 
+      background-color: #f8f9fa; 
+      border-radius: 4px; 
+      border-left: 4px solid #17a2b8;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -58,28 +86,32 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   readonly linkTypes = LinkTypeOptions;
 
   entityNameFormControl = new FormControl('');
+  linkEntityFormControl = new FormControl('');
   fromAttributeFormControl = new FormControl('');
   toAttributeFormControl = new FormControl('');
   linkTypeFormControl = new FormControl('');
   aliasFormControl = new FormControl('');
   intersectFormControl = new FormControl(false);
   visibleFormControl = new FormControl(false);
-  showOnlyLookupsFormControl = new FormControl(false);
+  fetchAllEntitiesFormControl = new FormControl(false);
 
   // Observables for autocomplete
   filteredEntities$: Observable<EntityModel[]>; // New entity to link to 
   filteredFromAttributes$: Observable<AttributeModel[]>; // From attribute of the new entity
   filteredToAttributes$: Observable<AttributeModel[]>; // To attribute of the parent entity
+  filteredLinkEntities$: Observable<LinkEntityResponseModel>;
 
   entities$: Observable<EntityModel[]>;
   fromAttributes$: Observable<AttributeModel[]>;
   toAttributes$: Observable<AttributeModel[]>;
 
-
-  showOnlyLookups$: Observable<boolean>;
+  linkEntities$: Observable<LinkEntityResponseModel>;
+  fetchAllEntities$: Observable<boolean>;
+  parentEntityLogicalName$: Observable<string>;
 
   constructor(
     private entityService: EntityEntityService,
+    private linkEntityService: LinkEntityService,
     private attributeService: AttributeEntityService) { super(); }
 
   ngOnInit() {
@@ -96,75 +128,164 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   private initializeForm() {
     this.setupInitialValues();
 
-    // TODO: Check if this is needed
-    // Model -> Form input
-    this.setupEntityModelToFormBinding();
-    this.setupFromAttributeModelToFormBindings();
-    this.setupToAttributeModelToFormBindings();
+    this.setupLinkEntitiesObservable();
 
-    this.setupEntityAutocomplete();    
+    this.setupEntityAutocomplete();
+    this.setupLinkEntityAutocomplete();
     this.setupFromAttributeAutocomplete();
     this.setupToAttributeAutocomplete();
+
+    this.setupFormToModelBindings();
   }
 
-  private setupEntityModelToFormBinding() {
-    this.selectedNode.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
-      takeUntil(this.destroy$),
-      filter(attributes => attributes.length > 0),
-    ).subscribe(attributes => {
-      const entityName = attributes.find(attr => attr.editorName === AttributeNames.linkEntity);
+  setupLinkEntitiesObservable() {
+    const parentEntity = this.selectedNode.getParentEntity();
 
-      if (entityName) {
-        entityName.value$.pipe(
-          takeUntil(this.destroy$),
-          distinctUntilChanged()
-        ).subscribe(value => {
-          this.entityNameFormControl.setValue(value, { emitEvent: false });
-        });
+    if (!parentEntity) {
+      this.linkEntities$ = of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
+      this.parentEntityLogicalName$ = of('');
+
+      if (!this.fetchAllEntitiesFormControl.value) {
+        this.fetchAllEntitiesFormControl.setValue(true, { emitEvent: true });
       }
+      return;
+    }
+
+    let isParentValid = false;
+    parentEntity.validationResult$.pipe(take(1)).subscribe(result => {
+      isParentValid = result.isValid;
     });
+
+    if (!isParentValid) {
+      this.linkEntities$ = of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
+      this.parentEntityLogicalName$ = of('');
+
+      if (!this.fetchAllEntitiesFormControl.value) {
+        this.fetchAllEntitiesFormControl.setValue(true, { emitEvent: true });
+      }
+      return;
+    }
+
+    this.parentEntityLogicalName$ = parentEntity.attributes$.pipe(
+      take(1),
+      map(attributes => {
+        const entityNameAttr = attributes.find(attr => attr.editorName === AttributeNames.entityName);
+        const name = entityNameAttr?.value$.value as string || '';
+        return name;
+      })
+    );
+
+    this.linkEntities$ = this.parentEntityLogicalName$.pipe(
+      switchMap(entityName => {
+        if (!entityName) {
+          return of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
+        }
+        return this.linkEntityService.getLinkEntities(entityName).pipe(
+        );
+      })
+    );
   }
 
-  setupFromAttributeModelToFormBindings() {
-    this.selectedNode.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
-      takeUntil(this.destroy$),
-      filter(attributes => attributes.length > 0),
-    ).subscribe(attributes => {
-      const fromAttribute = attributes.find(attr => attr.editorName === AttributeNames.linkFromAttribute);
-      if (fromAttribute) {
-        fromAttribute.value$.pipe(
-          takeUntil(this.destroy$),
-          distinctUntilChanged()
-        ).subscribe(value => {
-          this.fromAttributeFormControl.setValue(value, { emitEvent: false });
+  private setupLinkEntityAutocomplete() {
+    this.filteredLinkEntities$ = combineLatest([
+      this.linkEntityFormControl.valueChanges.pipe(startWith(this.linkEntityFormControl.value || '')),
+      this.linkEntities$,
+    ]).pipe(
+      map(([searchTerm, linkEntities]) => {
+        if (!searchTerm || typeof searchTerm !== 'string') {
+          return linkEntities;
+        }
+
+        const searchTermLower = searchTerm.toLowerCase();
+
+        const filteredOneToMany = linkEntities.OneToManyRelationships
+          .filter(rel =>
+            rel.ReferencingEntityName.toLowerCase().includes(searchTermLower) ||
+            rel.SchemaName.toLowerCase().includes(searchTermLower)
+          );
+
+        const filteredManyToOne = linkEntities.ManyToOneRelationships
+          .filter(rel =>
+            rel.ReferencedEntityName.toLowerCase().includes(searchTermLower) ||
+            rel.SchemaName.toLowerCase().includes(searchTermLower)
+          );
+
+        return {
+          OneToManyRelationships: filteredOneToMany,
+          ManyToOneRelationships: filteredManyToOne
+        };
+      }),
+      tap(filtered => {
+        console.log('Filtered link entities:', {
+          oneToManyCount: filtered.OneToManyRelationships?.length || 0,
+          manyToOneCount: filtered.ManyToOneRelationships?.length || 0
         });
-      }
+      })
+    );
+  }
+
+  private setupFormToModelBindings() {
+    this.entityNameFormControl.valueChanges.pipe(
+      filter(() => this.entityNameFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.Entity, this.selectedNode, value);
     });
-  }
 
-  setupToAttributeModelToFormBindings() {
-    this.selectedNode.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
-      takeUntil(this.destroy$),
-      filter(attributes => attributes.length > 0),
-    ).subscribe(attributes => {
-      const toAttribute = attributes.find(attr => attr.editorName === AttributeNames.linkToAttribute);
-      if (toAttribute) {
-        toAttribute.value$.pipe(
-          takeUntil(this.destroy$),
-          distinctUntilChanged()
-        ).subscribe(value => {
-          this.toAttributeFormControl.setValue(value, { emitEvent: false });
-        });
-      }
+    this.linkEntityFormControl.valueChanges.pipe(
+      filter(() => this.linkEntityFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.Entity, this.selectedNode, value);
+    });
+
+    this.fromAttributeFormControl.valueChanges.pipe(
+      filter(() => this.fromAttributeFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.From, this.selectedNode, value);
+    });
+
+    this.toAttributeFormControl.valueChanges.pipe(
+      filter(() => this.toAttributeFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.To, this.selectedNode, value);
+    });
+
+    this.linkTypeFormControl.valueChanges.pipe(
+      filter(() => this.linkTypeFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.Type, this.selectedNode, value);
+    });
+
+    this.aliasFormControl.valueChanges.pipe(
+      filter(() => this.aliasFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.Alias, this.selectedNode, value);
+    });
+
+    this.intersectFormControl.valueChanges.pipe(
+      filter(() => this.intersectFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.Intersect, this.selectedNode, value.toString());
+    });
+
+    this.visibleFormControl.valueChanges.pipe(
+      filter(() => this.visibleFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateAttribute(AttributeData.Link.Visible, this.selectedNode, value.toString());
     });
   }
 
   private setupInitialValues() {
-    this.showOnlyLookups$ = this.showOnlyLookupsFormControl.valueChanges.pipe(
-      startWith(this.showOnlyLookupsFormControl.value), shareReplay(1)
+
+    this.fetchAllEntities$ = this.fetchAllEntitiesFormControl.valueChanges.pipe(
+      startWith(this.fetchAllEntitiesFormControl.value)
     );
 
     const linkType = this.getAttribute(AttributeData.Link.Type, this.selectedNode);
@@ -231,9 +352,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     this.filteredFromAttributes$ = combineLatest([
       fromAttributeInput$,
       attributes$,
-      this.showOnlyLookups$
     ]).pipe(
-      map(([value, attributes, showOnlyLookups]) => this.filterAttributes(value, attributes, showOnlyLookups))
+      map(([value, attributes]) => this.filterAttributes(value, attributes))
     );
   }
 
@@ -268,9 +388,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     this.filteredToAttributes$ = combineLatest([
       toAttributeInput$,
       parentEntityAttribute$,
-      this.showOnlyLookups$
     ]).pipe(
-      map(([value, attributes, showOnlyLookups]) => this.filterAttributes(value, attributes, showOnlyLookups))
+      map(([value, attributes]) => this.filterAttributes(value, attributes))
     );
   }
 
@@ -282,13 +401,9 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     );
   }
 
-  private filterAttributes(value: string, attributes: AttributeModel[], showOnlyLookups: boolean): AttributeModel[] {
-    let filtered = attributes;
-    if (showOnlyLookups) {
-      filtered = filtered.filter(attr => attr.attributeType === AttributeType.LOOKUP);
-    }
+  private filterAttributes(value: string, attributes: AttributeModel[]): AttributeModel[] {
     const filterValue = value?.toLowerCase() || '';
-    return filtered.filter(attr =>
+    return attributes.filter(attr =>
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );

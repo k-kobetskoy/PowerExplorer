@@ -1,17 +1,46 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<mat-form-field class="form-field">
+<mat-checkbox [formControl]="fetchAllEntitiesFormControl">
+    Fetch All Entities
+</mat-checkbox>
+
+<!-- Show entity picker when fetchAllEntitiesFormControl is true -->
+<mat-form-field class="form-field" *ngIf="fetchAllEntities$ | async">
     <mat-label>Entity</mat-label>
     <input type="text" matInput [formControl]="entityNameFormControl" [matAutocomplete]="entityAuto" placeholder="Select an entity">
     <mat-autocomplete #entityAuto="matAutocomplete">
         <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
-            <div class="option-content">
-                <span class="logical-name">{{entity.logicalName}}</span>
-                <span class="display-name">{{entity.displayName}}</span>
+            <div class="relationship-option">
+                <div class="entity-name">{{entity.logicalName}}</div>
+                <div class="relation-name">{{entity.displayName}}</div>
             </div>
         </mat-option>
     </mat-autocomplete>
     <app-loading-indicator matSuffix [diameter]="20" loadingKey="entityName"></app-loading-indicator>
+</mat-form-field>
+
+<mat-form-field class="form-field" *ngIf="!(fetchAllEntities$ | async)">
+    <mat-label>Link Entity</mat-label>
+    <input type="text" matInput [formControl]="linkEntityFormControl" [matAutocomplete]="linkEntityAuto" placeholder="Select a link entity">
+    <mat-autocomplete #linkEntityAuto="matAutocomplete">
+        <mat-optgroup *ngIf="(filteredLinkEntities$ | async)?.OneToManyRelationships?.length" label="One To Many Relationships">
+            <mat-option *ngFor="let relation of (filteredLinkEntities$ | async)?.OneToManyRelationships" [value]="relation.ReferencingEntityName">
+                <div class="relationship-option">
+                    <div class="entity-name">{{relation.ReferencingEntityName}}</div>
+                    <div class="relation-name">{{relation.SchemaName}}</div>
+                </div>
+            </mat-option>
+        </mat-optgroup>
+        <mat-optgroup *ngIf="(filteredLinkEntities$ | async)?.ManyToOneRelationships?.length" label="Many To One Relationships">
+            <mat-option *ngFor="let relation of (filteredLinkEntities$ | async)?.ManyToOneRelationships" [value]="relation.ReferencedEntityName">
+                <div class="relationship-option">
+                    <div class="entity-name">{{relation.ReferencedEntityName}}</div>
+                    <div class="relation-name">{{relation.SchemaName}}</div>
+                </div>
+            </mat-option>
+        </mat-optgroup>
+    </mat-autocomplete>
+    <app-loading-indicator matSuffix [diameter]="20" loadingKey="linkEntity"></app-loading-indicator>
 </mat-form-field>
 
 <mat-form-field class="form-field">
@@ -20,9 +49,9 @@
         placeholder="Select from attribute">
     <mat-autocomplete #fromAttrAuto="matAutocomplete">
         <mat-option *ngFor="let attr of filteredFromAttributes$ | async" [value]="attr.logicalName">
-            <div class="option-content">
-                <span class="logical-name">{{attr.logicalName}}</span>
-                <span class="display-name">{{attr.displayName}}</span>
+            <div class="relationship-option">
+                <div class="entity-name">{{attr.logicalName}}</div>
+                <div class="relation-name">{{attr.displayName}}</div>
             </div>
         </mat-option>
     </mat-autocomplete>
@@ -35,9 +64,9 @@
         placeholder="Select to attribute">
     <mat-autocomplete #toAttrAuto="matAutocomplete">
         <mat-option *ngFor="let attr of filteredToAttributes$ | async" [value]="attr.logicalName">
-            <div class="option-content">
-                <span class="logical-name">{{attr.logicalName}}</span>
-                <span class="display-name">{{attr.displayName}}</span>
+            <div class="relationship-option">
+                <div class="entity-name">{{attr.logicalName}}</div>
+                <div class="relation-name">{{attr.displayName}}</div>
             </div>
         </mat-option>
     </mat-autocomplete>
@@ -68,7 +97,4 @@
         Visible
     </mat-checkbox>
 
-    <mat-checkbox [formControl]="showOnlyLookupsFormControl">
-        Show Only Lookups
-    </mat-checkbox>
 </div>
