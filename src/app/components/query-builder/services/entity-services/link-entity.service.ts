@@ -3,7 +3,7 @@ import { Observable, map, of, switchMap, tap, catchError } from 'rxjs';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { CacheKeys } from 'src/app/config/cache-keys';
 import { BaseRequestService } from './abstract/base-request.service';
-import { LinkEntityResponseModel, RelationshipModel } from 'src/app/models/incoming/link/link-entity-response-model';
+import { LinkEntityResponseModel, RelationshipModel, RelationshipType } from 'src/app/models/incoming/link/link-entity-response-model';
 
 @Injectable({ providedIn: 'root' })
 export class LinkEntityService extends BaseRequestService {
@@ -28,11 +28,13 @@ export class LinkEntityService extends BaseRequestService {
         return this.httpClient.get<any>(url).pipe(
           map(response => {
             const oneToManyRelationships: RelationshipModel[] = this.mapToRelationshipModel(
-              response.OneToManyRelationships || []
+              response.OneToManyRelationships || [],
+              RelationshipType.OneToMany
             );
 
             const manyToOneRelationships: RelationshipModel[] = this.mapToRelationshipModel(
-              response.ManyToOneRelationships || []
+              response.ManyToOneRelationships || [],
+              RelationshipType.ManyToOne
             );
 
             return {
@@ -50,7 +52,7 @@ export class LinkEntityService extends BaseRequestService {
     );
   }
 
-  private mapToRelationshipModel(rawRelationships: any[]): RelationshipModel[] {
+  private mapToRelationshipModel(rawRelationships: any[], relationshipType: RelationshipType): RelationshipModel[] {
     if (!rawRelationships || !rawRelationships.length) {
       return [];
     }
@@ -59,12 +61,14 @@ export class LinkEntityService extends BaseRequestService {
       ReferencedEntityName: rel.ReferencedEntity || '',
       ReferencedEntityNavigationPropertyName: rel.ReferencedEntityNavigationPropertyName || '',
       ReferencedAttribute: rel.ReferencedAttribute || '',
-
+      
       SchemaName: rel.SchemaName || '',
 
       ReferencingEntityName: rel.ReferencingEntity || '',
       ReferencingEntityNavigationPropertyName: rel.ReferencingEntityNavigationPropertyName || '',
-      ReferencingAttribute: rel.ReferencingAttribute || ''
+      ReferencingAttribute: rel.ReferencingAttribute || '',
+      
+      RelationshipType: relationshipType
     }));
   }
 }

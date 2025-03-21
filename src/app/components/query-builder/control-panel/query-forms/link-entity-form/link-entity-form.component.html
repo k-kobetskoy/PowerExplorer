@@ -22,9 +22,9 @@
 <mat-form-field class="form-field" *ngIf="!(fetchAllEntities$ | async)">
     <mat-label>Link Entity</mat-label>
     <input type="text" matInput [formControl]="linkEntityFormControl" [matAutocomplete]="linkEntityAuto" placeholder="Select a link entity">
-    <mat-autocomplete #linkEntityAuto="matAutocomplete">
+    <mat-autocomplete #linkEntityAuto="matAutocomplete" [displayWith]="displayEntityName">
         <mat-optgroup *ngIf="(filteredLinkEntities$ | async)?.OneToManyRelationships?.length" label="One To Many Relationships">
-            <mat-option *ngFor="let relation of (filteredLinkEntities$ | async)?.OneToManyRelationships" [value]="relation.ReferencingEntityName">
+            <mat-option *ngFor="let relation of (filteredLinkEntities$ | async)?.OneToManyRelationships" [value]="relation">
                 <div class="relationship-option">
                     <div class="entity-name">{{relation.ReferencingEntityName}}</div>
                     <div class="relation-name">{{relation.SchemaName}}</div>
@@ -32,7 +32,7 @@
             </mat-option>
         </mat-optgroup>
         <mat-optgroup *ngIf="(filteredLinkEntities$ | async)?.ManyToOneRelationships?.length" label="Many To One Relationships">
-            <mat-option *ngFor="let relation of (filteredLinkEntities$ | async)?.ManyToOneRelationships" [value]="relation.ReferencedEntityName">
+            <mat-option *ngFor="let relation of (filteredLinkEntities$ | async)?.ManyToOneRelationships" [value]="relation">
                 <div class="relationship-option">
                     <div class="entity-name">{{relation.ReferencedEntityName}}</div>
                     <div class="relation-name">{{relation.SchemaName}}</div>

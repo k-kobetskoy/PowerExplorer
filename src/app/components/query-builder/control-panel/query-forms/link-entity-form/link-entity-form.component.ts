@@ -12,7 +12,11 @@ import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { LinkEntityService } from '../../../services/entity-services/link-entity.service';
-import { LinkEntityResponseModel } from 'src/app/models/incoming/link/link-entity-response-model';
+import { LinkEntityResponseModel, RelationshipModel, RelationshipType } from 'src/app/models/incoming/link/link-entity-response-model';
+
+// Interface for relation object to improve type safety
+interface RelationObject extends RelationshipModel { }
+
 @Component({
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',
@@ -85,15 +89,15 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
   readonly linkTypes = LinkTypeOptions;
 
-  entityNameFormControl = new FormControl('');
-  linkEntityFormControl = new FormControl('');
-  fromAttributeFormControl = new FormControl('');
-  toAttributeFormControl = new FormControl('');
-  linkTypeFormControl = new FormControl('');
-  aliasFormControl = new FormControl('');
-  intersectFormControl = new FormControl(false);
-  visibleFormControl = new FormControl(false);
-  fetchAllEntitiesFormControl = new FormControl(false);
+  entityNameFormControl = new FormControl<string | null>('');
+  linkEntityFormControl = new FormControl<string | RelationshipModel | null>('');
+  fromAttributeFormControl = new FormControl<string | null>('');
+  toAttributeFormControl = new FormControl<string | null>('');
+  linkTypeFormControl = new FormControl<string | null>('');
+  aliasFormControl = new FormControl<string | null>('');
+  intersectFormControl = new FormControl<boolean>(false);
+  visibleFormControl = new FormControl<boolean>(false);
+  fetchAllEntitiesFormControl = new FormControl<boolean>(false);
 
   // Observables for autocomplete
   filteredEntities$: Observable<EntityModel[]>; // New entity to link to 
@@ -129,6 +133,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     this.setupInitialValues();
 
     this.setupLinkEntitiesObservable();
+    this.subscribeOnLinkEntityFormControlValidityState();
+    this.subscribeOnFetchAllEntitiesFormControlChanges();
 
     this.setupEntityAutocomplete();
     this.setupLinkEntityAutocomplete();
@@ -136,6 +142,34 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     this.setupToAttributeAutocomplete();
 
     this.setupFormToModelBindings();
+  }
+  
+  subscribeOnFetchAllEntitiesFormControlChanges() {
+    this.fetchAllEntitiesFormControl.valueChanges.pipe(
+      takeUntil(this.destroy$),
+      shareReplay(1)
+    ).subscribe(_ => {
+      this.clearAllAttributes();
+    });
+  }
+  clearAllAttributes() {
+    this.entityNameFormControl.setValue(null, { emitEvent: true });
+    this.linkEntityFormControl.setValue(null, { emitEvent: true });
+    this.fromAttributeFormControl.setValue(null, { emitEvent: true });
+    this.toAttributeFormControl.setValue(null, { emitEvent: true });
+    this.linkTypeFormControl.setValue(null, { emitEvent: true });
+    this.aliasFormControl.setValue(null, { emitEvent: true });
+  }
+
+  subscribeOnLinkEntityFormControlValidityState() {
+    this.linkEntityFormControl.valueChanges.pipe(
+      filter(() => this.linkEntityFormControl.dirty),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value && typeof value === 'object') {
+        this.handleFullRelationObject(value);
+      }
+    });
   }
 
   setupLinkEntitiesObservable() {
@@ -236,32 +270,46 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
       filter(() => this.linkEntityFormControl.dirty),
       takeUntil(this.destroy$)
     ).subscribe(value => {
-      this.updateAttribute(AttributeData.Link.Entity, this.selectedNode, value);
+      if (!value) {
+        this.updateAttribute(AttributeData.Link.Entity, this.selectedNode, '');
+        return;
+      }
+
+      if (typeof value === 'object') {
+        const relation = value as RelationshipModel;
+        let entityName = '';
+
+        if (relation.RelationshipType === RelationshipType.OneToMany) {
+          entityName = relation.ReferencingEntityName;
+        } else if (relation.RelationshipType === RelationshipType.ManyToOne) {
+          entityName = relation.ReferencedEntityName;
+        }
+
+        this.updateAttribute(AttributeData.Link.Entity, this.selectedNode, entityName);
+      } else {
+        this.updateAttribute(AttributeData.Link.Entity, this.selectedNode, String(value));
+      }
     });
 
     this.fromAttributeFormControl.valueChanges.pipe(
-      filter(() => this.fromAttributeFormControl.dirty),
       takeUntil(this.destroy$)
     ).subscribe(value => {
       this.updateAttribute(AttributeData.Link.From, this.selectedNode, value);
     });
 
-    this.toAttributeFormControl.valueChanges.pipe(
-      filter(() => this.toAttributeFormControl.dirty),
+    this.toAttributeFormControl.valueChanges.pipe(      
       takeUntil(this.destroy$)
     ).subscribe(value => {
       this.updateAttribute(AttributeData.Link.To, this.selectedNode, value);
     });
 
     this.linkTypeFormControl.valueChanges.pipe(
-      filter(() => this.linkTypeFormControl.dirty),
       takeUntil(this.destroy$)
     ).subscribe(value => {
       this.updateAttribute(AttributeData.Link.Type, this.selectedNode, value);
     });
 
     this.aliasFormControl.valueChanges.pipe(
-      filter(() => this.aliasFormControl.dirty),
       takeUntil(this.destroy$)
     ).subscribe(value => {
       this.updateAttribute(AttributeData.Link.Alias, this.selectedNode, value);
@@ -284,9 +332,30 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
   private setupInitialValues() {
 
-    this.fetchAllEntities$ = this.fetchAllEntitiesFormControl.valueChanges.pipe(
-      startWith(this.fetchAllEntitiesFormControl.value)
-    );
+    const fetchAllEntities = this.getAttribute(AttributeData.Link.FetchAllEntities, this.selectedNode);
+    if (fetchAllEntities) {
+      this.fetchAllEntitiesFormControl.setValue(fetchAllEntities.value$.value === 'true', { emitEvent: false });
+    }
+
+    const entityName = this.getAttribute(AttributeData.Link.Entity, this.selectedNode);
+    if (entityName) {
+      this.entityNameFormControl.setValue(entityName.value$.value, { emitEvent: false });
+    }
+
+    const linkEntity = this.getAttribute(AttributeData.Link.Entity, this.selectedNode);
+    if (linkEntity) {
+      this.linkEntityFormControl.setValue(linkEntity.value$.value, { emitEvent: false });
+    }
+
+    const fromAttribute = this.getAttribute(AttributeData.Link.From, this.selectedNode);
+    if (fromAttribute) {
+      this.fromAttributeFormControl.setValue(fromAttribute.value$.value, { emitEvent: false });
+    }
+
+    const toAttribute = this.getAttribute(AttributeData.Link.To, this.selectedNode);
+    if (toAttribute) {
+      this.toAttributeFormControl.setValue(toAttribute.value$.value, { emitEvent: false });
+    }
 
     const linkType = this.getAttribute(AttributeData.Link.Type, this.selectedNode);
     if (linkType) {
@@ -407,6 +476,56 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );
+  }
+
+  displayEntityName(relation: RelationshipModel | string | null): string {
+    if (!relation) {
+      return '';
+    }
+
+    if (typeof relation === 'string') {
+      return relation;
+    }
+
+    if (relation.RelationshipType === RelationshipType.OneToMany) {
+      return relation.ReferencingEntityName;
+    } else if (relation.RelationshipType === RelationshipType.ManyToOne) {
+      return relation.ReferencedEntityName;
+    }
+
+    return '';
+  }
+
+  private handleFullRelationObject(relation: RelationshipModel): void {
+    if (relation.SchemaName) {  
+
+      if (relation.RelationshipType === RelationshipType.OneToMany) {
+        if (relation.ReferencingAttribute) {
+          this.fromAttributeFormControl.setValue(relation.ReferencingAttribute);
+        }
+
+        if (relation.ReferencedAttribute) {
+          this.toAttributeFormControl.setValue(relation.ReferencedAttribute);
+        }
+
+        this.aliasFormControl.setValue(this.getAliasName(relation.ReferencingEntityName, relation.ReferencedAttribute));
+
+      } else if (relation.RelationshipType === RelationshipType.ManyToOne) {
+
+        if (relation.ReferencedAttribute) {
+          this.fromAttributeFormControl.setValue(relation.ReferencedAttribute);
+        }
+
+        if (relation.ReferencingAttribute) {
+          this.toAttributeFormControl.setValue(relation.ReferencingAttribute);
+        }
+
+        this.aliasFormControl.setValue(this.getAliasName(relation.ReferencedEntityName, relation.ReferencingAttribute));
+      }
+    }
+  }
+  getAliasName(ReferencingEntityName: string, ReferencedAttribute: string): string {
+    return `${ReferencingEntityName.substring(0,2).toLocaleUpperCase()}_${ReferencedAttribute.substring(0,2).toLocaleUpperCase()}`;
   }
 
   ngOnDestroy() {

@@ -94,18 +94,18 @@ export class LinkAttributeData {
         new BaseAttributeData(false,'name', AttributeTreeViewDisplayStyle.onlyValue, 1, 'LinkEntity');
 
     static readonly Alias: IAttributeData =
-        new BaseAttributeData(false,'alias', AttributeTreeViewDisplayStyle.alias, 2, 'LinkAlias');
+        new BaseAttributeData(false,'alias', AttributeTreeViewDisplayStyle.alias, 8, 'LinkAlias');
 
     static readonly Intersect: IAttributeData =
-        new BaseAttributeData(true, 'intersect', AttributeTreeViewDisplayStyle.onlyName, 4, 'M:M');
+        new BaseAttributeData(true, 'intersect', AttributeTreeViewDisplayStyle.onlyName, 5, 'M:M');
 
     static readonly Type: IAttributeData =
-        new BaseAttributeData(true, 'link-type', AttributeTreeViewDisplayStyle.onlyValue, 3, 'LinkType');
+        new BaseAttributeData(true, 'link-type', AttributeTreeViewDisplayStyle.onlyValue, 4, 'LinkType');
 
-    static readonly From: IAttributeData = new BaseAttributeData(false,'from', AttributeTreeViewDisplayStyle.none, 5, '');
-    static readonly To: IAttributeData = new BaseAttributeData(false,'to', AttributeTreeViewDisplayStyle.none, 6, '');
+    static readonly From: IAttributeData = new BaseAttributeData(false,'from', AttributeTreeViewDisplayStyle.none, 2, '');
+    static readonly To: IAttributeData = new BaseAttributeData(false,'to', AttributeTreeViewDisplayStyle.none, 3, '');
     static readonly Visible: IAttributeData = new BaseAttributeData(true, 'visible', AttributeTreeViewDisplayStyle.none, 7, '');
-    static readonly FetchAllEntities: IAttributeData = new BaseAttributeData(true, 'fetchallentities', AttributeTreeViewDisplayStyle.none, 8, '');
+    static readonly FetchAllEntities: IAttributeData = new BaseAttributeData(true, 'fetchallentities', AttributeTreeViewDisplayStyle.none, 6, '');
 }
 
 export class OrderAttributeData {

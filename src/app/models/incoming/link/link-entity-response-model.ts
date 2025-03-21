@@ -1,16 +1,23 @@
+export enum RelationshipType {
+    OneToMany = 'OneToMany',
+    ManyToOne = 'ManyToOne'
+}
+
 export interface LinkEntityResponseModel {
     OneToManyRelationships: RelationshipModel[],
     ManyToOneRelationships: RelationshipModel[],
 }
 
 export interface RelationshipModel {
-    ReferencedEntityName: string, // The child entity
+    ReferencedEntityName: string, 
     ReferencedEntityNavigationPropertyName: string,
     ReferencedAttribute: string,
     
     SchemaName: string,
     
-    ReferencingEntityName: string, // The parent entity
+    ReferencingEntityName: string,
     ReferencingEntityNavigationPropertyName: string,
     ReferencingAttribute: string,    
+    
+    RelationshipType: RelationshipType
 }

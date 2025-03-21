@@ -161,6 +161,8 @@ export class QueryNode {
             attributes.splice(attribute.order - 1, 0, attribute);
         }
 
+        attributes.sort((a, b) => a.order - b.order);
+
         this.attributes$.next(attributes);
     }
 
