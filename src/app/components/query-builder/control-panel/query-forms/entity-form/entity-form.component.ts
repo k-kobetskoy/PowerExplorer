@@ -22,10 +22,8 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
     filteredEntities$: Observable<EntityModel[]>;
 
     private nameAttributeData = AttributeData.Entity.Name;
-    private aliasAttributeData = AttributeData.Entity.Alias;
 
     private nameInputName = this.nameAttributeData.EditorName;
-    private aliasInputName = this.aliasAttributeData.EditorName;
 
     constructor(private entityService: EntityEntityService, private fb: FormBuilder) { super(); }
 
@@ -42,11 +40,9 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     private initializeForm() {
         const nameAttribute = this.getAttribute(this.nameAttributeData, this.selectedNode);
-        const aliasAttribute = this.getAttribute(this.aliasAttributeData, this.selectedNode);
 
         this.entityForm = this.fb.group({
-            [this.nameAttributeData.EditorName]: [nameAttribute || ''],
-            [this.aliasAttributeData.EditorName]: [aliasAttribute || '']
+            [this.nameAttributeData.EditorName]: [nameAttribute || '']
         });
 
         // Form input -> model
@@ -66,20 +62,11 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
         ).subscribe(value => {
             this.updateAttribute(this.nameAttributeData, this.selectedNode, value);
         });
-
-        this.entityForm.get(this.aliasInputName).valueChanges.pipe(
-            distinctUntilChanged(),
-            debounceTime(50),
-            takeUntil(this.destroy$),
-        ).subscribe(value => {
-            this.updateAttribute(this.aliasAttributeData, this.selectedNode, value);
-        });
     }
 
     private setupModelToFormBindings() {
         const controlBindings = [
-            { editorName: this.nameAttributeData.EditorName, control: this.nameInputName },
-            { editorName: this.aliasAttributeData.EditorName, control: this.aliasInputName }
+            { editorName: this.nameAttributeData.EditorName, control: this.nameInputName }
         ];
 
         this.selectedNode.attributes$.pipe(

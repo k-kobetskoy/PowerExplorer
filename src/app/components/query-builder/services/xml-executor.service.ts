@@ -97,7 +97,6 @@ export class XmlExecutorService extends BaseRequestService {
     return this.activeEnvironmentUrl$.pipe(
       switchMap(envUrl => {
         if (!envUrl) {
-          console.error('No active environment URL found');
           this.errorDialogService.showError({
             title: 'Connection Error',
             message: 'No active environment URL found',
@@ -125,9 +124,13 @@ export class XmlExecutorService extends BaseRequestService {
           return of([]);
         }
 
-        const entityName = entityNode.attributes$.value.filter(attr => attr.editorName === 'name')[0].value$.value;
 
+        const entitiyAttributeMap = this.nodeTreeService.getEntityAttributeMap();
+        console.log(entitiyAttributeMap);
+        const entityName = entityNode.attributes$.value.filter(attr => attr.editorName === 'name')[0].value$.value;
+                
         return this.attributeEntityService.getAttributes(entityName).pipe(
+          tap(attributes => console.log(attributes)),
           map(attributes => {
             if (!attributes.length) {
               return this.normalizeData(result.value);
@@ -160,8 +163,6 @@ export class XmlExecutorService extends BaseRequestService {
   private normalizeDataWithTypes<T extends { [key: string]: any }>(data: T[], attributeMap: Map<string, AttributeModel>): TypedResultItem[] {
     if (!data?.length) return [];
 
-    console.log('Normalizing data with types and annotations');
-
     // Get all keys from the first item, including annotation keys
     const firstItem = data[0];
     const allKeys = Object.keys(firstItem).filter(key => key !== '@odata.etag');
@@ -190,6 +191,8 @@ export class XmlExecutorService extends BaseRequestService {
     return data.map(item => {
       const normalizedItem: TypedResultItem = {};
 
+      //const isLinkedAttribute = this.isLinkedAttribute(item);
+
       // Process each field group (base field + its annotations)
       fieldGroups.forEach((annotationKeys, baseKey) => {
         // Handle lookup fields (they start with underscore and end with _value)
@@ -197,20 +200,7 @@ export class XmlExecutorService extends BaseRequestService {
         let isLookup = false;
 
         if (baseKey.startsWith('_') && baseKey.endsWith('_value')) {
-          // isLookup = true;
-          // // Try to get the logical name from associatednavigationproperty annotation
-          // const navPropKey = `${baseKey}@Microsoft.Dynamics.CRM.associatednavigationproperty`;
-          // let logicalName = '';
-
-          // if (item[navPropKey]) {
-          //   // Use associatednavigationproperty if available
-          //   logicalName = String(item[navPropKey]).toLowerCase();
-          // } else {
-          //   // Extract from the field name: _fieldname_value -> fieldname
-          //   logicalName = baseKey.substring(1, baseKey.length - 6).toLowerCase();
-          // }
-
-          // fieldKey = logicalName;
+          // Skip lookup fields for now (commented out implementation)
           return;
         }
 

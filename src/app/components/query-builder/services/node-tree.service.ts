@@ -8,9 +8,9 @@ import { QueryNodeData } from '../models/constants/query-node-data';
 import { ValueAttributeData } from '../models/constants/attribute-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
 import { ValidationResult, ValidationService } from './validation.service';
+import { AttributeNames } from '../models/constants/attribute-names';
 @Injectable({ providedIn: 'root' })
 export class NodeTreeService {
-
   private _nodeTree$: BehaviorSubject<QueryNodeTree> = new BehaviorSubject<QueryNodeTree>(null);
 
   xmlRequest$: BehaviorSubject<string> = new BehaviorSubject<string>('');
@@ -34,12 +34,12 @@ export class NodeTreeService {
     private nodeFactory: NodeFactoryService,
     private validationService: ValidationService,
   ) {
-    
+
     this.initializeNodeTree();
-    
+
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
 
-    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$);    
+    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$);
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -53,7 +53,7 @@ export class NodeTreeService {
   }
 
   initializeNodeTree() {
-    if(this._nodeTree$.value) {
+    if (this._nodeTree$.value) {
       return;
     }
 
@@ -66,6 +66,10 @@ export class NodeTreeService {
     this._nodeTree$.next(nodeTree);
 
     this._selectedNode$.next(rootNode);
+
+    const attributeFactory = this.nodeFactory.getAttributesFactory(rootNode.nodeName);
+
+    rootNode.addAttribute(attributeFactory.createAttribute(AttributeNames.rootTop, rootNode, false, '10'));
 
     this.addNode(QueryNodeData.Entity.NodeName);
   }
@@ -110,13 +114,13 @@ export class NodeTreeService {
 
   addNode(newNodeName: string): QueryNode {
     console.log('Node Tree Service - Adding new node with name:', newNodeName);
-    
+
     // Map "Link" action to "Link Entity" node name
     if (newNodeName === 'Link') {
       newNodeName = 'Link Entity';
       console.log('Mapped "Link" action to "Link Entity" node name');
     }
-    
+
     let parentNode = this._selectedNode$.value;
 
     let newNode = this.nodeFactory.createNode(newNodeName, false, this._nodeTree$.value.root);
@@ -148,7 +152,7 @@ export class NodeTreeService {
 
   addValueNode(parentConditionNode: QueryNode, value: string = ''): QueryNode {
     const valueNode = this.nodeFactory.createNode(QueryNodeData.Value.NodeName, false, this._nodeTree$.value.root);
-    
+
     let nodeAbove = this.getNodeAbove(valueNode.order, parentConditionNode);
     let bottomNode = nodeAbove.next;
 
@@ -161,9 +165,9 @@ export class NodeTreeService {
     if (value) {
       const attributeFactory = this.nodeFactory.getAttributesFactory(QueryNodeData.Value.NodeName);
       const textAttribute = attributeFactory.createAttribute(
-        ValueAttributeData.InnerText.EditorName, 
-        valueNode, 
-        false, 
+        ValueAttributeData.InnerText.EditorName,
+        valueNode,
+        false,
         value
       );
       valueNode.addAttribute(textAttribute);
@@ -171,7 +175,7 @@ export class NodeTreeService {
 
     this.expandNode(parentConditionNode);
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
-    
+
     return valueNode;
   }
 
@@ -283,9 +287,85 @@ export class NodeTreeService {
     if (nodeTree && nodeTree.root) {
       this.cleanupNodeAndChildren(nodeTree.root);
     }
-    
+
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
+  }
+
+  getEntityAttributeMap(): EntityAttributeMap {
+    const map: EntityAttributeMap = {};
+    const rootNode = this._nodeTree$.value.root;
+
+    if (!rootNode) {
+      return map;
+    }
+
+    this.traverseNodeTree(map, rootNode.next, { entityAlias: null, attributeData: [] }, null);
+
+    return map;
+  }
+
+  traverseNodeTree(map: EntityAttributeMap, queryNode: QueryNode, entityAttributeData: EntityAttributeData, entityName: string | null) {
+    if (!queryNode) {
+      if (entityName) {
+        map[entityName] = {
+          entityAlias: entityAttributeData.entityAlias,
+          attributeData: [...entityAttributeData.attributeData]
+        };
+      }
+      return;
+    }
+
+    const nodeIsEntityOrLink = queryNode.tagName === QueryNodeData.Entity.TagName || queryNode.tagName === QueryNodeData.Link.TagName;
+
+    if (nodeIsEntityOrLink) {
+      // Save current entity data if we have a valid entity name
+      if (entityName !== null) {
+        map[entityName] = {
+          entityAlias: entityAttributeData.entityAlias,
+          attributeData: [...entityAttributeData.attributeData]
+        };
+      }
+
+      // Get attributes from the node
+      const attributes = queryNode.attributes$.value;
+      const entityNameAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
+
+      if (entityNameAttribute) {
+        const entityLogicalName = entityNameAttribute.value$.value;
+
+        if (!map[entityLogicalName]) {
+          map[entityLogicalName] = { entityAlias: null, attributeData: [] };
+        }
+
+        const nextEntityAttributeData: EntityAttributeData = {
+          entityAlias: null,
+          attributeData: []
+        };
+
+        const entityAliasAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityAlias);
+        nextEntityAttributeData.entityAlias = entityAliasAttribute ? entityAliasAttribute.value$.value : null;
+
+        this.traverseNodeTree(map, queryNode.next, nextEntityAttributeData, entityLogicalName);
+      }
+    }
+
+    // Handle Attribute nodes
+    const nodeIsAttribute = queryNode.tagName === QueryNodeData.Attribute.TagName;
+
+    if (nodeIsAttribute) {
+      const attributes = queryNode.attributes$.value;
+      const attributeLogicalName = attributes.find(attr => attr.editorName === AttributeNames.attributeName)?.value$.value;
+      const attributeAlias = attributes.find(attr => attr.editorName === AttributeNames.attributeAlias)?.value$.value;
+
+      if (attributeLogicalName || attributeAlias) {
+        entityAttributeData.attributeData.push({
+          attributeLogicalName: attributeLogicalName || null,
+          alias: attributeAlias || null
+        });
+      }
+      this.traverseNodeTree(map, queryNode.next, entityAttributeData, entityName);
+    }
   }
 
   private cleanupNodeAndChildren(node: QueryNode): void {
@@ -302,4 +382,18 @@ export class NodeTreeService {
     this._nodeTree$.value.destroyed$.next();
     this._nodeTree$.value.destroyed$.complete();
   }
+}
+
+interface EntityAttributeMap {
+  [entityLogicalName: string]: EntityAttributeData;
+}
+
+interface EntityAttributeData {
+  entityAlias: string | null;
+  attributeData: AttributeData[];
+}
+
+interface AttributeData {
+  attributeLogicalName: string | null;
+  alias: string | null;
 }

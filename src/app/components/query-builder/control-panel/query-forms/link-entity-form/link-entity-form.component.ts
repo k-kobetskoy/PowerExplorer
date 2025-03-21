@@ -132,6 +132,11 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   private initializeForm() {
     this.setupInitialValues();
 
+    this.fetchAllEntities$ = this.fetchAllEntitiesFormControl.valueChanges.pipe(
+      startWith(this.fetchAllEntitiesFormControl.value),
+      takeUntil(this.destroy$)
+    );
+
     this.setupLinkEntitiesObservable();
     this.subscribeOnLinkEntityFormControlValidityState();
     this.subscribeOnFetchAllEntitiesFormControlChanges();
@@ -143,22 +148,34 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
 
     this.setupFormToModelBindings();
   }
-  
+
   subscribeOnFetchAllEntitiesFormControlChanges() {
     this.fetchAllEntitiesFormControl.valueChanges.pipe(
-      takeUntil(this.destroy$),
-      shareReplay(1)
-    ).subscribe(_ => {
-      this.clearAllAttributes();
+      takeUntil(this.destroy$)
+    ).subscribe(fetchAll => {
+      if (this.fetchAllEntitiesFormControl.dirty) {
+        this.updateAttribute(AttributeData.Link.FetchAllEntities, this.selectedNode, fetchAll.toString());
+        
+        this.clearAllAttributes();
+      }
     });
   }
   clearAllAttributes() {
+    // Clear all form values
     this.entityNameFormControl.setValue(null, { emitEvent: true });
     this.linkEntityFormControl.setValue(null, { emitEvent: true });
     this.fromAttributeFormControl.setValue(null, { emitEvent: true });
     this.toAttributeFormControl.setValue(null, { emitEvent: true });
     this.linkTypeFormControl.setValue(null, { emitEvent: true });
     this.aliasFormControl.setValue(null, { emitEvent: true });
+    
+    // Mark controls as dirty to ensure changes get propagated
+    this.entityNameFormControl.markAsDirty();
+    this.linkEntityFormControl.markAsDirty();
+    this.fromAttributeFormControl.markAsDirty();
+    this.toAttributeFormControl.markAsDirty();
+    this.linkTypeFormControl.markAsDirty();
+    this.aliasFormControl.markAsDirty();
   }
 
   subscribeOnLinkEntityFormControlValidityState() {
@@ -297,7 +314,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
       this.updateAttribute(AttributeData.Link.From, this.selectedNode, value);
     });
 
-    this.toAttributeFormControl.valueChanges.pipe(      
+    this.toAttributeFormControl.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
       this.updateAttribute(AttributeData.Link.To, this.selectedNode, value);
@@ -331,49 +348,55 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   }
 
   private setupInitialValues() {
-
     const fetchAllEntities = this.getAttribute(AttributeData.Link.FetchAllEntities, this.selectedNode);
     if (fetchAllEntities) {
       this.fetchAllEntitiesFormControl.setValue(fetchAllEntities.value$.value === 'true', { emitEvent: false });
+    } else {
+      this.fetchAllEntitiesFormControl.setValue(false, { emitEvent: false });
     }
+
+    this.entityNameFormControl.setValue(null, { emitEvent: false });
+    this.linkEntityFormControl.setValue(null, { emitEvent: false });
+    this.fromAttributeFormControl.setValue(null, { emitEvent: false });
+    this.toAttributeFormControl.setValue(null, { emitEvent: false });
+    this.linkTypeFormControl.setValue(null, { emitEvent: false });
+    this.aliasFormControl.setValue(null, { emitEvent: false });
+    this.intersectFormControl.setValue(false, { emitEvent: false });
+    this.visibleFormControl.setValue(false, { emitEvent: false });
 
     const entityName = this.getAttribute(AttributeData.Link.Entity, this.selectedNode);
-    if (entityName) {
+    if (entityName && entityName.value$.value) {
       this.entityNameFormControl.setValue(entityName.value$.value, { emitEvent: false });
-    }
-
-    const linkEntity = this.getAttribute(AttributeData.Link.Entity, this.selectedNode);
-    if (linkEntity) {
-      this.linkEntityFormControl.setValue(linkEntity.value$.value, { emitEvent: false });
+      this.linkEntityFormControl.setValue(entityName.value$.value, { emitEvent: false });
     }
 
     const fromAttribute = this.getAttribute(AttributeData.Link.From, this.selectedNode);
-    if (fromAttribute) {
+    if (fromAttribute && fromAttribute.value$.value) {
       this.fromAttributeFormControl.setValue(fromAttribute.value$.value, { emitEvent: false });
     }
 
     const toAttribute = this.getAttribute(AttributeData.Link.To, this.selectedNode);
-    if (toAttribute) {
+    if (toAttribute && toAttribute.value$.value) {
       this.toAttributeFormControl.setValue(toAttribute.value$.value, { emitEvent: false });
     }
 
     const linkType = this.getAttribute(AttributeData.Link.Type, this.selectedNode);
-    if (linkType) {
+    if (linkType && linkType.value$.value) {
       this.linkTypeFormControl.setValue(linkType.value$.value, { emitEvent: false });
     }
 
     const alias = this.getAttribute(AttributeData.Link.Alias, this.selectedNode);
-    if (alias) {
+    if (alias && alias.value$.value) {
       this.aliasFormControl.setValue(alias.value$.value, { emitEvent: false });
     }
 
     const intersect = this.getAttribute(AttributeData.Link.Intersect, this.selectedNode);
-    if (intersect) {
+    if (intersect && intersect.value$.value) {
       this.intersectFormControl.setValue(intersect.value$.value === 'true', { emitEvent: false });
     }
 
     const visible = this.getAttribute(AttributeData.Link.Visible, this.selectedNode);
-    if (visible) {
+    if (visible && visible.value$.value) {
       this.visibleFormControl.setValue(visible.value$.value === 'true', { emitEvent: false });
     }
   }
@@ -497,7 +520,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   }
 
   private handleFullRelationObject(relation: RelationshipModel): void {
-    if (relation.SchemaName) {  
+    if (relation.SchemaName) {
 
       if (relation.RelationshipType === RelationshipType.OneToMany) {
         if (relation.ReferencingAttribute) {
@@ -507,8 +530,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
         if (relation.ReferencedAttribute) {
           this.toAttributeFormControl.setValue(relation.ReferencedAttribute);
         }
-
-        this.aliasFormControl.setValue(this.getAliasName(relation.ReferencingEntityName, relation.ReferencedAttribute));
+        // Set alias name if needed
+        //this.aliasFormControl.setValue(this.getAliasName(relation.ReferencingEntityName, relation.ReferencedAttribute));
 
       } else if (relation.RelationshipType === RelationshipType.ManyToOne) {
 
@@ -519,13 +542,13 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
         if (relation.ReferencingAttribute) {
           this.toAttributeFormControl.setValue(relation.ReferencingAttribute);
         }
-
-        this.aliasFormControl.setValue(this.getAliasName(relation.ReferencedEntityName, relation.ReferencingAttribute));
+        // Set alias name if needed 
+        //this.aliasFormControl.setValue(this.getAliasName(relation.ReferencedEntityName, relation.ReferencingAttribute));
       }
     }
   }
   getAliasName(ReferencingEntityName: string, ReferencedAttribute: string): string {
-    return `${ReferencingEntityName.substring(0,2).toLocaleUpperCase()}_${ReferencedAttribute.substring(0,2).toLocaleUpperCase()}`;
+    return `${ReferencingEntityName.substring(0, 2).toLocaleUpperCase()}_${ReferencedAttribute.substring(0, 2).toLocaleUpperCase()}`;
   }
 
   ngOnDestroy() {
