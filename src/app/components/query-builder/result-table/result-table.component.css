@@ -197,3 +197,8 @@ tr.mat-mdc-row:hover {
   border-color: transparent #2c70b9 transparent transparent;
   opacity: 0.3;
 }
+
+.null-value {
+  font-style: italic !important;
+  color: #999 !important;
+}

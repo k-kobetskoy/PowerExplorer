@@ -18,8 +18,8 @@
 
     <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
       <th mat-header-cell *matHeaderCellDef> {{getColumnDisplayName(column)}} </th>
-      <td mat-cell *matCellDef="let element" (click)="selectCell(element, cell)" [class.selected]="selectedOverflowCell === element" [class.has-formatted-value]="hasFormattedValue(element, column)" [ngClass]="column !== 'No.' ? getCellClass(column) : ''" #cell>
-        {{element[column]}}
+      <td mat-cell *matCellDef="let element" (click)="selectCell(element, cell)" [class.selected]="selectedOverflowCell === element" [class.has-formatted-value]="hasFormattedValue(element, column)" [ngClass]="[column !== 'No.' ? getCellClass(column) : '', element[column] === null ? 'null-value' : '']" #cell>
+        {{formatCellValue(element[column])}}
       </td>
     </ng-container>
 

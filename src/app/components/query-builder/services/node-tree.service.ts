@@ -300,7 +300,12 @@ export class NodeTreeService {
       return map;
     }
 
-    this.traverseNodeTree(map, rootNode.next, { entityAlias: null, attributeData: [] }, null);
+    this.traverseNodeTree(map, rootNode.next, { 
+      entityAlias: null, 
+      attributeData: [],
+      isPrimaryEntity: true,
+      primaryIdAttribute: null
+    }, null);
 
     return map;
   }
@@ -310,7 +315,9 @@ export class NodeTreeService {
       if (entityName) {
         map[entityName] = {
           entityAlias: entityAttributeData.entityAlias,
-          attributeData: [...entityAttributeData.attributeData]
+          attributeData: [...entityAttributeData.attributeData],
+          isPrimaryEntity: entityAttributeData.isPrimaryEntity,
+          primaryIdAttribute: entityAttributeData.primaryIdAttribute
         };
       }
       return;
@@ -323,7 +330,9 @@ export class NodeTreeService {
       if (entityName !== null) {
         map[entityName] = {
           entityAlias: entityAttributeData.entityAlias,
-          attributeData: [...entityAttributeData.attributeData]
+          attributeData: [...entityAttributeData.attributeData],
+          isPrimaryEntity: entityAttributeData.isPrimaryEntity,
+          primaryIdAttribute: entityAttributeData.primaryIdAttribute
         };
       }
 
@@ -334,13 +343,28 @@ export class NodeTreeService {
       if (entityNameAttribute) {
         const entityLogicalName = entityNameAttribute.value$.value;
 
+        // Detect primary ID attribute - conventionally it's entitylogicalname + "id"
+        // For example, "account" would have primary ID "accountid"
+        const primaryIdAttribute = `${entityLogicalName}id`;
+
         if (!map[entityLogicalName]) {
-          map[entityLogicalName] = { entityAlias: null, attributeData: [] };
+          map[entityLogicalName] = { 
+            entityAlias: null, 
+            attributeData: [],
+            // If this is the first entity in traversal, mark it as primary
+            isPrimaryEntity: queryNode.tagName === QueryNodeData.Entity.TagName && 
+                             !entityName && // No previous entity
+                             !queryNode.parent?.attributes$.value.some(a => a.editorName === AttributeNames.entityAlias), // Not an aliased entity
+            primaryIdAttribute: primaryIdAttribute
+          };
         }
 
         const nextEntityAttributeData: EntityAttributeData = {
           entityAlias: null,
-          attributeData: []
+          attributeData: [],
+          // Carry forward primary entity status if this is a continuation
+          isPrimaryEntity: map[entityLogicalName].isPrimaryEntity,
+          primaryIdAttribute: primaryIdAttribute
         };
 
         const entityAliasAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityAlias);
@@ -391,6 +415,8 @@ interface EntityAttributeMap {
 interface EntityAttributeData {
   entityAlias: string | null;
   attributeData: AttributeData[];
+  primaryIdAttribute?: string | null;
+  isPrimaryEntity?: boolean;
 }
 
 interface AttributeData {

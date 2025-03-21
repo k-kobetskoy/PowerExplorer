@@ -1,8 +1,14 @@
 import { Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
-import { switchMap, catchError, of, Subscription } from 'rxjs';
+import { switchMap, catchError, of, Subscription, tap } from 'rxjs';
 import { XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
+
+interface ResultData {
+  header: { [key: string]: { displayName: string, logicalName: string, type: string } };
+  'raw-values': any[];
+  'formated-values': any[];
+}
 
 @Component({
   selector: 'app-result-table',
@@ -16,16 +22,14 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
   selectedRow: any;
   selectedOverflowCell: any;
-  rawData: any[] = []; // Store the raw data with all annotations
   
   showFormattedValues = true; // Toggle for formatted/raw values
-  technicalColumns: string[] = []; // Store technical column names
-  displayColumns: string[] = []; // Store display column names
-
-  displayedColumns: string[];
-  dataSource: Object[];
-  fieldTypes: Map<string, string> = new Map<string, string>();
-  private displayNames: Map<string, string> = new Map<string, string>();
+  
+  displayedColumns: string[] = [];
+  dataSource: any[] = [];
+  
+  // Store the complete result data
+  resultData: ResultData | null = null;
   
   // Store the latest XML without executing it
   private latestXml: string = '';
@@ -63,6 +67,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   }
   
   private executeQuery(xml: string, entityNode: QueryNode) {
+    console.log('ResultTableComponent: Starting executeQuery');
+    
     if (!xml) {
       console.error('No XML available');
       this.displayedColumns = ['No query available'];
@@ -72,77 +78,34 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     
     this.xmlExecutor.executeXmlRequest(xml, entityNode)
       .pipe(
+        tap(response => {
+          if (response && response.header) {
+            console.log('ResultTableComponent: Header keys:', Object.keys(response.header));
+            console.log('ResultTableComponent: Raw values length:', response['raw-values']?.length);
+            console.log('ResultTableComponent: Formatted values length:', response['formated-values']?.length);
+          }
+        }),
         catchError(error => {
           console.error('Error in query execution:', error);
-          return of([]);
+          return of({ header: {}, 'raw-values': [], 'formated-values': [] } as ResultData);
         })
       )
       .subscribe({
-        next: data => {
-          this.fieldTypes.clear();
-          this.displayNames.clear();
-          this.rawData = [...data]; // Store a copy of the raw data
+        next: (data: ResultData) => {
+          this.resultData = data;
 
-          if (!data || data.length === 0) {
+          if (!data || !data['raw-values'] || data['raw-values'].length === 0) {
+            console.log('ResultTableComponent: No results to display');
             this.displayedColumns = ['No results'];
             this.dataSource = [];
             return;
           }
 
-          console.log('Raw data from executor:', data);
+          // Get columns from header
+          this.displayedColumns = ['No.', ...Object.keys(data.header)];
           
-          // Process the structured data
-          const normalizedData = data.map((item: any, index) => {
-            const normalizedItem: { [key: string]: any } = { 'No.': index + 1 };
-            
-            // Process each field in the item
-            Object.keys(item).forEach(key => {
-              const fieldInfo = item[key];
-              
-              // Store field type information for styling
-              if (fieldInfo && typeof fieldInfo === 'object' && 'type' in fieldInfo) {
-                this.fieldTypes.set(key, fieldInfo.type);
-                
-                // Store display name if available
-                if (fieldInfo.displayName) {
-                  this.displayNames.set(key, fieldInfo.displayName);
-                }
-                
-                // Use formatted value if available and showFormattedValues is true, otherwise use raw value
-                normalizedItem[key] = (this.showFormattedValues && fieldInfo.FormattedValue) 
-                  ? fieldInfo.FormattedValue 
-                  : fieldInfo.value;
-              } else {
-                // Fallback for simple values
-                normalizedItem[key] = fieldInfo;
-              }
-            });
-            
-            return normalizedItem;
-          });
-          
-          // Get all unique keys from the normalized data
-          const allKeys = new Set<string>();
-          normalizedData.forEach(item => {
-            Object.keys(item).forEach(key => {
-              if (key !== 'No.') {
-                allKeys.add(key);
-              }
-            });
-          });
-          
-          // Store both technical and display column names
-          this.technicalColumns = ['No.', ...Array.from(allKeys)];
-          
-          // Create display columns with formatted names - keep the same columns, just display them differently
-          this.displayColumns = [...this.technicalColumns]; // Same columns, different display
-          
-          // Set the displayed columns based on the toggle state
-          this.displayedColumns = this.showFormattedValues ? this.displayColumns : this.technicalColumns;
-          this.dataSource = normalizedData;
-          
-          console.log('Normalized data for display:', normalizedData);
-          console.log('Field types for styling:', this.fieldTypes);
+          // Set the data source based on the toggle state
+          this.refreshDataSource();
         },
         error: error => {
           console.error('Error getting results:', error);
@@ -173,35 +136,35 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   }
 
   getFieldType(columnName: string): string {
-    if (columnName === 'No.') return 'number';
-
-    const type = this.fieldTypes.get(columnName);
-    if (type) {
-      // Convert Dynamics CRM types to our internal types
-      switch (type.toLowerCase()) {
-        case 'money':
-        case 'decimal':
-        case 'double':
-        case 'integer':
-          return 'number';
-        case 'datetime':
-          return 'datetime';
-        case 'lookup':
-          return 'lookup';
-        case 'boolean':
-          return 'boolean';
-        case 'uniqueidentifier':
-          return 'uniqueidentifier';
-        case 'picklist':
-        case 'state':
-        case 'status':
-          return 'picklist';
-        default:
-          return 'string';
-      }
+    if (!this.resultData || !this.resultData.header || columnName === 'No.') {
+      return columnName === 'No.' ? 'number' : 'string';
     }
-    
-    return 'string'; // Default to string type if no type info is available
+
+    const fieldInfo = this.resultData.header[columnName];
+    if (!fieldInfo) return 'string';
+
+    // Convert field types from the header to our internal types
+    switch (fieldInfo.type.toLowerCase()) {
+      case 'money':
+      case 'decimal':
+      case 'double':
+      case 'integer':
+        return 'number';
+      case 'datetime':
+        return 'datetime';
+      case 'lookup':
+        return 'lookup';
+      case 'boolean':
+        return 'boolean';
+      case 'uniqueidentifier':
+        return 'uniqueidentifier';
+      case 'picklist':
+      case 'state':
+      case 'status':
+        return 'picklist';
+      default:
+        return 'string';
+    }
   }
 
   getCellClass(columnName: string): string {
@@ -213,10 +176,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       case 'string':
       case 'memo':
         return 'text-cell';
-      case 'integer':
-      case 'decimal':
-      case 'double':
-      case 'money':
+      case 'number':
         return 'number-cell';
       case 'boolean':
         return 'boolean-cell';
@@ -227,8 +187,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       case 'uniqueidentifier':
         return 'uniqueidentifier-cell';
       case 'picklist':
-      case 'state':
-      case 'status':
         return 'picklist-cell';
       default:
         return 'text-cell'; // Default styling
@@ -238,18 +196,30 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   getColumnDisplayName(columnName: string): string {
     if (columnName === 'No.') return 'No.';
     
-    // If showing raw values, return the technical name
-    if (!this.showFormattedValues) {
+    if (!this.resultData || !this.resultData.header) {
       return columnName;
     }
     
-    // Get the display name from our map, or format the column name if not available
-    const displayName = this.displayNames.get(columnName);
-    if (displayName) {
-      return displayName;
+    const fieldInfo = this.resultData.header[columnName];
+    if (!fieldInfo) {
+      return columnName;
     }
     
-    return this.formatDisplayName(columnName);
+    // If we're showing formatted values, return the displayName, otherwise return the logical name
+    if (this.showFormattedValues) {
+      return fieldInfo.displayName || columnName;
+    } else {
+      // For technical values view, show the logical name
+      return fieldInfo.logicalName || columnName;
+    }
+  }
+
+  formatCellValue(value: any): string {
+    // Handle null or undefined values
+    if (value === null || value === undefined) {
+      return 'null';
+    }
+    return value;
   }
 
   private formatDisplayName(fieldName: string): string {
@@ -267,82 +237,118 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       .join(' ');
   }
 
-  // Get the raw field data with all annotations for a specific row and column
-  getRawFieldData(row: any, columnName: string): any {
-    if (!this.rawData.length || !row || !columnName) return null;
-    
-    // Find the corresponding raw data row
-    const rowIndex = this.dataSource.indexOf(row);
-    if (rowIndex === -1) return null;
-    
-    const rawRow = this.rawData[rowIndex];
-    return rawRow[columnName];
-  }
-
   toggleValueFormat() {
     // Store the currently selected row before toggling
-    const currentSelectedRow = this.selectedRow;
-    const currentSelectedCell = this.selectedOverflowCell;
+    const currentSelectedRow = this.selectedRow ? { ...this.selectedRow } : null;
     
     this.showFormattedValues = !this.showFormattedValues;
     
-    // Toggle between technical and display column names
-    if (this.technicalColumns.length > 0 && this.displayColumns.length > 0) {
-      this.displayedColumns = this.showFormattedValues ? this.displayColumns : this.technicalColumns;
-    }
-    
+    // Refresh the data source with the new format
     this.refreshDataSource();
     
-    // Restore the selected row and cell after refreshing the data source
-    if (currentSelectedRow) {
-      // Find the corresponding row in the new data source by index
-      const rowIndex = this.dataSource.findIndex(row => 
-        row['No.'] === currentSelectedRow['No.']
-      );
-      
-      if (rowIndex >= 0) {
+    // Restore the selected row if possible
+    if (currentSelectedRow && this.dataSource.length > 0) {
+      const rowIndex = currentSelectedRow['No.'] - 1;
+      if (rowIndex >= 0 && rowIndex < this.dataSource.length) {
         this.selectedRow = this.dataSource[rowIndex];
-        
-        // If there was a selected cell, try to restore that as well
-        if (currentSelectedCell && currentSelectedCell['No.'] === currentSelectedRow['No.']) {
-          this.selectedOverflowCell = this.selectedRow;
-        }
       }
     }
   }
 
   private refreshDataSource() {
-    if (!this.rawData || this.rawData.length === 0) return;
-
-    const normalizedData = this.rawData.map((item: any, index) => {
-      const normalizedItem: { [key: string]: any } = { 'No.': index + 1 };
-      
-      // Process each field in the item
-      Object.keys(item).forEach(key => {
-        const fieldInfo = item[key];
-        
-        if (fieldInfo && typeof fieldInfo === 'object' && 'value' in fieldInfo) {
-          // Use formatted value if available and showFormattedValues is true, otherwise use raw value
-          normalizedItem[key] = (this.showFormattedValues && fieldInfo.FormattedValue) 
-            ? fieldInfo.FormattedValue 
-            : fieldInfo.value;
-        } else {
-          // Fallback for simple values
-          normalizedItem[key] = fieldInfo;
-        }
-      });
-      
-      return normalizedItem;
-    });
+    if (!this.resultData) {
+      return;
+    }
     
-    this.dataSource = normalizedData;
+    // Choose the data source based on the toggle state
+    let sourceData;
+    const variants = {
+      raw: ['raw-values', 'rawvalues', 'raw_values', 'rawValues'],
+      formatted: ['formated-values', 'formatted-values', 'formatedvalues', 'formattedvalues', 'formated_values', 'formatted_values']
+    };
+    
+    if (this.showFormattedValues) {
+      // Try all possible variants of formatted values property name
+      for (const variant of variants.formatted) {
+        if (variant in this.resultData && this.resultData[variant]) {
+          sourceData = this.resultData[variant];
+          break;
+        }
+      }
+    } else {
+      // Try all possible variants of raw values property name
+      for (const variant of variants.raw) {
+        if (variant in this.resultData && this.resultData[variant]) {
+          sourceData = this.resultData[variant];
+          break;
+        }
+      }
+    }
+    
+    if (!sourceData || sourceData.length === 0) {
+      this.dataSource = [];
+      return;
+    }
+    
+    // Add row numbers
+    this.dataSource = sourceData.map((item, index) => {
+      const newItem = { 'No.': index + 1, ...item };
+      return newItem;
+    });
   }
 
-  // Helper method to determine if a field has a formatted value
+  // Check if a field has different formatted and raw values
   hasFormattedValue(row: any, columnName: string): boolean {
-    if (!this.rawData.length || !row || !columnName || columnName === 'No.') return false;
+    if (!this.resultData || columnName === 'No.') return false;
     
-    const rawField = this.getRawFieldData(row, columnName);
-    return rawField && typeof rawField === 'object' && 'FormattedValue' in rawField;
+    const rowIndex = row['No.'] - 1;
+    if (rowIndex < 0) return false;
+    
+    // Get raw and formatted values using helper methods
+    const rawValue = this.getRawValue(row, columnName);
+    const formattedValue = this.getFormattedValue(row, columnName);
+    
+    return rawValue !== formattedValue && formattedValue !== null;
+  }
+  
+  // Get the raw value for a field
+  getRawValue(row: any, columnName: string): any {
+    if (!this.resultData || columnName === 'No.') return null;
+    
+    const rowIndex = row['No.'] - 1;
+    if (rowIndex < 0) return null;
+    
+    // Try all possible raw value properties
+    const variants = ['raw-values', 'rawvalues', 'raw_values', 'rawValues'];
+    
+    for (const variant of variants) {
+      if (this.resultData[variant] && 
+          rowIndex < this.resultData[variant].length) {
+        return this.resultData[variant][rowIndex][columnName];
+      }
+    }
+    
+    return null;
+  }
+  
+  // Get the formatted value for a field
+  getFormattedValue(row: any, columnName: string): any {
+    if (!this.resultData || columnName === 'No.') return null;
+    
+    const rowIndex = row['No.'] - 1;
+    if (rowIndex < 0) return null;
+    
+    // Try all possible formatted value properties
+    const variants = ['formated-values', 'formatted-values', 'formatedvalues', 
+                      'formattedvalues', 'formated_values', 'formatted_values'];
+    
+    for (const variant of variants) {
+      if (this.resultData[variant] && 
+          rowIndex < this.resultData[variant].length) {
+        return this.resultData[variant][rowIndex][columnName];
+      }
+    }
+    
+    return null;
   }
 }
