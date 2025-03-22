@@ -12,14 +12,14 @@
           </a>
           <div class="node-element-select-area" (click)="selectNode(node)"
             [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}"
-            [matTooltip]="(node.validationResult$|async).isValid ? '' : (node.validationResult$|async).errors.join('\n')"
-            [matTooltipDisabled]="(node.validationResult$|async).isValid"
+            [matTooltip]="(node.validationResult$|async)?.isValid === false ? ((node.validationResult$|async)?.errors || []).join('\n') : ''"
+            [matTooltipDisabled]="(node.validationResult$|async)?.isValid !== false"
             matTooltipClass="validation-error-tooltip">
             <mat-icon class="tree-element-icon">
             </mat-icon>
             <p class="small prevent-select">
               {{node.nodeDisplayValue$|async}}
-              <span *ngIf="(node.validationResult$|async).isValid===false" class="validationError">!</span>
+              <span *ngIf="(node.validationResult$|async)?.isValid === false" class="validationError">!</span>
             </p>
           </div>
         </div>
@@ -30,14 +30,14 @@
           <a></a>
           <div class="node-element-select-area" (click)="selectNode(node)"
             [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}"
-            [matTooltip]="(node.validationResult$|async).isValid ? '' : (node.validationResult$|async).errors.join('\n')"
-            [matTooltipDisabled]="(node.validationResult$|async).isValid"
+            [matTooltip]="(node.validationResult$|async)?.isValid === false ? ((node.validationResult$|async)?.errors || []).join('\n') : ''"
+            [matTooltipDisabled]="(node.validationResult$|async)?.isValid !== false"
             matTooltipClass="validation-error-tooltip">
             <mat-icon class="tree-element-icon">
             </mat-icon>
             <p class="small prevent-select">
               {{node.nodeDisplayValue$|async}}
-              <span *ngIf="(node.validationResult$|async).isValid===false" class="validationError">!</span>         
+              <span *ngIf="(node.validationResult$|async)?.isValid === false" class="validationError">!</span>         
             </p>
           </div>
         </div>

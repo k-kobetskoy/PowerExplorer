@@ -54,7 +54,7 @@ export class XmlExecutorService extends BaseRequestService {
         message: 'XML and entity information are required',
         details: 'Please ensure you have a valid query with entity information before executing'
       });
-      return of({ header: {}, 'raw-values': [], 'formated-values': [] });
+      return of({ header: {}, rawValues: [], formatedValues: [] });
     }
 
     const xmlOptions = this.extractQueryOptions(xml);
@@ -72,7 +72,7 @@ export class XmlExecutorService extends BaseRequestService {
       // Catch any errors at the top level
       catchError(error => {
         console.error('Top level error in executeXmlRequest:', error);
-        return of({ header: {}, 'raw-values': [], 'formated-values': [] });
+        return of({ header: {}, rawValues: [], formatedValues: [] });
       })
     );
   }
@@ -132,9 +132,12 @@ export class XmlExecutorService extends BaseRequestService {
         const requestOptions = this.buildRequestOptions(options);
 
         return this.httpClient.get<XmlExecuteResultModel>(url, requestOptions).pipe(
+          tap(result => {
+            console.log('XML result:', result);
+          }),
           switchMap(result => {
             if (!result?.value?.length) {
-              return of({ header: {}, 'raw-values': [], 'formated-values': [] });
+              return of({ header: {}, rawValues: [], formatedValues: [] });
             }
             
             // Process entities and attributes
@@ -147,32 +150,32 @@ export class XmlExecutorService extends BaseRequestService {
                   return this.attributeEntityService.getSpecificAttributes(entityAttributeMap).pipe(
                     map(attributeMaps => {
                       console.log('Using normalizeDataWithTypes with attribute maps');
-                      return this.normalizeDataWithTypes(result.value, attributeMaps);
+                      return this.normalizeDataWithTypes(result.value, attributeMaps, entityAttributeMap);
                     }),
                     catchError(error => {
                       console.error('Error retrieving attribute maps:', error);
                       console.log('Falling back to basic normalization');
-                      return of(this.normalizeData(result.value));
+                      return of(this.normalizeData(result.value, entityAttributeMap));
                     })
                   );
                 } catch (error) {
                   console.error('Error in attribute service call:', error);
                   console.log('Falling back to basic normalization');
-                  return of(this.normalizeData(result.value));
+                  return of(this.normalizeData(result.value, entityAttributeMap));
                 }
               }
               
               console.log('No entity attribute map, using normalizeData');
-              return of(this.normalizeData(result.value));
+              return of(this.normalizeData(result.value, entityAttributeMap));
             } catch (error) {
               console.error('Error processing data:', error);
-              return of({ header: {}, 'raw-values': [], 'formated-values': [] });
+              return of({ header: {}, rawValues: [], formatedValues: [] });
             }
           }),
           catchError((error: HttpErrorResponse) => {
             console.error('Error executing XML request:', error.message);
             this.errorDialogService.showHttpError(error);
-            return of({ header: {}, 'raw-values': [], 'formated-values': [] });
+            return of({ header: {}, rawValues: [], formatedValues: [] });
           })
         );
       })
@@ -182,7 +185,7 @@ export class XmlExecutorService extends BaseRequestService {
   private buildRequestOptions(options: FetchXmlQueryOptions): { headers: HttpHeaders } {
     const headers = new HttpHeaders({
       'Prefer': [
-        `odata.maxpagesize=${options.maxPageSize || this.DEFAULT_PAGE_SIZE}`,
+        //`odata.maxpagesize=${options.maxPageSize || this.DEFAULT_PAGE_SIZE}`,
         'odata.include-annotations="*"'
       ].filter(Boolean).join(',')
     });
@@ -223,15 +226,14 @@ export class XmlExecutorService extends BaseRequestService {
     return entityIdValue || null;
   }
 
-  // Helper method to build a Dynamics direct URL for an entity record
+  // Helper method to build a Dynamics URL for an entity record
   private buildDynamicsUrl(entityName: string, entityId: string): string {
-    // Use a simple approach with a default URL format
+    // Use the correct format: https://org2d6763a7.crm4.dynamics.com/main.aspx?forceUCI=1&pagetype=entityrecord&etn=cr1fc_order&id=61ee46ac-a111-ed11-b83d-000d3ab99dad
     let environmentUrl = '';
     
     try {
-      // Get the active environment URL using the first value from the Observable
+      // Get the active environment URL using a synchronous approach
       let currentUrl = '';
-      // Use a synchronous approach to get the environment URL
       const subscription = this.activeEnvironmentUrl$.subscribe(url => {
         currentUrl = url || '';
       });
@@ -263,11 +265,17 @@ export class XmlExecutorService extends BaseRequestService {
     // If we couldn't get the URL, log a warning
     if (!environmentUrl) {
       console.warn('Could not get environment URL for link building');
+      return '';
     }
 
-    // Format to match expected structure: {environmentUrl}main.aspx?pagetype=entityrecord&etn={entityName}&id={entityId}
-    // Removed forceUCI=1 parameter as per requirement
-    return `${environmentUrl}main.aspx?pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
+    // Ensure entityId is valid
+    if (!entityId || entityId.startsWith('record-')) {
+      console.warn('No valid entity ID for link building');
+      return '';
+    }
+
+    // Format to match expected structure with forceUCI=1 parameter
+    return `${environmentUrl}main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
   }
 
   // Helper method to add entity URL to raw and formatted items
@@ -277,8 +285,15 @@ export class XmlExecutorService extends BaseRequestService {
     primaryEntity: { name: string, idField: string }, 
     entityIdValue: string
   ): void {
+    // Create the URL only when we have a valid entity ID
+    if (!entityIdValue || !primaryEntity.name) {
+      console.log('Missing data for Dynamics URL, cannot create link');
+      return;
+    }
+    
     // Create the URL
     const dynamicsUrl = this.buildDynamicsUrl(primaryEntity.name, entityIdValue);
+    console.log(`Created Dynamics URL for ${primaryEntity.name}:`, dynamicsUrl);
     
     // For raw view, use the same icon as formatted view for consistency
     rawItem['__entity_url'] = {
@@ -299,12 +314,12 @@ export class XmlExecutorService extends BaseRequestService {
   }
 
   // Normalize data with attribute types from metadata
-  private normalizeDataWithTypes<T extends { [key: string]: any }>(data: T[], attributeMaps: AttributeMapResult): any {
+  private normalizeDataWithTypes<T extends { [key: string]: any }>(data: T[], attributeMaps: AttributeMapResult, passedEntityAttributeMap: EntityAttributeMap): any {
     console.log('normalizeDataWithTypes: Starting data normalization with types');
     
     if (!data?.length) {
       console.log('normalizeDataWithTypes: No data to process');
-      return { header: {}, 'raw-values': [], 'formated-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
     
     try {
@@ -312,12 +327,13 @@ export class XmlExecutorService extends BaseRequestService {
       const header: { [key: string]: any } = {};
       const rawValues: any[] = [];
       const formattedValues: any[] = [];
+      const linkValues: any[] = [];
       
-      // Get the entity attribute map to ensure we include all requested attributes
-      const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap();
+      // Use the passed entity attribute map
+      const entityAttributeMap = passedEntityAttributeMap;
       if (!entityAttributeMap) {
         console.log('normalizeDataWithTypes: No entity attribute map found');
-        return this.normalizeData(data);
+        return this.normalizeData(data, passedEntityAttributeMap);
       }
       
       // Check if there are any attributes defined in the request
@@ -331,16 +347,16 @@ export class XmlExecutorService extends BaseRequestService {
       // If no attributes are defined, use the specialized method
       if (!hasDefinedAttributes) {
         console.log('normalizeDataWithTypes: No attributes defined in request, using specialized handling');
-        return this.normalizeDataWithoutAttributes(data, attributeMaps);
+        return this.normalizeDataWithoutAttributes(data, attributeMaps, passedEntityAttributeMap);
       }
       
       // Find the primary entity to extract its ID for linking
       let primaryEntity: { name: string, idField: string } | null = null;
       Object.entries(entityAttributeMap).forEach(([entityName, entityData]) => {
-        if (entityData.isPrimaryEntity) {
+        if ((entityData as any).isPrimaryEntity) {
           primaryEntity = {
             name: entityName,
-            idField: entityData.primaryIdAttribute || `${entityName}id`
+            idField: (entityData as any).primaryIdAttribute || `${entityName}id`
           };
           console.log(`Found primary entity: ${primaryEntity.name} with ID field: ${primaryEntity.idField}`);
         }
@@ -514,22 +530,24 @@ export class XmlExecutorService extends BaseRequestService {
       // Create the final result
       const result = {
         header,
-        'raw-values': uniqueRawValues,
-        'formated-values': uniqueFormattedValues
+        rawValues: uniqueRawValues,
+        formatedValues: uniqueFormattedValues
       };
-      
-      // Add a direct property copy for compatibility
-      result['formatted-values'] = result['formated-values'];
       
       return result;
     } catch (error) {
       console.error('Error in normalizeDataWithTypes:', error);
-      return { header: {}, 'raw-values': [], 'formated-values': [], 'formatted-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
   }
   
   // Helper method to get unique records
   private getUniqueRecords(records: any[]): any[] {
+    // Don't deduplicate unless explicitly requested
+    // Returning original records to prevent automatic DISTINCT-like behavior
+    return records;
+    
+    /* Original deduplication code commented out
     try {
       const uniqueMap = new Map<string, any>();
       
@@ -551,22 +569,23 @@ export class XmlExecutorService extends BaseRequestService {
       console.error('Error deduplicating records:', e);
       return records;
     }
+    */
   }
 
   // Basic data normalization when attribute maps aren't available
-  private normalizeData<T extends { [key: string]: any }>(data: T[]): any {
+  private normalizeData<T extends { [key: string]: any }>(data: T[], passedEntityAttributeMap: EntityAttributeMap): any {
     console.log('normalizeData: Starting basic normalization');
     
     if (!data?.length) {
       console.log('normalizeData: No data to process');
-      return { header: {}, 'raw-values': [], 'formated-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
     
-    // Get entity attribute map to include only requested attributes
-    const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap();
+    // Use the passed entity attribute map
+    const entityAttributeMap = passedEntityAttributeMap;
     if (!entityAttributeMap) {
       console.log('normalizeData: No entity attribute map found, cannot determine requested attributes');
-      return { header: {}, 'raw-values': [], 'formated-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
     
     // Check if there are any attributes defined in the request
@@ -586,10 +605,10 @@ export class XmlExecutorService extends BaseRequestService {
     // Find the primary entity to extract its ID for linking
     let primaryEntity: { name: string, idField: string } | null = null;
     Object.entries(entityAttributeMap).forEach(([entityName, entityData]) => {
-      if (entityData.isPrimaryEntity) {
+      if ((entityData as any).isPrimaryEntity) {
         primaryEntity = {
           name: entityName,
-          idField: entityData.primaryIdAttribute || `${entityName}id`
+          idField: (entityData as any).primaryIdAttribute || `${entityName}id`
         };
         console.log(`normalizeData: Found primary entity: ${primaryEntity.name} with ID field: ${primaryEntity.idField}`);
       }
@@ -749,12 +768,9 @@ export class XmlExecutorService extends BaseRequestService {
     
     const result = {
       header,
-      'raw-values': uniqueRawValues,
-      'formated-values': uniqueFormattedValues
+      rawValues: uniqueRawValues,
+      formatedValues: uniqueFormattedValues
     };
-    
-    // Add compatibility property
-    result['formatted-values'] = result['formated-values'];
     
     return result;
   }
@@ -831,12 +847,12 @@ export class XmlExecutorService extends BaseRequestService {
   }
 
   // Specialized method for requests without defined attributes (with type information)
-  private normalizeDataWithoutAttributes<T extends { [key: string]: any }>(data: T[], attributeMaps: AttributeMapResult): any {
+  private normalizeDataWithoutAttributes<T extends { [key: string]: any }>(data: T[], attributeMaps: AttributeMapResult, passedEntityAttributeMap: EntityAttributeMap): any {
     console.log('normalizeDataWithoutAttributes: Starting specialized normalization with types');
     
     if (!data?.length) {
       console.log('normalizeDataWithoutAttributes: No data to process');
-      return { header: {}, 'raw-values': [], 'formated-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
     
     try {
@@ -845,17 +861,17 @@ export class XmlExecutorService extends BaseRequestService {
       const rawValues: any[] = [];
       const formattedValues: any[] = [];
       
-      // Get all entity names for identifying primary fields
-      const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap();
+      // Use the passed entity attribute map
+      const entityAttributeMap = passedEntityAttributeMap;
       
       // Find primary entity for linking if available
       let primaryEntity: { name: string, idField: string } | null = null;
       if (entityAttributeMap) {
         Object.entries(entityAttributeMap).forEach(([entityName, entityData]) => {
-          if (entityData.isPrimaryEntity) {
+          if ((entityData as any).isPrimaryEntity) {
             primaryEntity = {
               name: entityName,
-              idField: entityData.primaryIdAttribute || `${entityName}id`
+              idField: (entityData as any).primaryIdAttribute || `${entityName}id`
             };
           }
         });
@@ -993,17 +1009,14 @@ export class XmlExecutorService extends BaseRequestService {
       
       const result = {
         header,
-        'raw-values': uniqueRawValues,
-        'formated-values': uniqueFormattedValues
+        rawValues: uniqueRawValues,
+        formatedValues: uniqueFormattedValues
       };
-      
-      // Add compatibility property
-      result['formatted-values'] = result['formated-values'];
       
       return result;
     } catch (error) {
       console.error('Error in normalizeDataWithoutAttributes:', error);
-      return { header: {}, 'raw-values': [], 'formated-values': [], 'formatted-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
   }
   
@@ -1013,7 +1026,7 @@ export class XmlExecutorService extends BaseRequestService {
     
     if (!data?.length) {
       console.log('normalizeDataBasicWithoutAttributes: No data to process');
-      return { header: {}, 'raw-values': [], 'formated-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
     
     try {
@@ -1119,17 +1132,14 @@ export class XmlExecutorService extends BaseRequestService {
       
       const result = {
         header,
-        'raw-values': uniqueRawValues,
-        'formated-values': uniqueFormattedValues
+        rawValues: uniqueRawValues,
+        formatedValues: uniqueFormattedValues
       };
-      
-      // Add compatibility property
-      result['formatted-values'] = result['formated-values'];
       
       return result;
     } catch (error) {
       console.error('Error in normalizeDataBasicWithoutAttributes:', error);
-      return { header: {}, 'raw-values': [], 'formated-values': [], 'formatted-values': [] };
+      return { header: {}, rawValues: [], formatedValues: [] };
     }
   }
 }

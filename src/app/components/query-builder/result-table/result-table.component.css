@@ -202,16 +202,33 @@ tr.mat-mdc-row:hover {
   font-style: italic !important;
   color: #bdbdbd !important;
   font-weight: normal !important;
+  /* Override type-specific styles */
+  text-align: left !important;
+  background-color: transparent !important;
+  text-decoration: none !important;
+  font-family: "Inter", sans-serif !important;
+  letter-spacing: normal !important;
+  font-size: 13px !important;
 }
 
 .dynamics-link {
   color: #0078d4;
   text-decoration: none;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 .dynamics-link:hover {
   text-decoration: underline;
+}
+
+.link-cell {
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding: 0 !important;
 }
 
 /* Style for raw view links */
@@ -219,10 +236,6 @@ tr.mat-mdc-row:hover {
   color: #107c10; /* Green color to distinguish from formatted view */
   font-family: monospace; /* Use monospace font for technical/raw view */
   font-size: 0.9em;
-}
-
-.link-cell {
-  text-align: center;
 }
 
 .table-container {

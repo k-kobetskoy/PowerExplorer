@@ -48,8 +48,7 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   attributeFormControl = new FormControl('');
   descendingFormControl = new FormControl(false);
 
-  attributeInput$: Observable<string>;
-  descendingInput$: Observable<boolean>;
+  parentEntityAttributes$: Observable<AttributeModel[]>;
 
   @Input() selectedNode: QueryNode;
 
@@ -67,98 +66,110 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
   }
 
   private initializeForm() {
-    // Create form with existing attribute values
+    this.setupInitialValues();
 
-    // Model -> Form input
-    this.setupAttributeModelToFormBindings();
-    this.setupDescendingModelToFormBindings();
-
-    this.attributeInput$ = this.attributeFormControl.valueChanges.pipe(
-      startWith(this.attributeFormControl.value || ''),
-      shareReplay(1)
-    );
-
-    this.descendingInput$ = this.descendingFormControl.valueChanges.pipe(
-      startWith(this.descendingFormControl.value || false),
-      shareReplay(1)
-    );
+    this.setupParentEntityAttributesObservable();
 
     this.setupAttributeAutocomplete();
 
-
-    // Form input -> Model
     this.setupInputsToModelsBindings();
   }
 
-  private setupInputsToModelsBindings() {
-    this.attributeInput$.pipe(takeUntil(this.destroy$)).subscribe(value => {
+  setupInputsToModelsBindings() {
+    this.attributeFormControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       this.updateAttribute(AttributeData.Order.Attribute, this.selectedNode, value);
     });
 
-    this.descendingInput$.pipe(takeUntil(this.destroy$)).subscribe(value => {
+    this.descendingFormControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       this.updateAttribute(AttributeData.Order.Desc, this.selectedNode, value.toString());
     });
   }
 
-  private setupAttributeModelToFormBindings() {
-    this.selectedNode.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
-      takeUntil(this.destroy$),
-      filter(attributes => attributes.length > 0),
-    ).subscribe(attributes => {
-      const attribute = attributes.find(attr => attr.editorName === AttributeNames.orderAttribute);
-      if (attribute) {
-        attribute.value$.pipe(
-          takeUntil(this.destroy$),
-          distinctUntilChanged()
-        ).subscribe(value => {
-          this.attributeFormControl.setValue(value, { emitEvent: false });
-        });
-      }
-    });
+  setupParentEntityAttributesObservable() {
+    const parentEntity = this.selectedNode.getParentEntity();
+    
+    if (!parentEntity) {
+      this.parentEntityAttributes$ = of([]);
+      return;
+    }
+
+    this.parentEntityAttributes$ = parentEntity.validationResult$.pipe(
+      take(1),
+      switchMap(validationResult => {
+        if (!validationResult.isValid) {
+          console.warn('[OrderFormComponent] Parent entity validation failed');
+          return of([]);
+        }
+        return parentEntity.attributes$.pipe(
+          map(attributes => attributes.find(attr => attr.editorName === AttributeNames.entityName)),
+          filter(entityAttribute => !!entityAttribute),
+          switchMap(entityAttribute => {
+            return entityAttribute.value$.pipe(
+              distinctUntilChanged(),
+              filter(entityName => !!entityName),
+              switchMap(entityName => {
+                console.log(`[OrderFormComponent] Fetching attributes for entity: ${entityName}`);
+                return this.attributeService.getAttributes(entityName);
+              }),
+              catchError(error => {
+                console.error(`[OrderFormComponent] Error fetching attributes`, error);
+                return of([]);
+              })
+            );
+          }),
+          catchError(error => {
+            console.error(`[OrderFormComponent] Error in entity attributes pipe`, error);
+            return of([]);
+          }),
+          shareReplay(1)
+        );
+      })
+    );     
   }
 
-  private setupDescendingModelToFormBindings() {
+  private setupInitialValues() {
+    // Handle attribute initialization
+    const attribute = this.getAttribute(AttributeData.Order.Attribute, this.selectedNode);
+    if (attribute && attribute.value$ && attribute.value$.value) {
+      this.attributeFormControl.setValue(attribute.value$.value, { emitEvent: false });
+    } else {
+      this.attributeFormControl.setValue('', { emitEvent: false });
+    }
+
+    // Handle descending initialization
     const descending = this.getAttribute(AttributeData.Order.Desc, this.selectedNode);
-    if (descending) {
+    if (descending && descending.value$) {
       this.descendingFormControl.setValue(descending.value$.value === 'true', { emitEvent: false });
+    } else {
+      this.descendingFormControl.setValue(false, { emitEvent: false });
     }
   }
 
   private setupAttributeAutocomplete() {
-    const parentNode = this.selectedNode.getParentEntity();
-    if (!parentNode || parentNode.validationResult$.pipe(take(1)).subscribe(result => !result.isValid)) {
-      this.filteredAttributes$ = of([]);
-      return;
-    }
-
-    const parentEntityAttribute$ = parentNode.attributes$.pipe(
-      distinctUntilChanged((prev, curr) => prev.length === curr.length),
-      map(attributes => attributes.find(attr => attr.editorName === AttributeNames.entityName)),
-      takeUntil(this.destroy$),
-      switchMap(entityAttribute => {
-        return entityAttribute.value$.pipe(
-          takeUntil(this.destroy$),
-          distinctUntilChanged(),
-          switchMap(entityName => this.attributeService.getAttributes(entityName)),
-          catchError(error => {
-            console.error(`[LinkEntityFormComponent] Error fetching attributes`, error);
-            return of([] as AttributeModel[]);
-          })
-        )
-      })
-    );
-
+    // First ensure parentEntityAttributes$ has a default empty state
+    this.parentEntityAttributes$ = this.parentEntityAttributes$ || of([]);
+    
+    // Create the filtered attributes observable with better handling of null/undefined values
     this.filteredAttributes$ = combineLatest([
-      this.attributeInput$,
-      parentEntityAttribute$,
+      this.attributeFormControl.valueChanges.pipe(
+        startWith(this.attributeFormControl.value || ''),
+        map(value => value || '') // Ensure we always have a string
+      ),
+      this.parentEntityAttributes$.pipe(
+        startWith([]) // Start with empty array to ensure combineLatest emits right away
+      )
     ]).pipe(
-      map(([value, attributes]) => this.filterAttributes(value, attributes))
+      map(([value, attributes]) => this.filterAttributes(value, attributes || [])),
+      shareReplay(1) // Share the result to prevent multiple subscriptions from causing multiple API calls
     );
   }
 
   private filterAttributes(value: string, attributes: AttributeModel[]): AttributeModel[] {
-    const filterValue = value.toLowerCase();
+    if (!attributes || attributes.length === 0) {
+      return [];
+    }
+    
+    const filterValue = (value || '').toLowerCase();
     return attributes.filter(attr =>
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)

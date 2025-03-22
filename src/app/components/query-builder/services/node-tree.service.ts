@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
@@ -7,7 +7,7 @@ import { QueryNode } from '../models/query-node';
 import { QueryNodeData } from '../models/constants/query-node-data';
 import { ValueAttributeData } from '../models/constants/attribute-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
-import { ValidationResult, ValidationService } from './validation.service';
+import { VALID_RESULT, ValidationResult, ValidationService } from './validation.service';
 import { AttributeNames } from '../models/constants/attribute-names';
 @Injectable({ providedIn: 'root' })
 export class NodeTreeService {
@@ -17,7 +17,8 @@ export class NodeTreeService {
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
-  validationResult$: Observable<ValidationResult>;
+  private validationResultSubject = new BehaviorSubject<ValidationResult>(VALID_RESULT);
+  validationResult$ = this.validationResultSubject.asObservable();
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -39,7 +40,9 @@ export class NodeTreeService {
 
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
 
-    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$);
+    this.validationService.setupNodeTreeValidation(this._nodeTree$).subscribe(result => {
+      this.validationResultSubject.next(result);
+    });
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -405,6 +408,11 @@ export class NodeTreeService {
 
     this._nodeTree$.value.destroyed$.next();
     this._nodeTree$.value.destroyed$.complete();
+  }
+
+  forceValidationToPass() {
+    this.validationResultSubject.next(VALID_RESULT);
+    this._eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
   }
 }
 

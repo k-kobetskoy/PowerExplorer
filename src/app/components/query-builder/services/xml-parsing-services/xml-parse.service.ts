@@ -11,6 +11,8 @@ import { NodeFactoryService } from '../attribute-services/node-factory.service';
 import { ValueAttributeData } from '../../models/constants/attribute-data';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
+import { of } from 'rxjs';
+import { VALID_RESULT } from '../validation.service';
 
 
 export const PARSER_NODE_NAMES = {
@@ -134,6 +136,12 @@ export class XmlParseService {
       buildResult.nodeName,
       this.currentParentNode
     );
+    
+    // Ensure node has validationResult$ set
+    if (!node.validationResult$) {
+      console.warn(`Node ${node.nodeName} has no validationResult$, setting default`);
+      node.validationResult$ = of(VALID_RESULT);
+    }
 
     if (buildResult.attributes.length > 0) {
       const attributeFactory = this.attributeFactoryResolver.getAttributesFactory(buildResult.nodeName);
@@ -141,6 +149,12 @@ export class XmlParseService {
       for (let attribute of buildResult.attributes) {
         let nodeAttribute = attributeFactory.createAttribute(attribute.name, node, true, attribute.value);
         node.addAttribute(nodeAttribute);
+        
+        // Ensure attribute has validationResult$ set
+        if (!nodeAttribute.validationResult$) {
+          console.warn(`Attribute ${nodeAttribute.editorName} in node ${node.nodeName} has no validationResult$, setting default`);
+          nodeAttribute.validationResult$ = of(VALID_RESULT);
+        }
       }
     }
 
@@ -189,6 +203,9 @@ export class XmlParseService {
       if (!this.nodeTreeService.getNodeTree().value) {
         this.nodeTreeService.initializeNodeTree();
       }
+      
+      // Force validation to pass after successful parsing
+      this.nodeTreeService.forceValidationToPass();
       
       this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     } finally {

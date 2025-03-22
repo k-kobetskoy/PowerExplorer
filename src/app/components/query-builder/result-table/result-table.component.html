@@ -19,19 +19,43 @@
 
       <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
         <th mat-header-cell *matHeaderCellDef> {{getColumnDisplayName(column)}} </th>
-        <td mat-cell *matCellDef="let element" (click)="selectCell(element, cell)" [class.selected]="selectedOverflowCell === element" [class.has-formatted-value]="hasFormattedValue(element, column)" [ngClass]="[column !== 'No.' ? getCellClass(column) : '', (element[column] === null || element[column] === undefined) ? 'null-value' : '']" #cell>
+        <td mat-cell *matCellDef="let element" (click)="selectCell(element, cell)" 
+            [class.selected]="selectedOverflowCell === element" 
+            [class.has-formatted-value]="hasFormattedValue(element, column)" 
+            [ngClass]="{ 
+              'null-value': (element[column] === null || element[column] === undefined) && column !== '__entity_url',
+              'number-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'number-cell',
+              'boolean-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'boolean-cell',
+              'date-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'date-cell',
+              'lookup-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'lookup-cell',
+              'uniqueidentifier-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'uniqueidentifier-cell',
+              'picklist-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'picklist-cell',
+              'text-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'text-cell',
+              'link-cell': column === '__entity_url' || (column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'link-cell')
+            }" #cell>
           
           <!-- Special rendering for dynamic links in either view -->
-          <ng-container *ngIf="(getFieldType(column) === 'dynamicslink' || column === '__entity_url') && element[column] && element[column].url; else defaultCell">
-            <a [href]="element[column].url" target="_blank" rel="noopener" 
-              [ngClass]="{'dynamics-link': true, 'raw-link': element[column].isRawView}">
-              {{element[column].text || '🔗'}}
+          <ng-container *ngIf="column === '__entity_url'; else normalCell">
+            <a *ngIf="element[column]?.url" [href]="element[column].url" target="_blank" rel="noopener" 
+              class="dynamics-link" title="Open record in Dynamics">
+              🔗
             </a>
+            <span *ngIf="!element[column]?.url" class="null-value">null</span>
           </ng-container>
           
-          <!-- Default cell rendering -->
-          <ng-template #defaultCell>
-            {{formatCellValue(element[column])}}
+          <!-- Regular cell rendering -->
+          <ng-template #normalCell>
+            <ng-container *ngIf="getFieldType(column) === 'dynamicslink' && element[column] && element[column].url; else defaultCell">
+              <a [href]="element[column].url" target="_blank" rel="noopener" 
+                [ngClass]="{'dynamics-link': true, 'raw-link': element[column].isRawView}">
+                {{element[column].text || '🔗'}}
+              </a>
+            </ng-container>
+            
+            <!-- Default cell rendering -->
+            <ng-template #defaultCell>
+              {{formatCellValue(element[column])}}
+            </ng-template>
           </ng-template>
         </td>
       </ng-container>

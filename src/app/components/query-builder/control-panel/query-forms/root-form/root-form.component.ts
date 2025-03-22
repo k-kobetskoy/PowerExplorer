@@ -18,7 +18,7 @@ export class RootFormComponent extends BaseFormComponent implements OnInit, OnDe
 
     @Input() selectedNode: QueryNode;
 
-     topFormControl = new FormControl('');
+    topFormControl = new FormControl('');
     distinctFormControl = new FormControl(false);
     aggregateFormControl = new FormControl(false);
     totalRecordsCountFormControl = new FormControl(false);
