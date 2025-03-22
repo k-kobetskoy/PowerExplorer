@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
-import { switchMap, catchError, of, Subscription, tap } from 'rxjs';
+import { catchError, of, Subscription, tap } from 'rxjs';
 import { XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
@@ -8,6 +8,7 @@ interface ResultData {
   header: { [key: string]: { displayName: string, logicalName: string, type: string } };
   'raw-values': any[];
   'formated-values': any[];
+  'formatted-values'?: any[]; // For compatibility
 }
 
 @Component({
@@ -67,8 +68,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   }
   
   private executeQuery(xml: string, entityNode: QueryNode) {
-    console.log('ResultTableComponent: Starting executeQuery');
-    
     if (!xml) {
       console.error('No XML available');
       this.displayedColumns = ['No query available'];
@@ -78,13 +77,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     
     this.xmlExecutor.executeXmlRequest(xml, entityNode)
       .pipe(
-        tap(response => {
-          if (response && response.header) {
-            console.log('ResultTableComponent: Header keys:', Object.keys(response.header));
-            console.log('ResultTableComponent: Raw values length:', response['raw-values']?.length);
-            console.log('ResultTableComponent: Formatted values length:', response['formated-values']?.length);
-          }
-        }),
         catchError(error => {
           console.error('Error in query execution:', error);
           return of({ header: {}, 'raw-values': [], 'formated-values': [] } as ResultData);
@@ -95,7 +87,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           this.resultData = data;
 
           if (!data || !data['raw-values'] || data['raw-values'].length === 0) {
-            console.log('ResultTableComponent: No results to display');
             this.displayedColumns = ['No results'];
             this.dataSource = [];
             return;
@@ -162,6 +153,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       case 'state':
       case 'status':
         return 'picklist';
+      case 'dynamicslink':
+        return 'dynamicslink';
       default:
         return 'string';
     }
@@ -188,6 +181,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
         return 'uniqueidentifier-cell';
       case 'picklist':
         return 'picklist-cell';
+      case 'dynamicslink':
+        return 'link-cell';
       default:
         return 'text-cell'; // Default styling
     }
@@ -195,6 +190,9 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
   getColumnDisplayName(columnName: string): string {
     if (columnName === 'No.') return 'No.';
+    
+    // Always show "View in Dynamics" for the entity URL column in both views
+    if (columnName === '__entity_url') return 'View in Dynamics';
     
     if (!this.resultData || !this.resultData.header) {
       return columnName;
@@ -219,22 +217,14 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     if (value === null || value === undefined) {
       return 'null';
     }
-    return value;
-  }
-
-  private formatDisplayName(fieldName: string): string {
-    // Remove prefixes like cr1fc_
-    let displayName = fieldName.replace(/^[a-z0-9]+_/i, '');
     
-    // Convert camelCase to Title Case with spaces
-    return displayName
-      .replace(/_/g, ' ')
-      .replace(/([A-Z])/g, ' $1')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
+    // Handle DynamicsLink objects - but only show a simplified version in the cell
+    if (value && typeof value === 'object' && value.url && value.id) {
+      // Display the text property, which will be different for raw vs formatted views
+      return value.text || '🔗';
+    }
+    
+    return value;
   }
 
   toggleValueFormat() {
@@ -262,27 +252,11 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     
     // Choose the data source based on the toggle state
     let sourceData;
-    const variants = {
-      raw: ['raw-values', 'rawvalues', 'raw_values', 'rawValues'],
-      formatted: ['formated-values', 'formatted-values', 'formatedvalues', 'formattedvalues', 'formated_values', 'formatted_values']
-    };
     
     if (this.showFormattedValues) {
-      // Try all possible variants of formatted values property name
-      for (const variant of variants.formatted) {
-        if (variant in this.resultData && this.resultData[variant]) {
-          sourceData = this.resultData[variant];
-          break;
-        }
-      }
+      sourceData = this.resultData['formated-values'] || this.resultData['formatted-values'];
     } else {
-      // Try all possible variants of raw values property name
-      for (const variant of variants.raw) {
-        if (variant in this.resultData && this.resultData[variant]) {
-          sourceData = this.resultData[variant];
-          break;
-        }
-      }
+      sourceData = this.resultData['raw-values'];
     }
     
     if (!sourceData || sourceData.length === 0) {
@@ -292,8 +266,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     
     // Add row numbers
     this.dataSource = sourceData.map((item, index) => {
-      const newItem = { 'No.': index + 1, ...item };
-      return newItem;
+      return { 'No.': index + 1, ...item };
     });
   }
 
@@ -304,7 +277,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     const rowIndex = row['No.'] - 1;
     if (rowIndex < 0) return false;
     
-    // Get raw and formatted values using helper methods
+    // Get raw and formatted values
     const rawValue = this.getRawValue(row, columnName);
     const formattedValue = this.getFormattedValue(row, columnName);
     
@@ -313,22 +286,12 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   
   // Get the raw value for a field
   getRawValue(row: any, columnName: string): any {
-    if (!this.resultData || columnName === 'No.') return null;
+    if (!this.resultData || columnName === 'No.' || !this.resultData['raw-values']) return null;
     
     const rowIndex = row['No.'] - 1;
-    if (rowIndex < 0) return null;
+    if (rowIndex < 0 || rowIndex >= this.resultData['raw-values'].length) return null;
     
-    // Try all possible raw value properties
-    const variants = ['raw-values', 'rawvalues', 'raw_values', 'rawValues'];
-    
-    for (const variant of variants) {
-      if (this.resultData[variant] && 
-          rowIndex < this.resultData[variant].length) {
-        return this.resultData[variant][rowIndex][columnName];
-      }
-    }
-    
-    return null;
+    return this.resultData['raw-values'][rowIndex][columnName];
   }
   
   // Get the formatted value for a field
@@ -338,17 +301,9 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     const rowIndex = row['No.'] - 1;
     if (rowIndex < 0) return null;
     
-    // Try all possible formatted value properties
-    const variants = ['formated-values', 'formatted-values', 'formatedvalues', 
-                      'formattedvalues', 'formated_values', 'formatted_values'];
+    const formattedValues = this.resultData['formated-values'] || this.resultData['formatted-values'];
+    if (!formattedValues || rowIndex >= formattedValues.length) return null;
     
-    for (const variant of variants) {
-      if (this.resultData[variant] && 
-          rowIndex < this.resultData[variant].length) {
-        return this.resultData[variant][rowIndex][columnName];
-      }
-    }
-    
-    return null;
+    return formattedValues[rowIndex][columnName];
   }
 }

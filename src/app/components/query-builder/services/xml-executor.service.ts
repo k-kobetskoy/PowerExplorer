@@ -190,6 +190,114 @@ export class XmlExecutorService extends BaseRequestService {
     return { headers };
   }
 
+  // Helper method to add entity URL to the header
+  private addEntityUrlToHeader(header: { [key: string]: any }): void {
+    const urlFieldName = '__entity_url';
+    header[urlFieldName] = {
+      displayName: 'View in Dynamics',
+      logicalName: urlFieldName,
+      type: 'DynamicsLink',
+      isEntityUrl: true
+    };
+  }
+
+  // Helper method to find entity ID in a record
+  private findEntityId(item: any, primaryEntity: { name: string, idField: string }): string | null {
+    // Look for the entity ID in the response
+    let entityIdValue = item[primaryEntity.idField];
+    
+    // If standard ID field not found, try to find ID using alternate patterns
+    if (!entityIdValue) {
+      // Pattern 1: Look for fields ending with "id"
+      const potentialIdFields = Object.keys(item).filter(key => 
+        key.toLowerCase().endsWith('id') && 
+        this.inferType(key, item[key]) === 'Uniqueidentifier'
+      );
+      
+      if (potentialIdFields.length > 0) {
+        const firstIdField = potentialIdFields[0];
+        entityIdValue = item[firstIdField];
+      }
+    }
+
+    return entityIdValue || null;
+  }
+
+  // Helper method to build a Dynamics direct URL for an entity record
+  private buildDynamicsUrl(entityName: string, entityId: string): string {
+    // Use a simple approach with a default URL format
+    let environmentUrl = '';
+    
+    try {
+      // Get the active environment URL using the first value from the Observable
+      let currentUrl = '';
+      // Use a synchronous approach to get the environment URL
+      const subscription = this.activeEnvironmentUrl$.subscribe(url => {
+        currentUrl = url || '';
+      });
+      subscription.unsubscribe();
+      
+      if (currentUrl) {
+        // Convert API URL to web client URL if needed
+        // Example: https://org2d6763a7.api.crm4.dynamics.com/ => https://org2d6763a7.crm4.dynamics.com/
+        environmentUrl = currentUrl.replace('.api.', '.');
+        
+        // Clean up URL format
+        if (environmentUrl.endsWith('/api/data/v9.2/')) {
+          environmentUrl = environmentUrl.replace('/api/data/v9.2/', '/');
+        } else if (environmentUrl.endsWith('/api/data/v9.1/')) {
+          environmentUrl = environmentUrl.replace('/api/data/v9.1/', '/');
+        } else if (environmentUrl.endsWith('/api/data/v9.0/')) {
+          environmentUrl = environmentUrl.replace('/api/data/v9.0/', '/');
+        }
+        
+        // Ensure URL ends with slash
+        if (!environmentUrl.endsWith('/')) {
+          environmentUrl += '/';
+        }
+      }
+    } catch (error) {
+      console.error('Error getting environment URL:', error);
+    }
+    
+    // If we couldn't get the URL, log a warning
+    if (!environmentUrl) {
+      console.warn('Could not get environment URL for link building');
+    }
+
+    // Format to match expected structure: {environmentUrl}main.aspx?pagetype=entityrecord&etn={entityName}&id={entityId}
+    // Removed forceUCI=1 parameter as per requirement
+    return `${environmentUrl}main.aspx?pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
+  }
+
+  // Helper method to add entity URL to raw and formatted items
+  private addEntityUrlToItems(
+    rawItem: any, 
+    formattedItem: any, 
+    primaryEntity: { name: string, idField: string }, 
+    entityIdValue: string
+  ): void {
+    // Create the URL
+    const dynamicsUrl = this.buildDynamicsUrl(primaryEntity.name, entityIdValue);
+    
+    // For raw view, use the same icon as formatted view for consistency
+    rawItem['__entity_url'] = {
+      id: entityIdValue,
+      url: dynamicsUrl,
+      text: '🔗', // Use the same icon for both views
+      entityName: primaryEntity.name,
+      isRawView: true // Flag to identify this is from raw view
+    };
+    
+    // For formatted view, provide a link object with icon
+    formattedItem['__entity_url'] = {
+      id: entityIdValue,
+      url: dynamicsUrl,
+      text: '🔗', // Icon for formatted view
+      entityName: primaryEntity.name
+    };
+  }
+
   // Normalize data with attribute types from metadata
   private normalizeDataWithTypes<T extends { [key: string]: any }>(data: T[], attributeMaps: AttributeMapResult): any {
     console.log('normalizeDataWithTypes: Starting data normalization with types');
@@ -240,16 +348,7 @@ export class XmlExecutorService extends BaseRequestService {
       
       // Add entity URL link column for Dynamics/Dataverse if primary entity was identified
       if (primaryEntity) {
-        // Add only one direct URL link column with consistent naming
-        const urlFieldName = '__entity_url';
-        header[urlFieldName] = {
-          displayName: 'View in Dynamics',
-          logicalName: urlFieldName,
-          type: 'DynamicsLink',
-          isEntityUrl: true
-        };
-        
-        // We're NOT adding the redundant ID and link fields anymore
+        this.addEntityUrlToHeader(header);
       }
       
       // Build a map of all requested attributes including those with aliases
@@ -377,36 +476,9 @@ export class XmlExecutorService extends BaseRequestService {
         
         // Add entity URL field if primary entity is identified
         if (primaryEntity) {
-          // Look for the entity ID in the response
-          let entityIdValue = item[primaryEntity.idField];
-          
-          // If standard ID field not found, try to find ID using alternate patterns
-          if (!entityIdValue) {
-            // Pattern 1: Look for fields ending with "id"
-            const potentialIdFields = Object.keys(item).filter(key => 
-              key.toLowerCase().endsWith('id') && 
-              this.inferType(key, item[key]) === 'Uniqueidentifier'
-            );
-            
-            if (potentialIdFields.length > 0) {
-              const firstIdField = potentialIdFields[0];
-              entityIdValue = item[firstIdField];
-            }
-          }
-
+          const entityIdValue = this.findEntityId(item, primaryEntity);
           if (entityIdValue) {
-            // Add direct Dynamics URL link with improved display format
-            const dynamicsUrl = this.buildDynamicsUrl(primaryEntity.name, entityIdValue);
-            
-            // For raw value, just show the GUID as plain text - this prevents [object Object] display
-            rawItem['__entity_url'] = entityIdValue;
-            
-            // For formatted value, use a link icon with the URL
-            formattedItem['__entity_url'] = {
-              type: 'link',
-              text: '🔗 Open',
-              url: dynamicsUrl
-            };
+            this.addEntityUrlToItems(rawItem, formattedItem, primaryEntity, entityIdValue);
           }
         }
         
@@ -579,13 +651,7 @@ export class XmlExecutorService extends BaseRequestService {
     
     // Add only the entity URL link column if primary entity was identified
     if (primaryEntity) {
-      const urlFieldName = '__entity_url';
-      header[urlFieldName] = {
-        displayName: 'View in Dynamics',
-        logicalName: urlFieldName,
-        type: 'DynamicsLink',
-        isEntityUrl: true
-      };
+      this.addEntityUrlToHeader(header);
     }
     
     requestedAttributes.forEach(key => {
@@ -645,36 +711,9 @@ export class XmlExecutorService extends BaseRequestService {
       
       // Add entity URL link if primary entity is identified
       if (primaryEntity) {
-        // Look for the entity ID in the response
-        let entityIdValue = item[primaryEntity.idField];
-        
-        // If standard ID field not found, try to find ID using alternate patterns
-        if (!entityIdValue) {
-          // Pattern 1: Look for fields ending with "id"
-          const potentialIdFields = Object.keys(item).filter(key => 
-            key.toLowerCase().endsWith('id') && 
-            this.inferType(key, item[key]) === 'Uniqueidentifier'
-          );
-          
-          if (potentialIdFields.length > 0) {
-            const firstIdField = potentialIdFields[0];
-            entityIdValue = item[firstIdField];
-          }
-        }
-
+        const entityIdValue = this.findEntityId(item, primaryEntity);
         if (entityIdValue) {
-          // Add direct Dynamics URL link with improved display format
-          const dynamicsUrl = this.buildDynamicsUrl(primaryEntity.name, entityIdValue);
-          
-          // For raw value, just show the GUID as plain text - this prevents [object Object] display
-          rawItem['__entity_url'] = entityIdValue;
-          
-          // For formatted value, use a link icon with the URL
-          formattedItem['__entity_url'] = {
-            type: 'link',
-            text: '🔗 Open',
-            url: dynamicsUrl
-          };
+          this.addEntityUrlToItems(rawItem, formattedItem, primaryEntity, entityIdValue);
         }
       }
       
@@ -791,52 +830,6 @@ export class XmlExecutorService extends BaseRequestService {
       .join(' ');
   }
 
-  // Helper method to build a Dynamics direct URL for an entity record
-  private buildDynamicsUrl(entityName: string, entityId: string): string {
-    // Use a simple approach with a default URL format
-    let environmentUrl = '';
-    
-    try {
-      // Get the active environment URL using the first value from the Observable
-      let currentUrl = '';
-      // Use a synchronous approach to get the environment URL
-      const subscription = this.activeEnvironmentUrl$.subscribe(url => {
-        currentUrl = url || '';
-      });
-      subscription.unsubscribe();
-      
-      if (currentUrl) {
-        // Convert API URL to web client URL if needed
-        // Example: https://org2d6763a7.api.crm4.dynamics.com/ => https://org2d6763a7.crm4.dynamics.com/
-        environmentUrl = currentUrl.replace('.api.', '.');
-        
-        // Clean up URL format
-        if (environmentUrl.endsWith('/api/data/v9.2/')) {
-          environmentUrl = environmentUrl.replace('/api/data/v9.2/', '/');
-        } else if (environmentUrl.endsWith('/api/data/v9.1/')) {
-          environmentUrl = environmentUrl.replace('/api/data/v9.1/', '/');
-        } else if (environmentUrl.endsWith('/api/data/v9.0/')) {
-          environmentUrl = environmentUrl.replace('/api/data/v9.0/', '/');
-        }
-        
-        // Ensure URL ends with slash
-        if (!environmentUrl.endsWith('/')) {
-          environmentUrl += '/';
-        }
-      }
-    } catch (error) {
-      console.error('Error getting environment URL:', error);
-    }
-    
-    // If we couldn't get the URL, log a warning
-    if (!environmentUrl) {
-      console.warn('Could not get environment URL for link building');
-    }
-
-    // Format: {environmentUrl}main.aspx?forceUCI=1&pagetype=entityrecord&etn={entityName}&id={entityId}
-    return `${environmentUrl}main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
-  }
-
   // Specialized method for requests without defined attributes (with type information)
   private normalizeDataWithoutAttributes<T extends { [key: string]: any }>(data: T[], attributeMaps: AttributeMapResult): any {
     console.log('normalizeDataWithoutAttributes: Starting specialized normalization with types');
@@ -870,13 +863,7 @@ export class XmlExecutorService extends BaseRequestService {
       
       // Add entity URL link column for Dynamics/Dataverse if primary entity was identified
       if (primaryEntity) {
-        const urlFieldName = '__entity_url';
-        header[urlFieldName] = {
-          displayName: 'View in Dynamics',
-          logicalName: urlFieldName,
-          type: 'DynamicsLink',
-          isEntityUrl: true
-        };
+        this.addEntityUrlToHeader(header);
       }
       
       // Process the data to identify and group standard fields
@@ -969,22 +956,9 @@ export class XmlExecutorService extends BaseRequestService {
         
         // Add entity URL field if primary entity is identified
         if (primaryEntity) {
-          // Look for the entity ID in the response
-          let entityIdValue = item[primaryEntity.idField];
-          
+          const entityIdValue = this.findEntityId(item, primaryEntity);
           if (entityIdValue) {
-            // Add direct Dynamics URL link with improved display format
-            const dynamicsUrl = this.buildDynamicsUrl(primaryEntity.name, entityIdValue);
-            
-            // For raw value, just show the GUID as plain text
-            rawItem['__entity_url'] = entityIdValue;
-            
-            // For formatted value, use a link icon with the URL
-            formattedItem['__entity_url'] = {
-              type: 'link',
-              text: '🔗 Open',
-              url: dynamicsUrl
-            };
+            this.addEntityUrlToItems(rawItem, formattedItem, primaryEntity, entityIdValue);
           }
         }
         
@@ -1066,13 +1040,7 @@ export class XmlExecutorService extends BaseRequestService {
       
       // Add entity URL link column for Dynamics/Dataverse if primary entity was identified
       if (primaryEntity) {
-        const urlFieldName = '__entity_url';
-        header[urlFieldName] = {
-          displayName: 'View in Dynamics',
-          logicalName: urlFieldName,
-          type: 'DynamicsLink',
-          isEntityUrl: true
-        };
+        this.addEntityUrlToHeader(header);
       }
       
       // Process the data to identify standard fields
@@ -1114,22 +1082,9 @@ export class XmlExecutorService extends BaseRequestService {
         
         // Add entity URL field if primary entity is identified
         if (primaryEntity) {
-          // Look for the entity ID in the response
-          let entityIdValue = item[primaryEntity.idField];
-          
+          const entityIdValue = this.findEntityId(item, primaryEntity);
           if (entityIdValue) {
-            // Add direct Dynamics URL link with improved display format
-            const dynamicsUrl = this.buildDynamicsUrl(primaryEntity.name, entityIdValue);
-            
-            // For raw value, just show the GUID as plain text
-            rawItem['__entity_url'] = entityIdValue;
-            
-            // For formatted value, use a link icon with the URL
-            formattedItem['__entity_url'] = {
-              type: 'link',
-              text: '🔗 Open',
-              url: dynamicsUrl
-            };
+            this.addEntityUrlToItems(rawItem, formattedItem, primaryEntity, entityIdValue);
           }
         }
         

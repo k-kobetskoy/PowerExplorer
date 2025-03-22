@@ -22,10 +22,22 @@
 
 .mat-mdc-table .mat-mdc-cell {
   color: #272727;
+  max-width: 350px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  height: 22px !important;
+  line-height: 18px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
 }
 
 .full-size-table {
-  height: 100%;
+  height: auto;
+  width: auto;
+  min-width: auto;
+  margin: 0 auto;
 }
 
 .mat-mdc-table {
@@ -48,19 +60,11 @@
 }
 
 .mat-mdc-table .mat-mdc-header-cell:hover {
-
   background-color: #f1f1f1;
 }
 
-
-.mat-mdc-table .mat-mdc-cell {
-  max-width: 350px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-}
 /* cell hover */
 .mat-mdc-table .mat-mdc-cell:hover {
-
   background-color: #f1f1f1;
 }
 
@@ -86,21 +90,17 @@
 
 /* row height */
 .mat-mdc-table {
-  --mat-table-row-item-container-height: 28px;
+  --mat-table-row-item-container-height: 22px;
 }
 
 /* header row height */
 .mat-mdc-table {
-  --mat-table-header-container-height: 36px;
+  --mat-table-header-container-height: 30px;
 }
 
 .mdc-data-table__cell,
 .mdc-data-table__header-cell {
   padding: 0 10px 0 10px;
-}
-
-.full-size-table {
-    min-width: 100%;
 }
 
 .mat-mdc-cell.number-cell {
@@ -200,5 +200,44 @@ tr.mat-mdc-row:hover {
 
 .null-value {
   font-style: italic !important;
-  color: #999 !important;
+  color: #bdbdbd !important;
+  font-weight: normal !important;
+}
+
+.dynamics-link {
+  color: #0078d4;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dynamics-link:hover {
+  text-decoration: underline;
+}
+
+/* Style for raw view links */
+.raw-link {
+  color: #107c10; /* Green color to distinguish from formatted view */
+  font-family: monospace; /* Use monospace font for technical/raw view */
+  font-size: 0.9em;
+}
+
+.link-cell {
+  text-align: center;
+}
+
+.table-container {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0px 0 0 0px;
+  overflow-x: auto;
+  border-radius: 4px;
+}
+
+/* Fixed row height */
+.mat-mdc-row {
+  height: 26px !important;
+}
+
+.mat-mdc-header-row {
+  height: 30px !important;
 }
