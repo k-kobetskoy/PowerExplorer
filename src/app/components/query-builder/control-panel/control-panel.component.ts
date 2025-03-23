@@ -1,3 +1,4 @@
+// ControlPanelComponent - Added to fix component declaration issue
 import { NodeTreeService } from '../services/node-tree.service';
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';

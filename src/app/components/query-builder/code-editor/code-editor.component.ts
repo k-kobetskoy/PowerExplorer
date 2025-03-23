@@ -1,3 +1,4 @@
+// CodeEditorComponent - Fixing component declaration issue
 import { NodeTreeService } from '../services/node-tree.service';
 import { LinterProviderService } from '../services/xml-parsing-services/linter-provider.service';
 import { ChangeDetectionStrategy, Component, ElementRef, Inject, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';

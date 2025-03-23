@@ -36,9 +36,7 @@ export interface ITagBuildEntity {
 
 export const UNEXPECTED_ERROR_TEXT = 'Unexpected error. Please check you XML';
 
-
 @Injectable({ providedIn: 'root' })
-
 export class QueryNodeBuilderService {
   constructor(private attributeFactoryResolver: NodeFactoryService) { }
 

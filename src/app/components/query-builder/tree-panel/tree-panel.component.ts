@@ -1,3 +1,4 @@
+// TreePanelComponent - Added to fix component declaration issue
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
 
