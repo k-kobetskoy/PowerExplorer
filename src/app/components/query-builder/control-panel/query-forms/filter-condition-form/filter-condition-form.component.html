@@ -1,51 +1,55 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<mat-form-field>
-  <mat-label>Attrubute</mat-label>
-  <input type="text" matInput [formControl]="attributeFormControl" [matAutocomplete]="auto" (keyup)="onKeyPressed($event)">
-
-  <mat-autocomplete #auto="matAutocomplete">
-    <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
-      {{option.logicalName + ' ' + option.displayName}}
-
-    </mat-option>
-    <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
-  </mat-autocomplete>
-</mat-form-field>
-
-<ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
-  <ng-container [ngSwitch]="getFilterOperatorType(attribute)">
-    <app-number-form 
-      *ngSwitchCase='FilterOperatorTypes.NUMBER'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-number-form>
-    <app-boolean-form 
-      *ngSwitchCase='FilterOperatorTypes.BOOLEAN'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-boolean-form>
-    <app-id-form 
-      *ngSwitchCase='FilterOperatorTypes.ID'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-id-form>
-    <app-picklist-form 
-      *ngSwitchCase='FilterOperatorTypes.PICKLIST'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-picklist-form>
-    <app-status-form 
-      *ngSwitchCase='FilterOperatorTypes.STATUS'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-status-form>
-    <app-date-time-form 
-      *ngSwitchCase='FilterOperatorTypes.DATE_TIME'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-date-time-form>
-    <app-string-form 
-      *ngSwitchCase='FilterOperatorTypes.STRING'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-string-form>
+<div class="form-container">
+  <tui-combo-box
+    [formControl]="attributeFormControl"
+    class="tui-form__row">
+    Attribute
+    <tui-data-list-wrapper
+      *tuiDataList
+      [items]="filteredAttributes$ | async">
+      <ng-template let-item>
+        <div class="option-content">
+          <span>{{item.logicalName + ' ' + item.displayName}}</span>
+        </div>
+      </ng-template>
+    </tui-data-list-wrapper>
+  </tui-combo-box>
+  
+  <ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
+    <ng-container [ngSwitch]="getFilterOperatorType(attribute)">
+      <app-number-form 
+        *ngSwitchCase='FilterOperatorTypes.NUMBER'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-number-form>
+      <app-boolean-form 
+        *ngSwitchCase='FilterOperatorTypes.BOOLEAN'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-boolean-form>
+      <app-id-form 
+        *ngSwitchCase='FilterOperatorTypes.ID'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-id-form>
+      <app-picklist-form 
+        *ngSwitchCase='FilterOperatorTypes.PICKLIST'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-picklist-form>
+      <app-status-form 
+        *ngSwitchCase='FilterOperatorTypes.STATUS'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-status-form>
+      <app-date-time-form 
+        *ngSwitchCase='FilterOperatorTypes.DATE_TIME'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-date-time-form>
+      <app-string-form 
+        *ngSwitchCase='FilterOperatorTypes.STRING'
+        [selectedNode]="selectedNode" 
+        [attributeValue]="attribute.logicalName"></app-string-form>
+    </ng-container>
   </ng-container>
-</ng-container>
-
+</div>
+  
 <ng-template #elseBlock>
-  <div>no data</div>
+  <tui-loader size="m"></tui-loader>
 </ng-template>

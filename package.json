@@ -11,12 +11,11 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^18.0.3",
-    "@angular/cdk": "^18.0.3",
+    "@angular/cdk": "~18.0.3",
     "@angular/common": "^18.0.3",
     "@angular/compiler": "^18.0.3",
     "@angular/core": "^18.0.3",
     "@angular/forms": "^18.0.3",
-    "@angular/material": "^18.0.3",
     "@angular/platform-browser": "^18.0.3",
     "@angular/platform-browser-dynamic": "^18.0.3",
     "@angular/router": "^18.0.3",
@@ -25,16 +24,25 @@
     "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/lint": "github:codemirror/lint",
     "@codemirror/theme-one-dark": "^6.1.2",
+    "@taiga-ui/cdk": "^3.108.0",
+    "@taiga-ui/core": "^3.108.0",
+    "@taiga-ui/icons": "^3.108.0",
+    "@taiga-ui/kit": "^3.108.0",
+    "@taiga-ui/styles": "^3.108.0",
+    "@tinkoff/ng-dompurify": "^4.0.0",
+    "@tinkoff/ng-polymorpheus": "^4.3.0",
     "angular-split": "^17.2.0",
     "codemirror": "^6.0.1",
+    "dompurify": "^3.2.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.7"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^18.0.4",
+    "@angular-devkit/build-angular": "^18.2.15",
     "@angular/cli": "^18.0.4",
     "@angular/compiler-cli": "^18.0.3",
+    "@types/dompurify": "^3.2.0",
     "@types/jasmine": "~4.3.0",
     "jasmine-core": "~4.6.0",
     "karma": "~6.4.0",
@@ -42,6 +50,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "less": "^4.2.2",
     "typescript": "~5.4.5"
   }
 }

@@ -1,5 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { ConnectionsDialogComponent } from './connections-dialog/connections-dialog.component';
@@ -7,6 +6,9 @@ import { AuthService } from 'src/app/services/auth.service';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EnvironmentEntityService } from 'src/app/components/query-builder/services/entity-services/environment-entity.service';
+import { TuiDialogService } from '@taiga-ui/core';
+import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
+import { Icons } from 'src/app/components/svg-icons/icons';
 
 @Component({
   selector: 'app-connections',
@@ -20,9 +22,13 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   @Output() onEnvironmentConnection = new EventEmitter<EnvironmentModel>()
   activeEnvironment$: Observable<EnvironmentModel>
 
+  chevronsUpDownIcon = Icons.CHEVRONS_UP_DOWN;
   rippleColor: string = '#4b4b4b';
+  
+  private readonly connectionsDialog = new PolymorpheusComponent(ConnectionsDialogComponent);
 
-  constructor(private dialog: MatDialog,
+  constructor(
+    @Inject(TuiDialogService) private readonly dialogService: TuiDialogService,
     private _authService: AuthService,
     private _environmentEntityService: EnvironmentEntityService,
     private _eventBus: EventBusService) { }
@@ -43,10 +49,9 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   private createDialog() {
-    this.dialog.open(ConnectionsDialogComponent, {
-      height: '600px',
-      width: '420px',
-    })
+    this.dialogService.open(this.connectionsDialog, {
+      size: 'l',
+    }).subscribe();
   }
 
   ngOnDestroy(): void {

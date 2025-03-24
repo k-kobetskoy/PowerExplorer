@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { TuiDialogService } from '@taiga-ui/core';
 import { ErrorDialogComponent } from '../components/error-dialog/error-dialog.component';
+import { PolymorpheusComponent } from '@tinkoff/ng-polymorpheus';
 
 export interface ErrorDialogData {
   title: string;
@@ -12,20 +13,19 @@ export interface ErrorDialogData {
   providedIn: 'root'
 })
 export class ErrorDialogService {
-  constructor(private dialog: MatDialog) {}
+  constructor(private dialogService: TuiDialogService) {}
 
   showError(data: ErrorDialogData): void {
-    const dialogConfig = new MatDialogConfig();
-    
-    dialogConfig.width = '400px';
-    dialogConfig.disableClose = false;
-    dialogConfig.data = {
+    const dialogData = {
       title: data.title || 'Error',
       message: data.message || 'An error occurred',
       details: data.details || ''
     };
-
-    this.dialog.open(ErrorDialogComponent, dialogConfig);
+    
+    this.dialogService.open(
+      new PolymorpheusComponent(ErrorDialogComponent), 
+      { data: dialogData, dismissible: true, size: 's' }
+    );
   }
 
   showHttpError(error: any): void {

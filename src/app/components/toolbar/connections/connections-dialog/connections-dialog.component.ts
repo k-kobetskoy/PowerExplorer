@@ -1,5 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { Component, Inject, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { EventData } from 'src/app/services/event-bus/event-data';
@@ -7,6 +6,8 @@ import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { NavigationService } from 'src/app/services/navigation.service';
 import { EnvironmentEntityService } from 'src/app/components/query-builder/services/entity-services/environment-entity.service';
+import { TuiDialogContext } from '@taiga-ui/core';
+import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
 
 @Component({
   selector: 'app-connections-dialog',
@@ -17,15 +18,21 @@ import { EnvironmentEntityService } from 'src/app/components/query-builder/servi
 export class ConnectionsDialogComponent implements OnInit {
 
   environmentsList$: Observable<EnvironmentModel[]>
+  selectedEnvironment: EnvironmentModel | null = null;
 
   constructor(
-    private dialogRef: MatDialogRef<ConnectionsDialogComponent>,
+    @Inject(POLYMORPHEUS_CONTEXT)
+    private readonly context: TuiDialogContext<void>,
     private navigationService: NavigationService,
     private _environmentEntityService: EnvironmentEntityService,
     private eventBus: EventBusService) { }
 
   ngOnInit() {
     this.environmentsList$ = this._environmentEntityService.getEnvironments()
+  }
+
+  selectEnvironment(environment: EnvironmentModel): void {
+    this.selectedEnvironment = environment;
   }
 
   connectToEnvironment(selectedEnv: EnvironmentModel) {
@@ -41,6 +48,6 @@ export class ConnectionsDialogComponent implements OnInit {
   }
 
   closeDialog(): void {
-    this.dialogRef.close()
+    this.context.completeWith();
   }
 }

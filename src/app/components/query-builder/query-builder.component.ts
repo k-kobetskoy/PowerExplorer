@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { NavigationService } from 'src/app/services/navigation.service';
 
 export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
@@ -12,6 +12,8 @@ export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
 export class QueryBuilder implements OnInit {
   
   selectedTabIndex = 0;
+  
+  @ViewChild('resultTable') resultTable: any;
 
   constructor(private navigationService: NavigationService) { }
 

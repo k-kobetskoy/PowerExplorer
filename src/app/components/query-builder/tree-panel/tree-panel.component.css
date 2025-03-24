@@ -18,7 +18,7 @@ app-tree-panel .button-block {
   display: flex;
   height: 40px;
   background-color: #e9e9e9;
-}
+} 
 
 app-tree-panel .tree-node {
   display: flex;
@@ -61,11 +61,6 @@ app-tree-panel .validationError {
 }
 
 /* Debugging helpers */
-.validationStatus[data-valid="false"] {
-  outline: 2px solid #f44336;
-  padding: 0 3px;
-  margin: 0 2px;
-}
 
 app-tree-panel p {
   display: flex;

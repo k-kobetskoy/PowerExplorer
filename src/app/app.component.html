@@ -1,7 +1,17 @@
-<div class="container">
-  <app-main-toolbar></app-main-toolbar>
-  <main class="view-container">
-    <!--This is to avoid reload during acquireTokenSilent() because of hidden iframe -->
-    <router-outlet *ngIf="!isIframe" ></router-outlet>
-</main>
-</div>
+<tui-root class="tui-root">
+  <div class="container">
+    <app-main-toolbar></app-main-toolbar>
+    <main class="view-container">
+      <!--This is to avoid reload during acquireTokenSilent() because of hidden iframe -->
+      <div class="router-container" *ngIf="!isIframe">
+        <router-outlet></router-outlet>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Taiga UI required components -->
+  <ng-container ngProjectAs="tuiOverContent"></ng-container>
+  <ng-container ngProjectAs="tuiOverDialogs"></ng-container>
+  <ng-container ngProjectAs="tuiOverNotifications"></ng-container>
+  <ng-container ngProjectAs="tuiOverPortals"></ng-container>
+</tui-root>

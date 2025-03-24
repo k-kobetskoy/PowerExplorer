@@ -1,26 +1,25 @@
-.mat-mdc-header-row {
-  --mat-table-header-headline-weight: 600;
-
-  --mat-table-header-headline-size: 12px;
+.tui-table__th {
+  font-weight: 600;
+  font-size: 12px;
   color: #7e7e7e;
+  max-width: 350px;
 }
 
-.mat-mdc-table {
-  --mat-table-header-headline-font: "Inter", sans-serif;
+.tui-table__th:first-child {
+  border-right: 1px solid #f1f1f1;
+}
 
-  --mat-table-header-headline-size: 14px;
-  --mat-table-header-headline-weight: 500;
+.tui-table__th:hover {
+  background-color: #f1f1f1;
+}
 
-  --mat-table-row-item-label-text-font: "Inter", sans-serif;
-  --mat-table-row-item-label-text-line-height: 20px;
-  --mat-table-row-item-label-text-size: 13px;
-  --mat-table-row-item-label-text-weight: 500;
-
-  --mat-table-footer-supporting-text-font: "Inter", sans-serif;
+.tui-table {
+  font-family: "Inter", sans-serif;
   min-width: 10px;
+  white-space: nowrap;
 }
 
-.mat-mdc-table .mat-mdc-cell {
+.tui-table__td {
   color: #272727;
   max-width: 350px;
   padding-top: 2px;
@@ -31,125 +30,71 @@
   text-overflow: ellipsis;
   vertical-align: middle !important;
   box-sizing: border-box !important;
+  padding: 0 10px;
 }
 
-.full-size-table {
-  height: auto;
-  width: auto;
-  min-width: auto;
-  margin: 0 auto;
-}
-
-.mat-mdc-table {
-  white-space: nowrap;
-}
-
-.mat-mdc-table .mat-mdc-header-cell:first-child {
-  border-right: 1px solid #f1f1f1;
-}
-
-.mat-mdc-table .mat-mdc-cell:first-child {
+.tui-table__td:first-child {
   border-right: 1px solid #f1f1f1;
   text-align: center;
-  /* color: rgb(168, 168, 168); */
 }
 
-
-.mat-mdc-table .mat-mdc-header-cell {
-  max-width: 350px;
-}
-
-.mat-mdc-table .mat-mdc-header-cell:hover {
+.tui-table__td:hover {
   background-color: #f1f1f1;
 }
 
-/* cell hover */
-.mat-mdc-table .mat-mdc-cell:hover {
-  background-color: #f1f1f1;
+.tui-table__tr:hover {
+  background-color: rgba(224, 225, 230, 0.5) !important;
 }
 
-.mat-mdc-table .mat-mdc-cell.selected {
+.tui-table__td.selected {
   white-space: normal;
   overflow: visible;
   max-height: none;
-}
-
-
-.mat-mdc-table .mat-mdc-cell.selected {
   max-width: 350px;
-  white-space: normal;
+  background-color: rgba(224, 225, 230, 0.9) !important;
+  transition: background-color .3s;
 }
 
-
-.mat-mdc-table .selected {
-    background-color: rgba(224, 225, 230, 0.9) !important;
-    transition: background-color .3s;
-}
-
-
-
-/* row height */
-.mat-mdc-table {
-  --mat-table-row-item-container-height: 22px;
-}
-
-/* header row height */
-.mat-mdc-table {
-  --mat-table-header-container-height: 30px;
-}
-
-.mdc-data-table__cell,
-.mdc-data-table__header-cell {
-  padding: 0 10px 0 10px;
-}
-
-.mat-mdc-cell.number-cell {
+.number-cell {
   text-align: right !important;
   font-family: 'Hack', monospace !important;
   color: #2c70b9 !important;
   font-size: 0.9rem !important;
 }
 
-.mat-mdc-cell.boolean-cell {
-    text-align: center !important;
-    font-weight: bold !important;
+.boolean-cell {
+  text-align: center !important;
+  font-weight: bold !important;
 }
 
-.mat-mdc-cell.date-cell {
-    text-align: center !important;
-    font-style: italic !important;
-    color: #555 !important;
+.date-cell {
+  text-align: center !important;
+  font-style: italic !important;
+  color: #555 !important;
 }
 
-.mat-mdc-cell.lookup-cell {
-    text-align: left !important;
-    color: #2c70b9 !important;
-    text-decoration: underline !important;
-    cursor: pointer !important;
-}
-
-.mat-mdc-cell.uniqueidentifier-cell {
+.lookup-cell {
   text-align: left !important;
-  color: #2c70b9  !important;
+  color: #2c70b9 !important;
+  text-decoration: underline !important;
+  cursor: pointer !important;
+}
+
+.uniqueidentifier-cell {
+  text-align: left !important;
+  color: #2c70b9 !important;
   font-family: 'Hack', monospace !important;
   letter-spacing: -0.05em !important;
   font-size: 0.9rem !important;
 }
 
-
-.mat-mdc-cell.picklist-cell {
-    text-align: center !important;
-    font-weight: 500 !important;
-     background-color: rgba(184, 172, 147, 0.1) !important;
+.picklist-cell {
+  text-align: center !important;
+  font-weight: 500 !important;
+  background-color: rgba(184, 172, 147, 0.1) !important;
 }
 
-/* Row hover effect */
-tr.mat-mdc-row:hover {
-    background-color: rgba(224, 225, 230, 0.5) !important;
-}
-
-/* Add a new class for code-like content */
-.mat-mdc-cell.code-cell {
+.code-cell {
   font-family: 'Hack', monospace !important;
   letter-spacing: -0.05em !important;
   font-size: 0.9rem !important;
@@ -164,45 +109,10 @@ tr.mat-mdc-row:hover {
   border-bottom: 1px solid #e0e0e0;
 }
 
-.format-toggle-container {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  color: #555;
-  margin-left: 4px;
-}
-
-.toggle-label {
-  margin-right: 8px;
-  font-weight: 500;
-}
-
-.format-toggle {
-  margin-left: 8px;
-}
-
-.has-formatted-value {
-  position: relative;
-}
-
-.has-formatted-value::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 8px 8px 0;
-  border-color: transparent #2c70b9 transparent transparent;
-  opacity: 0.3;
-}
-
 .null-value {
   font-style: italic !important;
   color: #bdbdbd !important;
   font-weight: normal !important;
-  /* Override type-specific styles */
   text-align: left !important;
   background-color: transparent !important;
   text-decoration: none !important;
@@ -221,27 +131,16 @@ tr.mat-mdc-row:hover {
   height: 100%;
 }
 
-.dynamics-link:hover {
-  text-decoration: underline;
-}
-
 .link-cell {
   text-align: center !important;
   vertical-align: middle !important;
   padding: 0 !important;
 }
 
-/* Style for raw view links */
-.raw-link {
-  color: #107c10; /* Green color to distinguish from formatted view */
-  font-family: monospace; /* Use monospace font for technical/raw view */
-  font-size: 0.9em;
-}
-
 .table-container {
   width: fit-content;
   max-width: 100%;
-  margin: 0px 0 0 0px;
+  margin: 0;
   overflow-x: auto;
   border-radius: 4px;
 }

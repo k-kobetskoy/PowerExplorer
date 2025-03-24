@@ -1,3 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" [attr.height]="size" [attr.width]="size"  [class]="class">    
-    <path [attr.d]="icon" />
+<svg xmlns="http://www.w3.org/2000/svg" [attr.height]="size" [attr.width]="size" [class]="class">    
+    <path [attr.d]="icon" [attr.fill]="fillColor" 
+          [attr.stroke]="useStroke ? strokeColor : null" 
+          [attr.stroke-width]="useStroke ? strokeWidth : null"
+          [attr.stroke-linecap]="useStroke ? 'round' : null"
+          [attr.stroke-linejoin]="useStroke ? 'round' : null" />
 </svg>

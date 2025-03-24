@@ -1,44 +1,37 @@
-<div class="query-builder">
-  <as-split direction="horizontal" gutterSize="2">
-    <as-split-area [size]="20" order="1" minSize="10">
-
-
-      <as-split direction="vertical" gutterSize="2">
-        <as-split-area [size]="65" order="3" minSize="30">
+<div class="query-builder query-builder-container">
+  <as-split direction="horizontal" class="main-split" [style.height.%]="100" [style.width.%]="100" 
+    [gutterSize]="10" [useTransition]="true" unit="pixel">
+    <as-split-area [size]="392" order="1" [minSize]="392" [maxSize]="600">
+      <as-split direction="vertical" [gutterSize]="10" [useTransition]="true" class="left-panel-split" unit="pixel">
+        <as-split-area [size]="400" order="3" [minSize]="400">
           <app-query-tree-button-block (executeXmlRequest)="resultTable.getResult()"></app-query-tree-button-block>
           <app-tree-panel></app-tree-panel>
         </as-split-area>
-        <as-split-area [size]="35" order="4" minSize="20">
+        <as-split-area [size]="417" order="4" [minSize]="417">
           <app-control-panel></app-control-panel>
         </as-split-area>
       </as-split>
-
-
     </as-split-area>
-    <as-split-area [size]="80" order="2" minSize="30">
-
-
-      <mat-tab-group [(selectedIndex)]="selectedTabIndex"  mat-stretch-tabs="false" mat-align-tabs="start" animationDuration="200" stretchTabs="false">
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <p class="prevent-select">FetchXml</p>
-          </ng-template>
-          <div class="fetch-xml-content">
-            <app-code-editor #codeEditor></app-code-editor>
-          </div>
-        </mat-tab>
-
-        <mat-tab>
-          <ng-template mat-tab-label>
-            <p class="prevent-select">Result</p>
-          </ng-template>
-          <div class="fetch-result-content">
-            <app-result-table #resultTable (resultTableGetResult)="toggleTab()"></app-result-table>
-          </div>
-        </mat-tab>
-
-
-      </mat-tab-group>
+    
+    <as-split-area [size]="null" order="2" [minSize]="400" class="right-panel">
+      <!-- Taiga UI tabs -->
+      <tui-tabs [(activeItemIndex)]="selectedTabIndex" class="content-tabs">
+        <button tuiTab>
+          <span class="prevent-select">FetchXml</span>
+        </button>
+        <button tuiTab>
+          <span class="prevent-select">Result</span>
+        </button>
+      </tui-tabs>
+      
+      <div class="tab-content">
+        <div *ngIf="selectedTabIndex === 0" class="fetch-xml-content">
+          <app-code-editor #codeEditor></app-code-editor>
+        </div>
+        <div *ngIf="selectedTabIndex === 1" class="fetch-result-content">
+          <app-result-table #resultTable (resultTableGetResult)="toggleTab()"></app-result-table>
+        </div>
+      </div>
     </as-split-area>
   </as-split>
 </div>

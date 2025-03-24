@@ -1,81 +1,157 @@
-app-query-builder {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  align-items: stretch;
-}
-
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  align-items: stretch;
-}
-
+/* Main container */
 .query-builder {
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex: 1 1 auto;
-  background: rgb(255, 255, 255);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
-app-query-builder .as-split-gutter{
-  background-color: rgb(121, 168, 255);  
-  flex-basis: 2px !important;
+/* Angular Split styles */
+.main-split {
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: 1 1 auto;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Fix for right panel width issue */
+.right-panel {
+  width: 65% !important;
+  flex: 1 1 auto !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.left-panel-split {
+  height: 100% !important;
+  min-height: 817px !important; /* 400px + 417px + 10px gutter */
+}
+
+/* Ensure split areas take proper space */
+as-split-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Remove background from gutters */
+[_nghost-ng-c3013344202] > .as-split-gutter[_ngcontent-ng-c3013344202],
+[_nghost] > .as-split-gutter,
+:host ::ng-deep .as-split-gutter {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+/* Angular Split gutter styling */
+.as-split-gutter {
+  background-color: transparent !important;  
+  flex-basis: 10px !important;
   z-index: 49;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none !important;
 }
 
-app-query-tree-button-block{
+/* Horizontal gutter (appears between top/bottom areas) */
+as-split[direction="vertical"] > .as-split-gutter {
+  flex-basis: 10px !important;
+  transition: all 0.2s ease;
+  cursor: row-resize;
+}
+
+as-split[direction="vertical"] > .as-split-gutter .as-split-gutter-icon {
+  background-image: none !important;
+  background-color: #D4D5D8;
+  z-index: 50;
+  width: 120px !important;
+  height: 2px !important;
+  border-radius: 1px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+as-split[direction="vertical"] > .as-split-gutter:hover .as-split-gutter-icon {
+  background-color: #bec6df;
+  opacity: 1;
+  transform: scaleY(2);
+}
+
+/* Vertical gutter (appears between left/right areas) */
+as-split[direction="horizontal"] > .as-split-gutter {
+  flex-basis: 10px !important;
+  transition: all 0.2s ease;
+  cursor: col-resize;
+}
+
+as-split[direction="horizontal"] > .as-split-gutter .as-split-gutter-icon {
+  background-image: none !important;
+  background-color: #D4D5D8;
+  z-index: 50;
+  width: 2px !important;
+  height: 400px !important;
+  border-radius: 1px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+as-split[direction="horizontal"] > .as-split-gutter:hover .as-split-gutter-icon {
+  background-color: #bec6df;
+  opacity: 1;
+  transform: scaleX(2);
+}
+
+/* Component styles */
+app-query-tree-button-block {
   display: flex;
   height: var(--tab-bar-height);
   background-color: #e9e9e9;
+  flex-shrink: 0;
+  width: 100%;
 }
 
-app-query-builder .as-split-gutter-icon {
-  background-image: none !important;
-  background-color: rgb(247, 247, 247);
-  z-index: 50;
-}
-
-app-query-builder .as-split-gutter-icon:hover {
-  background-color: rgb(121, 168, 255);
-  background-image: none;
-  transform: scale(2);
-  z-index: 51;
-}
-
-as-split-area{
+app-tree-panel, app-control-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
-
+  overflow: auto;
+  width: 100%;
 }
 
-app-query-builder .mat-mdc-tab-header {
-  --mdc-secondary-navigation-tab-container-height: var(--tab-bar-height);
+/* Taiga UI specific styles */
+.content-tabs {
+  height: var(--tab-bar-height);
+  flex-shrink: 0;
+  width: 100%;
 }
 
-app-query-builder .mdc-tab {
+button[tuiTab] {
   min-width: 200px;
+  font-family: "Work Sans", sans-serif;
 }
 
-app-query-builder .mat-mdc-tab-header {
-  --mat-tab-header-label-text-font: "Work Sans", sans-serif;
-  --mat-tab-header-label-text-tracking: 0em;
-}
-
-mat-tab-group {
-  flex: 1 1 auto;
-}
-
-app-query-builder .mat-mdc-tab-body-wrapper {
-  flex: 1 1 auto;
-}
-
-
-app-query-builder .mat-mdc-tab-body-content {
+/* Content containers */
+.tab-content {
   display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
 }
 
 .fetch-xml-content {    
@@ -83,11 +159,57 @@ app-query-builder .mat-mdc-tab-body-content {
   flex-direction: column;
   flex: 1 1 auto;
   align-items: stretch;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .fetch-result-content {
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  max-height: 85vh;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+app-code-editor, app-result-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: auto;
+}
+
+/* Ensure router-container fills the right panel */
+.router-container,
+div[class*="router-container"] {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* Fix for router-outlet issue */
+router-outlet {
+  display: none !important;
+}
+
+router-outlet + .query-builder-container {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* Ensure vertical split areas take proper space */
+as-split[direction="vertical"] > as-split-area {
+  min-height: 0;
+  overflow: hidden;
 }

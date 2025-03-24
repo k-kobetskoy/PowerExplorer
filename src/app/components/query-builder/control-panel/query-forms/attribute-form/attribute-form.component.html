@@ -2,28 +2,29 @@
 
 <div class="form-container">
     <form [formGroup]="attributeForm">
-        <mat-form-field class="form-field">
-            <mat-label>Attribute</mat-label>
-            <input type="text" matInput
-                formControlName="name"
-                [matAutocomplete]="auto"
-                placeholder="Select an attribute">
-            <mat-autocomplete #auto="matAutocomplete" >
-                <mat-option *ngFor="let attr of filteredAttributes$ | async" [value]="attr.logicalName">
+        <tui-combo-box
+            formControlName="name"
+            class="tui-form__row">
+            Attribute
+            <tui-data-list-wrapper
+                *tuiDataList
+                [items]="filteredAttributes$ | async">
+                <ng-template let-item>
                     <div class="option-content">
-                        <span class="logical-name">{{attr.logicalName}}</span>
-                        <span class="display-name">{{attr.displayName}}</span>
+                        <span class="logical-name">{{item.logicalName}}</span>
+                        <span class="display-name">{{item.displayName}}</span>
                     </div>
-                </mat-option>
-            </mat-autocomplete>
-            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
-        </mat-form-field>
+                </ng-template>
+            </tui-data-list-wrapper>
+        </tui-combo-box>
+        <div class="tui-form__row">
+            <app-loading-indicator [diameter]="20"></app-loading-indicator>
+        </div>
 
-        <mat-form-field class="form-field">
-            <mat-label>Alias</mat-label>
-            <input type="text" matInput
-                formControlName="alias"
-                placeholder="Enter an alias">
-        </mat-form-field>
+        <tui-input
+            formControlName="alias"
+            class="tui-form__row">
+            Alias
+        </tui-input>
     </form>
 </div>

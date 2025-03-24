@@ -1,25 +1,26 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
 <div class="form-container">
-    <mat-form-field class="form-field">
-      <mat-label>Attribute</mat-label>
-      <input type="text"
-             matInput
-             [formControl]="attributeFormControl"
-             [matAutocomplete]="attributeAutoComplete">
+    <tui-combo-box
+        [formControl]="attributeFormControl"
+        class="tui-form__row">
+        Attribute
+        <tui-data-list-wrapper
+            *tuiDataList
+            [items]="filteredAttributes$ | async">
+            <ng-template let-item>
+                <div class="option-content">
+                    <span class="logical-name">{{item.logicalName}}</span>
+                    <span class="display-name">{{item.displayName}}</span>
+                </div>
+            </ng-template>
+        </tui-data-list-wrapper>
+    </tui-combo-box>
+    <div class="tui-form__row">
+        <app-loading-indicator [diameter]="20" loadingKey="attribute"></app-loading-indicator>
+    </div>
 
-      <mat-autocomplete #attributeAutoComplete="matAutocomplete">
-        <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
-          <div class="option-content">
-            <span class="logical-name">{{option.logicalName}}</span>
-            <span class="display-name">{{option.displayName}}</span>
-          </div>
-        </mat-option>
-      </mat-autocomplete>
-      <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
-    </mat-form-field>
-
-    <mat-checkbox [formControl]="descendingFormControl">
-      Descending Order
-    </mat-checkbox>
+    <tui-checkbox [formControl]="descendingFormControl">
+        Descending Order
+    </tui-checkbox>
 </div>

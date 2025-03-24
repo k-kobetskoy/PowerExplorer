@@ -1,0 +1,22 @@
+.settings-container {
+    display: flex;
+    align-items: center;
+}
+
+.settings-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0 0 10px;
+    cursor: pointer;
+}
+
+.settings-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--main-text-color);
+}
+
+.settings-button:hover .settings-icon {
+    color: var(--main-text-color-hover);
+} 

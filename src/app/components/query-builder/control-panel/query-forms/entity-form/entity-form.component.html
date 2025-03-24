@@ -1,16 +1,19 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
 <form [formGroup]="entityForm">
-    <mat-form-field>
-        <mat-label>Name</mat-label>
-        <input type="text" matInput
-            formControlName="name"
-            [matAutocomplete]="auto">
-        <mat-autocomplete #auto="matAutocomplete">
-            <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
-                {{entity.logicalName}} {{entity.displayName}}
-            </mat-option>
-        </mat-autocomplete>
-        <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
-    </mat-form-field>
+    <tui-combo-box
+        formControlName="name">
+        Name
+        <tui-data-list-wrapper
+            *tuiDataList
+            [items]="filteredEntities$ | async">
+            <ng-template let-item>
+                {{item.logicalName}} {{item.displayName}}
+            </ng-template>
+        </tui-data-list-wrapper>
+    </tui-combo-box>
+    
+    <div class="tui-form__row">
+        <app-loading-indicator [diameter]="20"></app-loading-indicator>
+    </div>
 </form>

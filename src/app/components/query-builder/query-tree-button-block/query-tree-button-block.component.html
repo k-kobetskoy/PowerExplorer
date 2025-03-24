@@ -1,8 +1,29 @@
 <div class="button-container">
+
+  <!-- Custom button with inline SVG using the parameterized getIcon method -->
   <button 
-    mat-flat-button 
-    color="primary" 
-    (click)="execute()" 
-    [disabled]="buttonDisabled$|async">Execute</button>
+    type="button"
+    (click)="execute()"
+    [disabled]="buttonDisabled$|async"
+    class="custom-execute-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 18 18" fill="white" class="button-icon">
+      <path [attr.d]="getIcon('play')"></path>
+    </svg>
+    <span class="prevent-select">Run</span>
+  </button>
+
+  <button 
+    type="button"
+    class="custom-execute-button">
+    <tui-icon
+    icon="@tui.settings"
+    [style.font-size.rem]="4"
+    />
+
+  </button>
+
+
+
+
 </div>
   

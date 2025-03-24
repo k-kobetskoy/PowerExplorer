@@ -1,6 +1,12 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { ErrorDialogData } from 'src/app/services/error-dialog.service';
+import { TuiDialogContext } from '@taiga-ui/core';
+import { POLYMORPHEUS_CONTEXT } from '@tinkoff/ng-polymorpheus';
+
+export interface ErrorDialogData {
+  title: string;
+  message: string;
+  details?: string;
+}
 
 @Component({
   selector: 'app-error-dialog',
@@ -9,11 +15,11 @@ import { ErrorDialogData } from 'src/app/services/error-dialog.service';
 })
 export class ErrorDialogComponent {
   constructor(
-    public dialogRef: MatDialogRef<ErrorDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: ErrorDialogData
+    @Inject(POLYMORPHEUS_CONTEXT)
+    public context: TuiDialogContext<void, ErrorDialogData>
   ) {}
 
   close(): void {
-    this.dialogRef.close();
+    this.context.completeWith();
   }
 } 

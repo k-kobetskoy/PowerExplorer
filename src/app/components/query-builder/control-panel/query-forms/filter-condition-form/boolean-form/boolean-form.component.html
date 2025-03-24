@@ -1,41 +1,46 @@
 <div class="form-container">
-    <mat-form-field class="form-field">
-      <mat-label>Operator</mat-label>
-      <mat-select [formControl]="operatorFormControl">
-        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
-          <div class="option-content">
-            <span>{{option.name}}</span>
-          </div>
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <tui-select
+        [formControl]="operatorFormControl"
+        class="tui-form__row">
+        Operator
+        <tui-data-list-wrapper
+            *tuiDataList
+            [items]="filterOperators">
+            <ng-template let-item>
+                <div class="option-content">
+                    <span>{{item.name}}</span>
+                </div>
+            </ng-template>
+        </tui-data-list-wrapper>
+    </tui-select>
 
     <ng-container *ngIf="!(showMultiValueInput$ | async)">
-    <mat-form-field class="form-field">
-      <mat-label>Value</mat-label>
-      <mat-select [formControl]="valueFormControl">  
-        <ng-container *ngIf="booleanOptions$ | async as booleanOptions">
-          <mat-option [value]="booleanOptions.true.value">
-            <div class="option-content">
-              <span>{{booleanOptions.true.label}} ({{booleanOptions.true.value}})</span>
-            </div>
-          </mat-option>
-          <mat-option [value]="booleanOptions.false.value">
-            <div class="option-content">
-              <span>{{booleanOptions.false.label}} ({{booleanOptions.false.value}})</span>
-            </div>
-          </mat-option>
-        </ng-container>
-      </mat-select>
-      <app-loading-indicator matSuffix [diameter]="20" loadingKey="booleanOptions"></app-loading-indicator>
-    </mat-form-field>
-  </ng-container>
+        <tui-select
+            [formControl]="valueFormControl"
+            class="tui-form__row">
+            Value
+            <tui-data-list-wrapper
+                *tuiDataList
+                [items]="(booleanOptions$ | async) ? [
+                    (booleanOptions$ | async)?.true,
+                    (booleanOptions$ | async)?.false
+                ] : []">
+                <ng-template let-item>
+                    <div class="option-content">
+                        <span>{{item.label}} ({{item.value}})</span>
+                    </div>
+                </ng-template>
+            </tui-data-list-wrapper>
+        </tui-select>
+        <div class="tui-form__row">
+            <app-loading-indicator [diameter]="20" loadingKey="booleanOptions"></app-loading-indicator>
+        </div>
+    </ng-container>
   
-  <app-multi-value-form 
-      *ngIf="showMultiValueInput$ | async"
-      [selectedNode]="selectedNode"
-      [attributeValue]="attributeValue"
-      [hideOperator]="true">
-  </app-multi-value-form>
-  
+    <app-multi-value-form 
+        *ngIf="showMultiValueInput$ | async"
+        [selectedNode]="selectedNode"
+        [attributeValue]="attributeValue"
+        [hideOperator]="true">
+    </app-multi-value-form>
 </div>
