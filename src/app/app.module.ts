@@ -17,13 +17,10 @@ import { ControlPanelComponent } from './components/query-builder/control-panel/
 import { CodeEditorComponent } from './components/query-builder/code-editor/code-editor.component';
 import { CodeEditorFooterComponent } from './components/query-builder/code-editor-footer/code-editor-footer.component';
 import { NodeStyleDirective } from './directives/node-style.directive';
-import { QuickActionsComponent } from './components/query-builder/control-panel/query-forms/quick-actions/quick-actions.component';
 import { LoadingIndicatorComponent } from './components/loading-indicator/loading-indicator.component';
 import { EntityFormComponent } from './components/query-builder/control-panel/query-forms/entity-form/entity-form.component';
-import { RootFormComponent } from './components/query-builder/control-panel/query-forms/root-form/root-form.component';
 import { AttributeFormComponent } from './components/query-builder/control-panel/query-forms/attribute-form/attribute-form.component';
 import { FilterFormComponent } from './components/query-builder/control-panel/query-forms/filter-form/filter-form.component';
-import { FilterConditionFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/filter-condition-form.component';
 import { NumberFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/number-form/number-form.component';
 import { BooleanFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/boolean-form/boolean-form.component';
 import { DateTimeFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/date-time-form/date-time-form.component';
@@ -31,13 +28,18 @@ import { IdFormComponent } from './components/query-builder/control-panel/query-
 import { PicklistFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/picklist-form/picklist-form.component';
 import { StringFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/string-form/string-form.component';
 import { LinkEntityFormComponent } from './components/query-builder/control-panel/query-forms/link-entity-form/link-entity-form.component';
-import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
 import { ValueFormComponent } from './components/query-builder/control-panel/query-forms/value-form/value-form.component';
 import { QueryTreeButtonBlockComponent } from './components/query-builder/query-tree-button-block/query-tree-button-block.component';
 import { ValidationService } from './components/query-builder/services/validation.service';
 import { ErrorDialogComponent } from './components/error-dialog/error-dialog.component';
 import { SvgIconsModule } from './components/svg-icons/svg-icons.module';
 import { SettingsComponent } from './components/toolbar/settings/settings.component';
+
+
+// Standalone components
+import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
+import { QuickActionsComponent } from './components/query-builder/control-panel/query-forms/quick-actions/quick-actions.component';
+import { RootFormComponent } from './components/query-builder/control-panel/query-forms/root-form/root-form.component';
 
 import { MsalRedirectComponent } from '@azure/msal-angular';
 import { MsalConfigDynamicModule } from './msal-config-dynamic.module';
@@ -49,6 +51,7 @@ import { ResultTableComponent } from './components/query-builder/result-table/re
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
 import { MultiValueFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/multi-value-form/multi-value-form.component';
 import { StatusFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/status-form/status-form.component';
+import { FilterConditionFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/filter-condition-form.component';
 
 // Taiga UI imports - using NO_ERRORS_SCHEMA to handle unknown elements
 import { NgDompurifySanitizer } from '@tinkoff/ng-dompurify';
@@ -89,28 +92,14 @@ export function iconResolver(): TuiStringHandler<string> {
     MenuComponent,
     UserInfoComponent,
     ConnectionsDialogComponent,
-    ControlPanelComponent,
-    TreePanelComponent,
-    CodeEditorComponent,
-    CodeEditorFooterComponent,
     NodeStyleDirective,
-    QuickActionsComponent,
     LoadingIndicatorComponent,
-    EntityFormComponent,
-    RootFormComponent,
-    AttributeFormComponent,
-    FilterFormComponent,
-    FilterConditionFormComponent,
     NumberFormComponent,
     BooleanFormComponent,
     DateTimeFormComponent,
     IdFormComponent,
     PicklistFormComponent,
     StringFormComponent,
-    LinkEntityFormComponent,
-    OrderFormComponent,
-    ValueFormComponent,
-    ResultTableComponent,
     MultiValueFormComponent,
     StatusFormComponent,
     SettingsComponent,
@@ -130,8 +119,22 @@ export function iconResolver(): TuiStringHandler<string> {
     PolymorpheusModule,
     TuiIcon,
     TuiIconPipe,
-    QueryTreeButtonBlockComponent, // Import the standalone component
-    ErrorDialogComponent // Import standalone ErrorDialogComponent
+    QueryTreeButtonBlockComponent, // Standalone component
+    ErrorDialogComponent, // Standalone ErrorDialogComponent
+    QueryBuilder, // Standalone QueryBuilder component
+    CodeEditorComponent, // Standalone CodeEditorComponent
+    TreePanelComponent, // Standalone TreePanelComponent
+    ControlPanelComponent, // Standalone ControlPanelComponent
+    ResultTableComponent, // Standalone component
+    AttributeFormComponent, // Standalone component
+    EntityFormComponent, // Standalone component
+    FilterConditionFormComponent, // Standalone component
+    FilterFormComponent, // Standalone component
+    LinkEntityFormComponent, // Standalone component
+    OrderFormComponent, // Standalone component
+    QuickActionsComponent, // Standalone component
+    RootFormComponent, // Standalone component
+    ValueFormComponent, // Standalone component
   ], 
   schemas: [NO_ERRORS_SCHEMA], // Using NO_ERRORS_SCHEMA to handle unknown elements
   providers: [

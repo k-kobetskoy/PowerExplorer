@@ -3,10 +3,13 @@ import { NavigationService } from 'src/app/services/navigation.service';
 import { CommonModule } from '@angular/common';
 import { AngularSplitModule } from 'angular-split';
 import { QueryTreeButtonBlockComponent } from './query-tree-button-block/query-tree-button-block.component';
-import { TuiStringHandler } from '@taiga-ui/cdk';
 import { TUI_ICON_RESOLVER, TuiIcon } from '@taiga-ui/core';
 import { iconResolver } from '../../app.module';
-
+import { CodeEditorComponent } from './code-editor/code-editor.component';
+import { TreePanelComponent } from './tree-panel/tree-panel.component';
+import { ControlPanelComponent } from './control-panel/control-panel.component';
+import {TuiSwitch} from '@taiga-ui/kit';
+import { ResultTableComponent } from './result-table/result-table.component';
 export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
 
 @Component({
@@ -19,7 +22,11 @@ export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
     CommonModule,
     AngularSplitModule,
     QueryTreeButtonBlockComponent,
-    TuiIcon
+    TuiIcon,
+    CodeEditorComponent,
+    TreePanelComponent,
+    ControlPanelComponent,
+    TuiSwitch
   ],
   schemas: [NO_ERRORS_SCHEMA],
   providers: [
@@ -33,7 +40,8 @@ export class QueryBuilder implements OnInit {
   
   selectedTabIndex = 0;
   
-  @ViewChild('resultTable') resultTable: any;
+  @ViewChild('resultTable') resultTable: ResultTableComponent;
+  @ViewChild('codeEditor') codeEditor: CodeEditorComponent;
 
   constructor(private navigationService: NavigationService) { }
 
@@ -42,16 +50,6 @@ export class QueryBuilder implements OnInit {
   }
 
   toggleTab() {
-    // Toggle between XML (0) and Result (1) tabs
     this.selectedTabIndex = this.selectedTabIndex === 0 ? 1 : 0;
-  }
-
-  parseXml(xml: string) {
-    // this.xmlParseService.parse(xml);    
-  }
-
-  validateXml(xml: string) {
-    // let validationResult =this.xmlParseService.validate(xml);
-    // console.log(validationResult);
   }
 }

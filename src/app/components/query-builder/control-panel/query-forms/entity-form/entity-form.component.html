@@ -1,18 +1,39 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
-<form [formGroup]="entityForm">
-    <div class="form-field">
-        <label for="entity-name">Name</label>
-        <select id="entity-name" [formControl]="getFormControl(nameInputName)" class="form-control">
-            <option value="">Select entity</option>
-            <option *ngFor="let entity of filteredEntities$ | async" 
-                [value]="entity.logicalName">
-                {{entity.logicalName}} {{entity.displayName}}
-            </option>
-        </select>
-    </div>
-    
-    <div class="tui-form__row">
-        <app-loading-indicator [diameter]="20"></app-loading-indicator>
-    </div>
-</form>
+<div class="form-container" *ngIf="entityForm">
+    <form [formGroup]="entityForm">
+        <div class="form-field entity-search">
+            <label for="entity-name">Select entity</label>
+            <tui-input 
+                formControlName="name"
+                [tuiTextfieldCleaner]="true">
+                Entity
+                <input 
+                    tuiTextfield
+                    (focus)="onInputFocus()" 
+                    (blur)="onInputBlur()"
+                    placeholder="Search for an entity...">
+            </tui-input>
+
+            <!-- Entity dropdown results -->
+            <div *ngIf="showResults" class="entity-results">
+                <!-- Loading indicator -->
+                <div *ngIf="isLoading" class="loading-indicator">
+                    Loading entities...
+                </div>
+
+                <!-- No results message -->
+                <div *ngIf="(filteredEntities$ | async)?.length === 0 && !isLoading" class="no-results">
+                    No entities found
+                </div>
+                
+                <!-- Entity list -->
+                <div *ngFor="let entity of filteredEntities$ | async" class="entity-item"
+                    (mousedown)="selectEntity(entity)">
+                    <div class="entity-name">{{ entity.logicalName }}</div>
+                    <div class="entity-display-name">{{ entity.displayName }}</div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -18,22 +18,30 @@
     <!-- Right panel -->
     <as-split-area order="2" class="right-panel">
 
-        <div class="code-editor-toolbar">
-          <div class="toggle-wrapper">
-            <div class="toggle-button">
-              <div class="toggle-slider" [class.slide-right]="selectedTabIndex === 1"></div>
-              <div class="toggle-options">
-                <div class="option" [class.active]="selectedTabIndex === 0" (click)="selectedTabIndex = 0">Xml</div>
-                <div class="option" [class.active]="selectedTabIndex === 1" (click)="selectedTabIndex = 1">Result</div>
-              </div>
+      <div class="code-editor-toolbar">
+        <div class="toggle-wrapper">
+          <div class="toggle-button">
+            <div class="toggle-slider" [class.slide-right]="selectedTabIndex === 1"></div>
+            <div class="toggle-options">
+              <div class="option" [class.active]="selectedTabIndex === 0" (click)="selectedTabIndex = 0">Xml</div>
+              <div class="option" [class.active]="selectedTabIndex === 1" (click)="selectedTabIndex = 1">Result</div>
             </div>
           </div>
-          <button class="custom-default-button">
-            <tui-icon icon="@tui.parse" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
-            <span class="custom-button-text">Parse</span>
-          </button>
         </div>
+        <button *ngIf="selectedTabIndex === 0" class="custom-default-button" (click)="codeEditor.parseXml()">
+          <tui-icon icon="@tui.parse" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
+          <span class="custom-button-text">Parse</span>
+        </button>
         
+        <div *ngIf="selectedTabIndex === 1" class="switch-wrapper">
+          
+          <span class="switch-label">Show Display Values</span>
+          <input tuiSwitch type="checkbox" [ngModel]="true"/>
+        </div>
+
+
+      </div>
+
 
       <div class="tab-content">
         <div *ngIf="selectedTabIndex === 0" class="fetch-xml-content">

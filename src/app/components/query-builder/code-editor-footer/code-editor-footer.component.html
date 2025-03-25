@@ -1,4 +1,8 @@
 <div class="code-editor-footer-content">
-    <button mat-flat-button color="primary" (click)="onParse.emit()">Parse</button>
-    <button mat-flat-button color="primary" (click)="onValidate.emit()">Validate</button>
+    <button class="custom-default-button" (click)="onParse.emit()">
+        <span class="custom-button-text">Parse</span>
+    </button>
+    <button class="custom-default-button" (click)="onValidate.emit()">
+        <span class="custom-button-text">Validate</span>
+    </button>
 </div>

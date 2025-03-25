@@ -3,7 +3,7 @@
 <div class="form-container">
     <tui-combo-box
         [formControl]="attributeFormControl"
-        class="tui-form__row">
+        class="form-field">
         Attribute
         <tui-data-list-wrapper
             *tuiDataList
@@ -16,11 +16,11 @@
             </ng-template>
         </tui-data-list-wrapper>
     </tui-combo-box>
-    <div class="tui-form__row">
+    <div class="loading-container">
         <app-loading-indicator [diameter]="20" loadingKey="attribute"></app-loading-indicator>
     </div>
 
-    <tui-checkbox [formControl]="descendingFormControl">
+    <tui-checkbox-block [formControl]="descendingFormControl">
         Descending Order
-    </tui-checkbox>
+    </tui-checkbox-block>
 </div>

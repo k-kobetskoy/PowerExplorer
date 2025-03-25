@@ -1,12 +1,14 @@
 <div class="form-container">
-  <mat-form-field class="form-field">
-    <mat-label>Value</mat-label>
-    <input matInput
-           type="text"
-           [formControl]="valueFormControl"
-           placeholder="Enter value">
-    <mat-hint class="hint-text">
+  <div class="form-field">
+    <label for="value">Value</label>
+    <tui-input
+      id="value"
+      [formControl]="valueFormControl"
+      tuiTextfieldSize="m">
+      Value
+    </tui-input>
+    <div class="hint-text">
       Value content for the XML node
-    </mat-hint>
-  </mat-form-field>
+    </div>
+  </div>
 </div> 

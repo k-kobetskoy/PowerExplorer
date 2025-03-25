@@ -1,13 +1,19 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../models/constants/ui/filter-static-data';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
+
 @Component({
+  standalone: true,
   selector: 'app-filter-form',
   templateUrl: './filter-form.component.html',
   styles: [`
@@ -28,7 +34,19 @@ import { AttributeData } from '../../../models/constants/attribute-data';
       margin-top: 0.5rem;
     }
   `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule
+  ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
+  ]
 })
 export class FilterFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
@@ -110,8 +128,8 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
     }
   }
 
-ngOnDestroy() {
-  this.destroy$.next();
-  this.destroy$.complete();
-}
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 }

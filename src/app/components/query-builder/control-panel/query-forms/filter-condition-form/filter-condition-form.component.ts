@@ -1,5 +1,6 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil, BehaviorSubject, catchError, debounceTime, filter } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
@@ -9,11 +10,37 @@ import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { BaseFormComponent } from '../base-form.component';
 
+// Import other form components for completeness (they will be handled by schemas)
+import { NumberFormComponent } from './number-form/number-form.component';
+import { BooleanFormComponent } from './boolean-form/boolean-form.component';
+import { DateTimeFormComponent } from './date-time-form/date-time-form.component';
+import { IdFormComponent } from './id-form/id-form.component';
+import { PicklistFormComponent } from './picklist-form/picklist-form.component';
+import { StringFormComponent } from './string-form/string-form.component';
+import { StatusFormComponent } from './status-form/status-form.component';
+
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
+
 @Component({
+  standalone: true,
   selector: 'app-filter-condition-form',
   templateUrl: './filter-condition-form.component.html',
   styleUrls: ['./filter-condition-form.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule
+  ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
+  ]
 })
 export class FilterConditionFormComponent extends BaseFormComponent implements OnInit, OnChanges, OnDestroy {
   private _destroy$ = new Subject<void>();

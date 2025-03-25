@@ -1,17 +1,21 @@
 /* tslint:disable:no-unused-variable */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { waitForAsync, ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 
 import { CodeEditorFooterComponent } from './code-editor-footer.component';
+import { MatButtonModule } from '@angular/material/button';
 
 describe('RightPanelFooterComponent', () => {
   let component: CodeEditorFooterComponent;
   let fixture: ComponentFixture<CodeEditorFooterComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ CodeEditorFooterComponent ]
+      imports: [ 
+        CodeEditorFooterComponent,
+        MatButtonModule
+      ]
     })
     .compileComponents();
   }));

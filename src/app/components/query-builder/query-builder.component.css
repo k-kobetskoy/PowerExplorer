@@ -280,3 +280,15 @@ as-split[direction="vertical"] > as-split-area {
   flex-direction: column;
   min-height: 0;
 }
+
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.switch-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555969;
+}

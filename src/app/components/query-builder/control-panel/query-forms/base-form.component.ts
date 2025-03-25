@@ -3,7 +3,11 @@ import { IAttributeData } from '../../models/constants/attribute-data';
 import { NodeAttribute } from '../../models/node-attribute';
 import { QueryNode } from '../../models/query-node';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
-@Component({ template: '' })
+
+@Component({ 
+    template: '',
+    standalone: true
+})
 export class BaseFormComponent {
     
     protected getAttribute(attributeData: IAttributeData, selectedNode: QueryNode): NodeAttribute | undefined {

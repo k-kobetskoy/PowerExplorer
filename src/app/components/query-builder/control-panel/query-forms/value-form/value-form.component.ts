@@ -1,12 +1,18 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { QueryNode } from '../../../models/query-node';
 import { BaseFormComponent } from '../base-form.component';
 
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
+
 @Component({
+  standalone: true,
   selector: 'app-value-form',
   templateUrl: './value-form.component.html',
   styles: [`
@@ -26,7 +32,20 @@ import { BaseFormComponent } from '../base-form.component';
       color: rgba(0, 0, 0, 0.6);
       margin-top: 4px;
     }
-  `]
+  `],
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule
+  ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
+  ]
 })
 export class ValueFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   protected destroy$ = new Subject<void>();

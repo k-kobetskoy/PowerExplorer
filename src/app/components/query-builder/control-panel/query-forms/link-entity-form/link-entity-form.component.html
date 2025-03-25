@@ -2,15 +2,15 @@
 
 <div class="form-container">
     <div class="form-row">
-        <tui-checkbox formControlName="fetchAllEntities">
+        <tui-checkbox-block [formControl]="fetchAllEntitiesFormControl">
             Fetch all entities
-        </tui-checkbox>
+        </tui-checkbox-block>
     </div>
 
     <div class="form-section">
         <tui-combo-box
             *ngIf="fetchAllEntities$ | async"
-            formControlName="entity">
+            [formControl]="entityNameFormControl">
             Entity
             <tui-data-list-wrapper
                 *tuiDataList
@@ -23,7 +23,7 @@
 
         <tui-combo-box
             *ngIf="!(fetchAllEntities$ | async)"
-            formControlName="linkEntity">
+            [formControl]="linkEntityFormControl">
             Link Entity
             <tui-data-list-wrapper
                 *tuiDataList
@@ -35,7 +35,7 @@
         </tui-combo-box>
 
         <tui-combo-box
-            formControlName="fromAttribute">
+            [formControl]="fromAttributeFormControl">
             From Attribute
             <tui-data-list-wrapper
                 *tuiDataList
@@ -47,7 +47,7 @@
         </tui-combo-box>
 
         <tui-combo-box
-            formControlName="toAttribute">
+            [formControl]="toAttributeFormControl">
             To Attribute
             <tui-data-list-wrapper
                 *tuiDataList
@@ -59,7 +59,7 @@
         </tui-combo-box>
 
         <tui-select
-            formControlName="linkType">
+            [formControl]="linkTypeFormControl">
             Link Type
             <tui-data-list-wrapper
                 *tuiDataList
@@ -71,19 +71,18 @@
         </tui-select>
 
         <tui-input
-            formControlName="alias">
+            [formControl]="aliasFormControl">
             Alias
         </tui-input>
     </div>
 </div>
 
 <div class="checkbox-group">
-    <mat-checkbox [formControl]="intersectFormControl">
+    <tui-checkbox-block [formControl]="intersectFormControl">
         Intersect
-    </mat-checkbox>
+    </tui-checkbox-block>
 
-    <mat-checkbox [formControl]="visibleFormControl">
+    <tui-checkbox-block [formControl]="visibleFormControl">
         Visible
-    </mat-checkbox>
-
+    </tui-checkbox-block>
 </div>

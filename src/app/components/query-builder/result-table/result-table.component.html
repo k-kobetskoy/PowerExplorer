@@ -3,25 +3,40 @@
   <div class="table-controls">
     <div class="format-toggle-container">
       <span class="toggle-label">{{ showFormattedValues ? 'Formatted Display' : 'Technical Values' }}</span>
-      <mat-slide-toggle 
-        [checked]="showFormattedValues"
-        (change)="toggleValueFormat()"
-        color="primary"
-        class="format-toggle">
-      </mat-slide-toggle>
+      <button 
+        tuiButton
+        type="button"
+        appearance="flat"
+        class="toggle-button"
+        (click)="toggleValueFormat()">
+        <span class="toggle-text">{{ showFormattedValues ? 'Switch to Technical Values' : 'Switch to Formatted Display' }}</span>
+      </button>
     </div>
   </div>
 
   <app-loading-indicator [diameter]="20"></app-loading-indicator>
 
   <div class="table-container">
-    <table mat-table [dataSource]="data" class="mat-elevation-z0 full-size-table">
-
-      <ng-container *ngFor="let column of displayedColumns" [matColumnDef]="column">
-        <th mat-header-cell *matHeaderCellDef> {{getColumnDisplayName(column)}} </th>
-        <td mat-cell *matCellDef="let element" (click)="selectCell(element, cell)" 
-            [class.selected]="selectedOverflowCell === element" 
-            [class.has-formatted-value]="hasFormattedValue(element, column)" 
+    <table class="tui-table full-size-table">
+      <thead>
+        <tr class="tui-table__tr">
+          <th *ngFor="let column of displayedColumns" class="tui-table__th">
+            {{getColumnDisplayName(column)}}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr 
+          *ngFor="let element of data"
+          class="tui-table__tr"
+          (click)="selectRow(element)"
+          [class.selected]="selectedRow === element">
+          <td 
+            *ngFor="let column of displayedColumns"
+            class="tui-table__td"
+            (click)="selectCell(element, $event)"
+            [class.selected]="selectedOverflowCell === element"
+            [class.has-formatted-value]="hasFormattedValue(element, column)"
             [ngClass]="{ 
               'null-value': (element[column] === null || element[column] === undefined) && column !== '__entity_url',
               'number-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'number-cell',
@@ -32,37 +47,35 @@
               'picklist-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'picklist-cell',
               'text-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'text-cell',
               'link-cell': column === '__entity_url' || (column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'link-cell')
-            }" #cell>
-          
-          <!-- Special rendering for dynamic links in either view -->
-          <ng-container *ngIf="column === '__entity_url'; else normalCell">
-            <a *ngIf="element[column]?.url" [href]="element[column].url" target="_blank" rel="noopener" 
-              class="dynamics-link" title="Open record in Dynamics">
-              🔗
-            </a>
-            <span *ngIf="!element[column]?.url" class="null-value">null</span>
-          </ng-container>
-          
-          <!-- Regular cell rendering -->
-          <ng-template #normalCell>
-            <ng-container *ngIf="getFieldType(column) === 'dynamicslink' && element[column] && element[column].url; else defaultCell">
-              <a [href]="element[column].url" target="_blank" rel="noopener" 
-                [ngClass]="{'dynamics-link': true, 'raw-link': element[column].isRawView}">
-                {{element[column].text || '🔗'}}
+            }">
+            
+            <!-- Special rendering for dynamic links in either view -->
+            <ng-container *ngIf="column === '__entity_url'; else normalCell">
+              <a *ngIf="element[column]?.url" [href]="element[column].url" target="_blank" rel="noopener" 
+                class="dynamics-link" title="Open record in Dynamics">
+                <tui-icon icon="@tui.external" [style.font-size.rem]="1"></tui-icon>
               </a>
+              <span *ngIf="!element[column]?.url" class="null-value">null</span>
             </ng-container>
             
-            <!-- Default cell rendering -->
-            <ng-template #defaultCell>
-              {{formatCellValue(element[column])}}
+            <!-- Regular cell rendering -->
+            <ng-template #normalCell>
+              <ng-container *ngIf="getFieldType(column) === 'dynamicslink' && element[column] && element[column].url; else defaultCell">
+                <a [href]="element[column].url" target="_blank" rel="noopener" 
+                  [ngClass]="{'dynamics-link': true, 'raw-link': element[column].isRawView}">
+                  {{element[column].text || ''}}
+                  <tui-icon icon="@tui.external" [style.font-size.rem]="0.8"></tui-icon>
+                </a>
+              </ng-container>
+              
+              <!-- Default cell rendering -->
+              <ng-template #defaultCell>
+                {{formatCellValue(element[column])}}
+              </ng-template>
             </ng-template>
-          </ng-template>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;" (click)="selectRow(row)"
-        [class.selected]="selectedRow === row"></tr>
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </ng-container>

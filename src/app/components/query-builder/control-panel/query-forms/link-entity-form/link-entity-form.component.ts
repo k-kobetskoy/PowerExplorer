@@ -1,6 +1,7 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest, of, shareReplay, tap } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, catchError, take } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
@@ -14,10 +15,15 @@ import { AttributeNames } from '../../../models/constants/attribute-names';
 import { LinkEntityService } from '../../../services/entity-services/link-entity.service';
 import { LinkEntityResponseModel, RelationshipModel, RelationshipType } from 'src/app/models/incoming/link/link-entity-response-model';
 
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
+
 // Interface for relation object to improve type safety
 interface RelationObject extends RelationshipModel { }
 
 @Component({
+  standalone: true,
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',
   styles: [`
@@ -80,7 +86,19 @@ interface RelationObject extends RelationshipModel { }
       border-left: 4px solid #17a2b8;
     }
   `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule
+  ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
+  ]
 })
 export class LinkEntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   @Input() selectedNode: QueryNode;

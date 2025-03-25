@@ -1,6 +1,7 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest, of } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, take, catchError, shareReplay } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -9,7 +10,12 @@ import { QueryNode } from '../../../models/query-node';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeData } from '../../../models/constants/attribute-data';
 
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
+
 @Component({
+  standalone: true,
   selector: 'app-order-form',
   templateUrl: './order-form.component.html',
   styles: [`
@@ -17,10 +23,17 @@ import { AttributeData } from '../../../models/constants/attribute-data';
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      padding: 1rem;
     }
 
     .form-field {
       width: 100%;
+    }
+
+    .loading-container {
+      display: flex;
+      justify-content: center;
+      margin: 0.5rem 0;
     }
 
     .option-content {
@@ -38,7 +51,19 @@ import { AttributeData } from '../../../models/constants/attribute-data';
       color: rgba(0, 0, 0, 0.6);
     }
   `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule
+  ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
+  ]
 })
 export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();

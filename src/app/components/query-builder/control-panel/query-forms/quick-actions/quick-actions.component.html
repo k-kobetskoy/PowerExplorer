@@ -1,10 +1,8 @@
 <div class="node-editor-container">
   <div class="tree-actions">
-    <button mat-flat-button color="primary" (click)="deleteNode()">Delete</button>
+    <button tuiButton appearance="accent" size="s" (click)="deleteNode()">Delete</button>
   </div>
   <div class="quick-actions">
-    <button mat-flat-button *ngFor="let nodeName of getNodeActions()" (click)="addNode(nodeName)">{{nodeName}}</button>
+    <button tuiButton appearance="flat" size="s" *ngFor="let nodeName of getNodeActions()" (click)="addNode(nodeName)">{{nodeName}}</button>
   </div>
-
-
 </div>

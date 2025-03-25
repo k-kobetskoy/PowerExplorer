@@ -1,15 +1,84 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, OnChanges, SimpleChanges, Input, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { Subject, takeUntil, debounceTime, Observable, shareReplay, startWith, filter } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Subject, takeUntil, filter } from 'rxjs';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
 
 @Component({
+    standalone: true,
     selector: 'app-root-form',
     templateUrl: './root-form.component.html',
-    styleUrls: ['./root-form.component.css'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styles: [`
+        .form-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .form-field {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 0.5rem;
+            width: 1.2rem;
+            height: 1.2rem;
+        }
+
+        .checkbox-item label {
+            font-weight: normal;
+        }
+    `],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        QuickActionsComponent
+    ],
+    schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+    providers: [
+        {
+            provide: TUI_ICON_RESOLVER,
+            useFactory: iconResolver
+        }
+    ]
 })
 export class RootFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
     private destroy$ = new Subject<void>();
@@ -41,8 +110,6 @@ export class RootFormComponent extends BaseFormComponent implements OnInit, OnDe
 
     private initializeForm() {
         this.setInputInitialValues();
-
-        // Form input -> Model
         this.setupFormToModelBindings();
     }
 
@@ -158,7 +225,6 @@ export class RootFormComponent extends BaseFormComponent implements OnInit, OnDe
             this.updateAttribute(AttributeData.Root.DataSource, this.selectedNode, value);
         });
     }
-
 
     ngOnDestroy() {
         this.destroy$.next();

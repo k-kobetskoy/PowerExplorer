@@ -1,5 +1,11 @@
 app-tree-panel {
+  margin-top: 10px;
   height: 100%;
+
+  /* &:hover {
+    background-color: #EFF0F3;
+    border-radius: 10px;
+  } */
 }
 
 app-tree-panel .tree-container {
@@ -7,7 +13,7 @@ app-tree-panel .tree-container {
   flex-direction: column;
 }
 
-app-tree-panel .tree{
+app-tree-panel .tree {
   display: flex;
   height: 100%;
   flex-direction: column;
@@ -17,8 +23,8 @@ app-tree-panel .tree{
 app-tree-panel .button-block {
   display: flex;
   height: 40px;
-  background-color: #e9e9e9;
-} 
+
+}
 
 app-tree-panel .tree-node {
   display: flex;
@@ -29,50 +35,41 @@ app-tree-panel .node-element-select-area {
   cursor: pointer;
   display: flex;
   align-items: center;
-  flex:1;
+  flex: 1;
+  border-radius: 4px;
+  position: relative;
+
+  &:hover {
+    background-color: #d1d3e0;
+  }
+
+  &:active {
+    background-color: #AAAEC2 !important;
+    transform: scale(0.997);
+  }
 }
 
 app-tree-panel .active {
-  background-color: rgb(0, 153, 255) !important;
+  background-color: #AAAEC2 !important;
 }
 
 app-tree-panel .active>p {
   color: white;
 }
 
-app-tree-panel .inactive {
-  background-color: rgb(255, 255, 255);
-}
-
-app-tree-panel .validationError {
-  color: #f44336;
-  font-weight: bold;
-  margin-left: 5px;
-  font-size: 16px;
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  line-height: 20px;
-  text-align: center;
-  border-radius: 50%;
-  background-color: rgba(244, 67, 54, 0.2);
-  position: relative;
-  top: 2px;
-}
-
-/* Debugging helpers */
 
 app-tree-panel p {
   display: flex;
   flex: 1;
   padding-top: 2px;
   padding-bottom: 2px;
+  padding-left: 6px;
 }
 
 app-tree-panel a {
   display: flex;
   align-items: center;
-  
+
   width: 16px;
   height: 16px;
   padding-top: 2px;
@@ -82,10 +79,35 @@ app-tree-panel a {
 
 app-tree-panel .tree-element-icon {
   display: flex;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   overflow: visible;
   font-size: medium;
+  margin-left: 2px;
+}
+
+app-tree-panel .warning-icon {
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+  margin-right: 4px;
+  margin-left: auto;
+  display: flex;
+}
+
+app-tree-panel .validationError {
+  color: #f44336;
+  font-weight: bold;
+  margin-right: 4px;
+  margin-left: auto;
+  font-size: 16px;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 50%;
+  background-color: rgba(244, 67, 54, 0.2);
 }
 
 app-tree-panel .parent-node-element {
@@ -93,29 +115,16 @@ app-tree-panel .parent-node-element {
   padding-bottom: 3px;
 }
 
-app-tree-panel .arrow-icon {
-  display: flex;
-  flex:1;
-  color: rgb(131, 131, 131);
-  font-size: 16px;
-}
+/* Expand icon */
+app-tree-panel .expand-icon {
+  color: var(--default-text-color);
+  transition: transform 0.3s ease;
 
-app-tree-panel .mat-icon {
-  height: 16px;
-  width: 16px;
-}
+  &:hover {
+    cursor: pointer;
+  }
 
-app-tree-panel .arrow-icon:hover {
-  color: rgb(104, 104, 104);
-  cursor: pointer;
-}
-
-app-tree-panel .arrow-icon:active {
-  color: rgb(104, 104, 104);
-  cursor: pointer;
-  transform: scale(0.9);
-}
-
-app-tree-panel .node-element-select-area:hover {
-  background-color: #e6e6e6;
+  &.collapsed {
+    transform: rotate(-90deg);
+  }
 }

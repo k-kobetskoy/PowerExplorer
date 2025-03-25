@@ -1,9 +1,15 @@
-import { Component, EventEmitter, OnInit, Output, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, OnDestroy, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { catchError, of, Subscription, takeUntil, tap, Subject } from 'rxjs';
 import { XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
 import { EnvironmentEntityService } from '../services/entity-services/environment-entity.service';
+
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
 
 interface ResultData {
   header: { [key: string]: { displayName: string, logicalName: string, type: string } };
@@ -13,9 +19,23 @@ interface ResultData {
 }
 
 @Component({
+  standalone: true,
   selector: 'app-result-table',
   templateUrl: './result-table.component.html',
-  styleUrls: ['./result-table.component.css']
+  styleUrls: ['./result-table.component.css'],
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+  providers: [
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
+  ]
 })
 export class ResultTableComponent implements OnInit, OnDestroy {
 
@@ -156,7 +176,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     this.selectedRow = row;
   }
 
-  selectCell(element: Object, cell: HTMLElement) {
+  selectCell(element: Object, event: MouseEvent) {
+    const cell = event.target as HTMLElement;
     if (this.isTextHidden(cell)) {
       this.selectedOverflowCell = element;
     } else if (this.selectedOverflowCell != element) {

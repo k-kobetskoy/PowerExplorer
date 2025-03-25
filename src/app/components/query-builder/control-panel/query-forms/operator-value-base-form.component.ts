@@ -1,5 +1,6 @@
-import { Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Component, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Component, AfterViewInit, ChangeDetectionStrategy, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ViewEncapsulation } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
@@ -9,7 +10,27 @@ import { QueryNode } from '../../models/query-node';
 import { BaseFormComponent } from './base-form.component';
 import { MultiValueNodesService } from '../../services/multi-value-nodes.service';
 
-@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
+// Taiga UI imports
+import { TUI_ICON_RESOLVER } from '@taiga-ui/core';
+import { iconResolver } from 'src/app/app.module';
+
+@Component({ 
+    template: '', 
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule
+    ],
+    schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
+    providers: [
+        {
+            provide: TUI_ICON_RESOLVER,
+            useFactory: iconResolver
+        }
+    ],
+    encapsulation: ViewEncapsulation.None
+})
 export class OperatorValueBaseFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
     protected destroy$ = new Subject<void>();
     private previousAttributeValue: string;
