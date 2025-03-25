@@ -1,6 +1,6 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { Observable, Subject, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, startWith, takeUntil } from 'rxjs/operators';
@@ -23,7 +23,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     private nameAttributeData = AttributeData.Entity.Name;
 
-    private nameInputName = this.nameAttributeData.EditorName;
+    public nameInputName = 'name';
 
     constructor(private entityService: EntityEntityService, private fb: FormBuilder) { super(); }
 
@@ -42,7 +42,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
         const nameAttribute = this.getAttribute(this.nameAttributeData, this.selectedNode);
 
         this.entityForm = this.fb.group({
-            [this.nameAttributeData.EditorName]: [nameAttribute || '']
+            [this.nameInputName]: [nameAttribute || '']
         });
 
         // Form input -> model
@@ -108,6 +108,11 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
             entity.logicalName.toLowerCase().includes(filterValue) ||
             entity.displayName.toLowerCase().includes(filterValue)
         );
+    }
+
+    // Helper method to get form control
+    getFormControl(name: string): FormControl {
+        return this.entityForm.get(name) as FormControl;
     }
 
     ngOnDestroy() {

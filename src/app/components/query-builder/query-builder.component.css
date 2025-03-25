@@ -22,7 +22,6 @@
 
 /* Fix for right panel width issue */
 .right-panel {
-  width: 65% !important;
   flex: 1 1 auto !important;
   display: flex;
   flex-direction: column;
@@ -116,7 +115,6 @@ as-split[direction="horizontal"] > .as-split-gutter:hover .as-split-gutter-icon 
 app-query-tree-button-block {
   display: flex;
   height: var(--tab-bar-height);
-  background-color: #e9e9e9;
   flex-shrink: 0;
   width: 100%;
 }
@@ -131,16 +129,75 @@ app-tree-panel, app-control-panel {
   width: 100%;
 }
 
-/* Taiga UI specific styles */
-.content-tabs {
+/* Toggle AND TOOLBAR STYLING */
+
+.code-editor-toolbar {
+  display: flex;
   height: var(--tab-bar-height);
   flex-shrink: 0;
   width: 100%;
+  justify-content: space-between;
+  padding: 0px 10px 0px 15px;
 }
 
-button[tuiTab] {
-  min-width: 200px;
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-button {
+  position: relative;
+  width: 146px;
+  height: 32px;
+  background-color: #CCCFDB;
+  border-radius: 16px;
+  overflow: hidden;
+
+  &:hover {
+    background-color: #b8bbc9;
+  }
+}
+
+.toggle-slider {
+  position: absolute;
+  width: 69px; /* Exactly half of toggle width minus margins */
+  height: 28px; /* Height minus margins */
+  background-color: white;
+  border-radius: 14px; /* Slightly smaller radius for inner element */
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+  z-index: 1;
+  box-shadow: 0 0px 6px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-slider.slide-right {
+  transform: translateX(73px); /* Width of toggle option including 4px margin */
+}
+
+.toggle-options {
+  position: relative;
+  display: flex;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+}
+
+.option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   font-family: "Work Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  transition: color 0.2s ease;
+}
+
+.option.active {
+  color: #303244;
 }
 
 /* Content containers */
@@ -212,4 +269,14 @@ router-outlet + .query-builder-container {
 as-split[direction="vertical"] > as-split-area {
   min-height: 0;
   overflow: hidden;
+}
+
+.tab-content {
+  display: flex;
+  margin-top: 10px;
+  background-color: #555969;
+  border-radius: 10px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }

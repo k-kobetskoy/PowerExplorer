@@ -4,12 +4,17 @@
     justify-content: space-between;
     height: 55px;
     padding: 0 10px;
-    background-color: #c9d7d8;
   }
 
   .logo-menu {
     display: flex;
     align-items: center; 
+    cursor: pointer;
+  }
+
+  .menu-logo {
+    font-weight: 600;
+    
   }
   
   .logo {
@@ -30,15 +35,16 @@
   }
   
   .menu {
-    max-width: 400px;
-    background-color: #ffcc00; 
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--main-text-color);
+    &:hover {
+      color: var(--main-text-color-hover);
+    }
   }
   
-.center-section {
-    height: 40px;
-    width: 300px;
-    background-color: #99ccff;
-  }
   
 .toolbar-right {
   display: flex;

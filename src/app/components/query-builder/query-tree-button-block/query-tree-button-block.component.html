@@ -1,29 +1,32 @@
 <div class="button-container">
+  <div class="button-container-left">
+    <div class="custom-query-name-button">
+      <div class="button-content">
+        <form [formGroup]="testForm">
+          <tui-input-inline class="tui-button-input">
+            <input formControlName="testValue1" tuiTextfield />
+          </tui-input-inline>
+        </form>
+        <div class="query-name-gutter"></div>
+        <div class="chevron-container" (click)="toggleQueryOptions()">
+          <tui-icon icon="@tui.chevron-down" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- Custom button with inline SVG using the parameterized getIcon method -->
-  <button 
-    type="button"
-    (click)="execute()"
-    [disabled]="buttonDisabled$|async"
-    class="custom-execute-button">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 18 18" fill="white" class="button-icon">
-      <path [attr.d]="getIcon('play')"></path>
-    </svg>
-    <span class="prevent-select">Run</span>
-  </button>
+  <div class="button-container-right">
+    <button type="button" class="custom-default-button">
+      <tui-icon icon="@tui.plus" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
+    </button>
 
-  <button 
-    type="button"
-    class="custom-execute-button">
-    <tui-icon
-    icon="@tui.settings"
-    [style.font-size.rem]="4"
-    />
+    <button type="button" class="custom-default-button">
+      <tui-icon icon="@tui.download" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
+    </button>
 
-  </button>
-
-
-
-
+    <button type="button" class="custom-run-button" [disabled]="isButtonDisabled" (click)="execute()">
+      <tui-icon icon="@tui.play" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
+      <span class="custom-button-text">Run</span>
+    </button>
+  </div>
 </div>
-  

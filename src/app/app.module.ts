@@ -1,7 +1,8 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgModule, NO_ERRORS_SCHEMA } from '@angular/core';
+import { NgModule, NO_ERRORS_SCHEMA, Optional } from '@angular/core';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { CommonModule, AsyncPipe } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -49,17 +50,41 @@ import { LoadingInterceptor } from './components/loading-indicator/loading.inter
 import { MultiValueFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/multi-value-form/multi-value-form.component';
 import { StatusFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/status-form/status-form.component';
 
-// Taiga UI
-import { TuiRootModule, TuiDialogModule, TuiAlertModule, TuiButtonModule, TuiDataListModule, TuiSvgModule, TuiLoaderModule, TuiTooltipModule, TUI_SANITIZER, TUI_ICONS } from '@taiga-ui/core';
-import { TuiTabsModule, TuiInputModule, TuiCheckboxModule, TuiSelectModule, TuiToggleModule, TuiDataListWrapperModule, TuiComboBoxModule } from '@taiga-ui/kit';
+// Taiga UI imports - using NO_ERRORS_SCHEMA to handle unknown elements
 import { NgDompurifySanitizer } from '@tinkoff/ng-dompurify';
 import { PolymorpheusModule } from '@tinkoff/ng-polymorpheus';
+import { TuiIcon, TUI_ICON_RESOLVER, TuiIconPipe } from '@taiga-ui/core';
+import { TuiStringHandler } from '@taiga-ui/cdk';
+import { TuiInputInline } from '@taiga-ui/kit';
+
+// We use factory function instead of class for TuiDialogService
+export function emptyDialogServiceFactory() {
+  // Return a minimal implementation that does nothing
+  return {
+    open: () => ({ subscribe: () => {} }),
+    // Add other methods as needed
+  };
+}
+
+export function iconResolver(): TuiStringHandler<string> {
+  return (name: string): string => {       
+    if (name.startsWith('@tui.')) {
+      const iconName = name.replace('@tui.', '');
+      return `/assets/icons/${iconName}.svg`;
+    }
+    
+    if (name.startsWith('tuiIcon')) {
+      const iconName = name.replace('tuiIcon', '').toLowerCase();
+      return `/assets/icons/${iconName}.svg`;
+    }
+        return `/assets/icons/${name}.svg`;
+  };
+}
 
 @NgModule({
   declarations: [
     AppComponent,
     MainToolbarComponent,
-    QueryBuilder,
     ConnectionsComponent,
     MenuComponent,
     UserInfoComponent,
@@ -85,9 +110,7 @@ import { PolymorpheusModule } from '@tinkoff/ng-polymorpheus';
     LinkEntityFormComponent,
     OrderFormComponent,
     ValueFormComponent,
-    QueryTreeButtonBlockComponent,
     ResultTableComponent,
-    ErrorDialogComponent,
     MultiValueFormComponent,
     StatusFormComponent,
     SettingsComponent,
@@ -96,32 +119,22 @@ import { PolymorpheusModule } from '@tinkoff/ng-polymorpheus';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
+    CommonModule,
+    AsyncPipe,
     AppRoutingModule,
     AngularSplitModule,
     FormsModule,
     ReactiveFormsModule,
     MsalConfigDynamicModule.forRoot('assets/configuration.json'),
-    TuiRootModule,
-    TuiDialogModule,
-    TuiAlertModule,
-    TuiButtonModule,
-    TuiDataListModule,
-    TuiSvgModule,
-    TuiLoaderModule,
-    TuiTooltipModule,
-    TuiTabsModule,
-    TuiInputModule,
-    TuiCheckboxModule,
-    TuiSelectModule,
-    TuiToggleModule,
-    TuiDataListWrapperModule,
-    TuiComboBoxModule,
-    PolymorpheusModule,
     SvgIconsModule,
+    PolymorpheusModule,
+    TuiIcon,
+    TuiIconPipe,
+    QueryTreeButtonBlockComponent, // Import the standalone component
+    ErrorDialogComponent // Import standalone ErrorDialogComponent
   ], 
-  schemas: [NO_ERRORS_SCHEMA],
+  schemas: [NO_ERRORS_SCHEMA], // Using NO_ERRORS_SCHEMA to handle unknown elements
   providers: [
-    { provide: TUI_SANITIZER, useClass: NgDompurifySanitizer },
     { provide: ACTIVE_ENVIRONMENT_URL, useValue: new BehaviorSubject<string>('') },
     { provide: USER_IS_LOGGED_IN, useValue: new BehaviorSubject<boolean>(false) },
     provideHttpClient(withInterceptorsFromDi()),
@@ -130,7 +143,14 @@ import { PolymorpheusModule } from '@tinkoff/ng-polymorpheus';
       useClass: LoadingInterceptor,
       multi: true
     },
-    ValidationService
+    ValidationService,
+    // Use a factory function for TuiDialogService
+    { provide: 'TuiDialogService', useFactory: emptyDialogServiceFactory },
+    // Direct icon resolver with predefined SVG content
+    {
+      provide: TUI_ICON_RESOLVER,
+      useFactory: iconResolver
+    }
   ]
 })
 export class AppModule { }

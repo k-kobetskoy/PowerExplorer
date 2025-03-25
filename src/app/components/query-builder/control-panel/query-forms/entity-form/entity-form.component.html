@@ -1,17 +1,16 @@
 <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
 
 <form [formGroup]="entityForm">
-    <tui-combo-box
-        formControlName="name">
-        Name
-        <tui-data-list-wrapper
-            *tuiDataList
-            [items]="filteredEntities$ | async">
-            <ng-template let-item>
-                {{item.logicalName}} {{item.displayName}}
-            </ng-template>
-        </tui-data-list-wrapper>
-    </tui-combo-box>
+    <div class="form-field">
+        <label for="entity-name">Name</label>
+        <select id="entity-name" [formControl]="getFormControl(nameInputName)" class="form-control">
+            <option value="">Select entity</option>
+            <option *ngFor="let entity of filteredEntities$ | async" 
+                [value]="entity.logicalName">
+                {{entity.logicalName}} {{entity.displayName}}
+            </option>
+        </select>
+    </div>
     
     <div class="tui-form__row">
         <app-loading-indicator [diameter]="20"></app-loading-indicator>

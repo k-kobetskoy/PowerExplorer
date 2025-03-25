@@ -1,28 +1,34 @@
-.envName{
+.envName {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
     position: relative;
+    font-weight: 600;
+    
+    &:hover {
+        cursor: pointer;
+        color: var(--main-text-color-hover);
+        
+        p {
+            color: var(--main-text-color-hover);
+        }
+        
+        .chevron-icon {
+            color: var(--main-text-color-hover);
+        }
+    }    
 }
 
 .env-info {
     display: flex;
     flex-direction: column;
     align-items: end;
-}
-
-.env-info h3, .env-info p{
-    color: var(--main-text-color);
-    z-index:50
-}
-
-.envName:hover{
-    cursor:pointer;
-}
-
-.envName:hover h3, .envName:hover p{
-    color: var(--main-text-color-hover);
+    
+    h3, p {
+        color: var(--main-text-color);
+        z-index: 50;
+    }
 }
 
 .chevron-container {
@@ -35,8 +41,4 @@
     width: 22px;
     height: 22px;
     color: var(--main-text-color);
-}
-
-.envName:hover .chevron-icon {
-    color: var(--main-text-color-hover);
 }

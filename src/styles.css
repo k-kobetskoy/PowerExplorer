@@ -16,36 +16,41 @@
   --main-text-color-hover: #4C4E5E;
   --code-footer-height: 60px;
   --tab-bar-height: 32px;
-  
+
   /* Button Colors */
   --color-white: #FFFFFF;
   --color-dark: #303244;
-  
+
   /* Primary Button */
   --color-primary: #3B82F6;
   --color-primary-hover: #2563EB;
   --color-primary-active: #1D4ED8;
-  
+
+  /* Accent Button */
+  --color-accent: #5F4FF7;
+  --color-accent-hover: #4F41D8;
+  --color-accent-active: #3F33B8;
+
   /* Secondary Button */
   --color-secondary: #6B7280;
   --color-secondary-hover: #4B5563;
   --color-secondary-active: #374151;
-  
+
   /* Danger Button */
   --color-danger: #EF4444;
   --color-danger-hover: #DC2626;
   --color-danger-active: #B91C1C;
-  
+
   /* Success Button */
   --color-success: #10B981;
   --color-success-hover: #059669;
   --color-success-active: #047857;
-  
+
   /* Warning Button */
   --color-warning: #F59E0B;
   --color-warning-hover: #D97706;
   --color-warning-active: #B45309;
-  
+
   /* Neutral Button */
   --color-neutral: #E5E7EB;
   --color-neutral-hover: #D1D5DB;
@@ -56,10 +61,11 @@
 html,
 body {
   height: 100%;
-  overflow: hidden; /* Prevent scrolling at the root */
+  overflow: hidden;
+  /* Prevent scrolling at the root */
 }
 
-body {  
+body {
   font-family: var(--tui-font-text);
   font-weight: var(--tui-font-text-1-font-weight);
 }
@@ -84,11 +90,11 @@ body {
 
 /* Ensure router outlet doesn't take space but its child does */
 router-outlet {
-  display: none !important; 
+  display: none !important;
 }
 
 /* Direct sibling of router-outlet (Angular's component replacement) */
-router-outlet + * {
+router-outlet+* {
   display: flex !important;
   flex-direction: column !important;
   flex: 1 1 auto !important;
@@ -105,7 +111,9 @@ router-outlet + * {
   display: flex;
   flex-direction: column;
   padding: 10px;
-  gap: 10px; /* Add spacing between toolbar and content */
+  gap: 10px;
+  /* Add spacing between toolbar and content */
+  background-color: #EBECF0;
 }
 
 /* Make view-container take all available height after the toolbar */
@@ -126,7 +134,8 @@ router-outlet + * {
   flex-direction: column;
   flex: 1 1 auto;
   overflow: hidden;
-  height: calc(100vh); /* Adjust this value as needed to fit your layout */
+  height: calc(100vh);
+  /* Adjust this value as needed to fit your layout */
 }
 
 /* Typography */
@@ -146,9 +155,9 @@ h3 {
 
 /* Utility classes */
 .prevent-select {
-  -webkit-user-select: none;   
+  -webkit-user-select: none;
   user-select: none;
-} 
+}
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
@@ -161,11 +170,11 @@ h3 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(214, 214, 214); 
+  background: rgb(214, 214, 214);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(167, 167, 167); 
+  background: rgb(167, 167, 167);
 }
 
 /* Monospace text styles */
@@ -198,7 +207,8 @@ h3 {
 .validation-error-tooltip {
   color: white !important;
   font-weight: 500 !important;
-  white-space: pre-line !important; /* Respect new lines in error messages */
+  white-space: pre-line !important;
+  /* Respect new lines in error messages */
   max-width: 300px !important;
   margin: 4px !important;
   padding: 8px 12px !important;
@@ -209,8 +219,46 @@ h3 {
   background-color: var(--color-primary) !important;
 }
 
-.t-root-content{
+.t-root-content {
   background-color: #EBECF0;
+}
+
+
+.custom-default-button {
+  margin-left: 10px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 8px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-primary-hover); /* Slightly darker */
+    transition: background-color 0.2s ease;
+  }
+
+  &:active {
+    background-color: var(--color-primary-active); /* Even darker */
+    transform: translateY(0.2px); /* Slight push down effect */
+  }
+
+  &:disabled {
+    background-color: var(--color-neutral);
+    cursor: not-allowed;
+    pointer-events: none; /* Prevents hover effects when disabled */
+  }
+}
+
+.custom-button-text {
+  margin: 0 8px;
+}
+
+app-button, app-custom-button {
+  display: flex;
 }
 
 /* Media queries */
@@ -218,9 +266,8 @@ h3 {
   body {
     overflow-x: auto;
   }
-  
+
   .main-section {
     width: auto;
   }
 }
-

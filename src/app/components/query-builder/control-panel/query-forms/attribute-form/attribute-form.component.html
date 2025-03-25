@@ -2,29 +2,24 @@
 
 <div class="form-container">
     <form [formGroup]="attributeForm">
-        <tui-combo-box
-            formControlName="name"
-            class="tui-form__row">
-            Attribute
-            <tui-data-list-wrapper
-                *tuiDataList
-                [items]="filteredAttributes$ | async">
-                <ng-template let-item>
-                    <div class="option-content">
-                        <span class="logical-name">{{item.logicalName}}</span>
-                        <span class="display-name">{{item.displayName}}</span>
-                    </div>
-                </ng-template>
-            </tui-data-list-wrapper>
-        </tui-combo-box>
+        <div class="form-field">
+            <label for="attribute-name">Attribute</label>
+            <select id="attribute-name" [formControl]="getFormControl(nameInputName)" class="form-control">
+                <option value="">Select attribute</option>
+                <option *ngFor="let attribute of filteredAttributes$ | async" 
+                    [value]="attribute.logicalName">
+                    {{attribute.logicalName}} {{attribute.displayName}}
+                </option>
+            </select>
+        </div>
+        
         <div class="tui-form__row">
             <app-loading-indicator [diameter]="20"></app-loading-indicator>
         </div>
 
-        <tui-input
-            formControlName="alias"
-            class="tui-form__row">
-            Alias
-        </tui-input>
+        <div class="form-field">
+            <label for="attribute-alias">Alias</label>
+            <input id="attribute-alias" type="text" [formControl]="getFormControl(aliasInputName)" class="form-control">
+        </div>
     </form>
 </div>

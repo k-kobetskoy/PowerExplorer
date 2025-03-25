@@ -1,5 +1,5 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
 import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest, of, catchError, filter } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
@@ -10,37 +10,7 @@ import { QueryNode } from '../../../models/query-node';
 @Component({
   selector: 'app-attribute-form',
   templateUrl: './attribute-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-
-    .logical-name {
-      font-weight: 500;
-    }
-
-    .display-name {
-      font-size: 0.85em;
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    mat-option {
-      height: auto;
-      line-height: 1.2;
-    }
-  `],
+  styleUrls: ['./attribute-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 
@@ -55,8 +25,8 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   private nameAttributeData = AttributeData.Attribute.Name;
   private aliasAttributeData = AttributeData.Attribute.Alias;
 
-  private nameInputName = this.nameAttributeData.EditorName;
-  private aliasInputName = this.aliasAttributeData.EditorName;
+  public nameInputName = 'name';
+  public aliasInputName = 'alias';
 
   constructor(
     private attributeService: AttributeEntityService,
@@ -111,8 +81,8 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
 
   private setupModelToFormBindings(selectedNode: QueryNode) {
     const controlBindings = [
-      { editorName: this.nameInputName, control: this.nameInputName },
-      { editorName: this.aliasInputName, control: this.aliasInputName }
+      { editorName: this.nameAttributeData.EditorName, control: this.nameInputName },
+      { editorName: this.aliasAttributeData.EditorName, control: this.aliasInputName }
     ];
 
     selectedNode.attributes$.pipe(
@@ -190,6 +160,11 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
       attr.logicalName.toLowerCase().includes(filterValue) ||
       attr.displayName.toLowerCase().includes(filterValue)
     );
+  }
+
+  // Helper method to get form control
+  getFormControl(name: string): FormControl {
+    return this.attributeForm.get(name) as FormControl;
   }
 
   ngOnDestroy() {

@@ -1,29 +1,40 @@
 <div class="query-builder query-builder-container">
-  <as-split direction="horizontal" class="main-split" [style.height.%]="100" [style.width.%]="100" 
-    [gutterSize]="10" [useTransition]="true" unit="pixel">
+  <as-split direction="horizontal" class="main-split" [style.height.%]="100" [style.width.%]="100" [gutterSize]="10"
+    [useTransition]="true" unit="pixel">
+    <!-- Left panel -->
     <as-split-area [size]="392" order="1" [minSize]="392" [maxSize]="600">
+
       <as-split direction="vertical" [gutterSize]="10" [useTransition]="true" class="left-panel-split" unit="pixel">
-        <as-split-area [size]="400" order="3" [minSize]="400">
+        <as-split-area order="3" [minSize]="400">
           <app-query-tree-button-block (executeXmlRequest)="resultTable.getResult()"></app-query-tree-button-block>
           <app-tree-panel></app-tree-panel>
         </as-split-area>
-        <as-split-area [size]="417" order="4" [minSize]="417">
+        <as-split-area [size]="417" order="4" [minSize]="417" [maxSize]="600">
           <app-control-panel></app-control-panel>
         </as-split-area>
       </as-split>
     </as-split-area>
-    
-    <as-split-area [size]="null" order="2" [minSize]="400" class="right-panel">
-      <!-- Taiga UI tabs -->
-      <tui-tabs [(activeItemIndex)]="selectedTabIndex" class="content-tabs">
-        <button tuiTab>
-          <span class="prevent-select">FetchXml</span>
-        </button>
-        <button tuiTab>
-          <span class="prevent-select">Result</span>
-        </button>
-      </tui-tabs>
-      
+
+    <!-- Right panel -->
+    <as-split-area order="2" class="right-panel">
+
+        <div class="code-editor-toolbar">
+          <div class="toggle-wrapper">
+            <div class="toggle-button">
+              <div class="toggle-slider" [class.slide-right]="selectedTabIndex === 1"></div>
+              <div class="toggle-options">
+                <div class="option" [class.active]="selectedTabIndex === 0" (click)="selectedTabIndex = 0">Xml</div>
+                <div class="option" [class.active]="selectedTabIndex === 1" (click)="selectedTabIndex = 1">Result</div>
+              </div>
+            </div>
+          </div>
+          <button class="custom-default-button">
+            <tui-icon icon="@tui.parse" class="button-icon" [style.font-size.rem]="1.125"></tui-icon>
+            <span class="custom-button-text">Parse</span>
+          </button>
+        </div>
+        
+
       <div class="tab-content">
         <div *ngIf="selectedTabIndex === 0" class="fetch-xml-content">
           <app-code-editor #codeEditor></app-code-editor>
