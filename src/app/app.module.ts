@@ -68,9 +68,7 @@ import { StatusFormComponent } from './components/query-builder/control-panel/qu
 @NgModule({
   declarations: [
     AppComponent,
-    MainToolbarComponent,
     QueryBuilder,
-    ConnectionsComponent,
     MenuComponent,
     UserInfoComponent,
     ConnectionsDialogComponent,
@@ -80,7 +78,6 @@ import { StatusFormComponent } from './components/query-builder/control-panel/qu
     CodeEditorFooterComponent,
     NodeStyleDirective,
     QuickActionsComponent,
-    ConnectionsComponent,
     LoadingIndicatorComponent,
     EntityFormComponent,
     RootFormComponent,
@@ -102,7 +99,7 @@ import { StatusFormComponent } from './components/query-builder/control-panel/qu
     MultiValueFormComponent,
     StatusFormComponent
   ],
-  bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule,
+  bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule, MainToolbarComponent,
     BrowserAnimationsModule,
     AppRoutingModule,
     MatDialogModule,

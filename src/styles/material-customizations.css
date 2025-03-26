@@ -1,0 +1,68 @@
+
+.mat-mdc-unelevated-button.mat-primary {
+    --mdc-filled-button-container-color: #3B82F6;
+  }
+  
+  html {
+    --mat-radio-label-text-font: Inter, sans-serif;
+    --mdc-dialog-subhead-font: Inter, sans-serif;
+    --mdc-dialog-supporting-text-font: Inter, sans-serif;
+    --mdc-dialog-title-text-font: Inter, sans-serif;
+    --mat-select-trigger-text-font: Inter, sans-serif;
+    --mat-select-value-text-font: Inter, sans-serif;
+    --mat-select-option-text-font: Inter, sans-serif;
+    --mat-select-option-selected-text-font: Inter, sans-serif;
+    --mat-select-option-disabled-text-font: Inter, sans-serif;
+    --mdc-filled-text-field-label-text-font: Inter, sans-serif;
+    --mdc-outlined-text-field-label-text-font: Inter, sans-serif;
+    --mat-form-field-container-text-font: Inter, sans-serif;
+    --mat-form-field-label-text-font: Inter, sans-serif;
+    --mat-form-field-hint-text-font: Inter, sans-serif;
+    --mat-form-field-error-text-font: Inter, sans-serif;
+    --mat-form-field-container-text-font: Inter, sans-serif;
+    --mat-form-field-label-text-font: Inter, sans-serif;
+    --mat-form-field-hint-text-font: Inter, sans-serif;
+    --mat-form-field-subscript-text-font: Inter, sans-serif;
+    --mdc-plain-tooltip-supporting-text-font: Inter, sans-serif;
+    --mat-card-title-text-font: Inter, sans-serif;
+    --mat-card-subtitle-text-font: Inter, sans-serif;
+    --mat-optgroup-label-text-font: Inter, sans-serif;
+    --mat-option-label-text-font: Inter, sans-serif;
+    --mat-toolbar-title-text-font: Inter, sans-serif;
+    --mat-datepicker-calendar-text-font: Inter, sans-serif;
+    --mat-standard-button-toggle-label-text-font: Inter, sans-serif;
+    --mat-bottom-sheet-container-text-font: Inter, sans-serif;
+    --mat-badge-text-font: Inter, sans-serif;
+    --mat-table-header-headline-font: Inter, sans-serif;
+    --mat-table-row-item-label-text-font: Inter, sans-serif;
+    --mat-table-footer-supporting-text-font: Inter, sans-serif;
+    --mdc-snackbar-supporting-text-font: Inter, sans-serif;
+    --mdc-extended-fab-label-text-font: Inter, sans-serif;
+    --mdc-text-button-label-text-font: Inter, sans-serif;
+    --mdc-text-button-label-text-font: Inter, sans-serif;
+    --mdc-filled-button-label-text-font: Inter, sans-serif;
+    --mdc-outlined-button-label-text-font: Inter, sans-serif;
+    --mdc-protected-button-label-text-font: Inter, sans-serif;
+  
+
+
+    --mdc-text-button-label-text-size: 14px;
+    --mdc-text-button-label-text-tracking: 0.03em;
+    --mdc-text-button-label-text-weight: 500;
+    --mdc-text-button-label-text-transform: none;
+    
+    --mdc-filled-button-label-text-size: 13px;
+    --mdc-filled-button-label-text-tracking: 0.03em;
+    --mdc-filled-button-label-text-weight: 500;
+    --mdc-filled-button-label-text-transform: none;
+    
+    --mdc-outlined-button-label-text-size: 13px;
+    --mdc-outlined-button-label-text-tracking: 0.03em;
+    --mdc-outlined-button-label-text-weight: 500;
+    --mdc-outlined-button-label-text-transform: none;
+    
+    --mdc-protected-button-label-text-size: 13px;
+    --mdc-protected-button-label-text-tracking: 0.03em;
+    --mdc-protected-button-label-text-weight: 500;
+    --mdc-protected-button-label-text-transform: none;
+  }

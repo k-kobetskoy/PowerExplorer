@@ -1,3 +1,5 @@
+@import './styles/material-customizations.css';
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -5,6 +7,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
 :root {
   --min-width: 960px;
   --width: calc(100vw - calc(100vw - 100%));
@@ -24,7 +28,7 @@ body {
 }
 
 body {  
-  font-family: "Work Sans", sans-serif;  
+  font-family: "Inter", sans-serif;  
   font-optical-sizing: auto;
   font-style: normal;
 }
@@ -100,6 +104,10 @@ h3{
   body {
     overflow-x: auto;
   }  
+
+  .main-section {
+    width: auto;
+  }
 }
 
 /* Add styles for validation error tooltips */
@@ -112,3 +120,25 @@ h3{
   padding: 8px 12px !important;
 }
 
+
+
+.container {
+  min-width: var(--min-width);
+  width: var(--width);
+
+  min-height: var(--min-height);
+  height: var(--height);
+
+  display: flex;
+  flex-direction: column;
+
+}
+
+.view-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+}
