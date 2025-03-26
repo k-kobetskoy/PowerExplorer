@@ -9,8 +9,28 @@ import { AttributeType } from '../../../../models/constants/dataverse/attribute-
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from 'src/app/components/query-builder/services/multi-value-nodes.service';
+import { MatInputModule } from '@angular/material/input';
+import { ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../../quick-actions/quick-actions.component';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
+import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component'; 
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    LoadingIndicatorComponent,
+    MultiValueFormComponent
+  ],  
   selector: 'app-picklist-form',
   templateUrl: './picklist-form.component.html',
   styles: [`

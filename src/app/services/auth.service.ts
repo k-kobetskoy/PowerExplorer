@@ -17,6 +17,10 @@ export class AuthService {
     return this._userIsLoggedIn.value;
   }
 
+  public get userIsLoggedIn$() {
+    return this._userIsLoggedIn.asObservable();
+  }
+
   constructor(@Inject(MSAL_GUARD_CONFIG) private msalGuardConfig: MsalGuardConfiguration,
     @Inject(MSAL_INTERCEPTOR_CONFIG) private msalInterceptorConfig: MsalInterceptorConfiguration,
     @Inject(USER_IS_LOGGED_IN) private _userIsLoggedIn: BehaviorSubject<boolean>,

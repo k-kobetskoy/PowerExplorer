@@ -1,8 +1,15 @@
 import { Component, HostBinding, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { LoadingIndicationService } from './services/loading-indication.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { CommonModule } from '@angular/common';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatProgressSpinnerModule
+  ],
   selector: 'app-loading-indicator',
   templateUrl: './loading-indicator.component.html',
   styleUrls: ['./loading-indicator.component.css'],

@@ -13,11 +13,17 @@ app-connections-dialog .mat-dialog-content{
     display: flex;
     flex: 1;    
 }
-
+.mat-mdc-dialog-container .mat-mdc-dialog-title+.mat-mdc-dialog-content{
+    overflow-x: clip;
+}
 
 
 app-connections-dialog .mat-mdc-dialog-surface .mdc-dialog__surface {
     display: flex;
+}
+
+.mat-mdc-list-base.mat-mdc-list-base .mdc-list-item--selected .mdc-list-item__primary-text, .mat-mdc-list-base.mat-mdc-list-base .mdc-list-item--activated .mdc-list-item__primary-text {
+    color: #2250bd;   
 }
 
 app-connections-dialog .mat-mdc-list-item-title.mdc-list-item__primary-text {
@@ -26,12 +32,17 @@ app-connections-dialog .mat-mdc-list-item-title.mdc-list-item__primary-text {
     font-style: normal;
     font-weight: 500;
     font-size: .9rem;
+    letter-spacing: 0em;
 }
 
 app-connections-dialog .mat-mdc-dialog-title.mdc-dialog__title {
     font-family: "Work Sans", sans-serif;
     font-optical-sizing: auto;
     font-style: normal;
+    font-weight: 600;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    margin-top: 20px;
 }
 
 app-connections-dialog .mat-mdc-list-item-line.mdc-list-item__secondary-text {
@@ -45,4 +56,8 @@ app-connections-dialog .mat-mdc-list-item-line.mdc-list-item__secondary-text {
 
 app-connections-dialog .mat-mdc-dialog-actions {
     justify-content: space-between;
+}
+
+.mdc-list-item.mdc-list-item--with-two-lines {
+    border-radius: 10px;
 }

@@ -1,80 +1,128 @@
 @import './styles/material-customizations.css';
 
+/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
 }
 
-
+/* Custom variables */
 :root {
+  /* Layout dimensions */
   --min-width: 960px;
   --width: calc(100vw - calc(100vw - 100%));
-
   --min-height: 740px;
   --height: calc(100vh - calc(100vh - 100%));
-
   --header-height: 60px;
   --code-footer-height: 60px;
   --tab-bar-height: 40px;
+
+  /* Text colors */
+  --main-text-color: #303244;
+  --main-text-color-hover: #4C4E5E;
+  
+  /* Button Colors */
+  --color-white: #FFFFFF;
+  --color-dark: #303244;
+
+  /* Primary Button */
+  --color-primary: #3B82F6;
+  --color-primary-hover: #2563EB;
+  --color-primary-active: #1D4ED8;
+
+  /* Accent Button */
+  --color-accent: #5F4FF7;
+  --color-accent-hover: #4F41D8;
+  --color-accent-active: #3F33B8;
+
+  /* Secondary Button */
+  --color-secondary: #6B7280;
+  --color-secondary-hover: #4B5563;
+  --color-secondary-active: #374151;
+
+  /* Danger Button */
+  --color-danger: #EF4444;
+  --color-danger-hover: #DC2626;
+  --color-danger-active: #B91C1C;
+
+  /* Success Button */
+  --color-success: #10B981;
+  --color-success-hover: #059669;
+  --color-success-active: #047857;
+
+  /* Warning Button */
+  --color-warning: #F59E0B;
+  --color-warning-hover: #D97706;
+  --color-warning-active: #B45309;
+
+  /* Neutral Button */
+  --color-neutral: #E5E7EB;
+  --color-neutral-hover: #D1D5DB;
+  --color-neutral-active: #9CA3AF;
 }
 
-
+/* Base styles */
 html,
 body {
-  height: 100%;  
-}
-
-body {  
-  font-family: "Inter", sans-serif;  
+  height: 100%;
+  overflow: hidden; /* Prevent scrolling at the root */
+  font-family: "Inter", sans-serif;
   font-optical-sizing: auto;
   font-style: normal;
+  text-rendering: optimizeLegibility;
+  font-smooth: always;
 }
 
-
-p{
+/* Typography */
+p {
   font-size: .9rem !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.01em !important;
 }
 
-.small{
+.small {
   font-size: .85rem !important;
   font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
 }
 
-h3{
+h3 {
   font-weight: 600;
   font-size: .95rem;
+  letter-spacing: 0.01em;
 }
 
-
+/* Utility classes */
 .prevent-select {
-  -webkit-user-select: none;   
+  -webkit-user-select: none;
   user-select: none;
-} 
+}
 
-
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
   background-color: rgb(248, 248, 248);
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
-  background: rgb(214, 214, 214); 
+  background: rgb(214, 214, 214);
 }
 
-/* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(167, 167, 167); 
+  background: rgb(167, 167, 167);
 }
 
+/* Monospace text styles */
 .monospace {
   font-family: 'Hack', monospace;
   font-size: 0.9rem;
@@ -100,17 +148,119 @@ h3{
   margin: 1rem 0;
 }
 
-@media (max-width: 960px) {
-  body {
-    overflow-x: auto;
-  }  
-
-  .main-section {
-    width: auto;
-  }
+/* Layout components */
+.container {
+  min-width: var(--min-width);
+  width: var(--width);
+  min-height: var(--min-height);
+  height: var(--height);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px; /* Add spacing between toolbar and content */
+  background-color: #EBECF0;
 }
 
-/* Add styles for validation error tooltips */
+.view-container {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* Ensure query-builder component takes appropriate space */
+.query-builder-container {
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow: hidden;
+  height: calc(100vh);
+}
+
+/* Taiga UI related styles */
+.tui-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.t-root-content {
+  background-color: #EBECF0;
+}
+
+/* Router container styles */
+.router-container {
+  flex: 1 1 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+router-outlet {
+  display: none !important;
+}
+
+router-outlet+* {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* Button styles */
+.custom-default-button {
+  margin-left: 10px;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 8px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.custom-default-button:hover {
+  background-color: var(--color-primary-hover); /* Slightly darker */
+  transition: background-color 0.2s ease;
+}
+
+.custom-default-button:active {
+  background-color: var(--color-primary-active); /* Even darker */
+  transform: translateY(0.2px); /* Slight push down effect */
+}
+
+.custom-default-button:disabled {
+  background-color: var(--color-neutral);
+  cursor: not-allowed;
+  pointer-events: none; /* Prevents hover effects when disabled */
+}
+
+.custom-button-text {
+  margin: 0 8px;
+}
+
+app-button, app-custom-button {
+  display: flex;
+}
+
+.tui-custom-rounded-button {
+  border-radius: 2px !important;
+  background-color: var(--color-primary) !important;
+}
+
+/* Validation styles */
 .validation-error-tooltip {
   color: white !important;
   font-weight: 500 !important;
@@ -120,25 +270,13 @@ h3{
   padding: 8px 12px !important;
 }
 
+/* Media queries */
+@media (max-width: 960px) {
+  body {
+    overflow-x: auto;
+  }
 
-
-.container {
-  min-width: var(--min-width);
-  width: var(--width);
-
-  min-height: var(--min-height);
-  height: var(--height);
-
-  display: flex;
-  flex-direction: column;
-
-}
-
-.view-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  flex-direction: column;
-  align-items: stretch;
+  .main-section {
+    width: auto;
+  }
 }

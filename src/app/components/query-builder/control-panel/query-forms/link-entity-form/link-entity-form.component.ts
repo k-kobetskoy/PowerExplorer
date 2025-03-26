@@ -1,6 +1,6 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest, of, shareReplay, tap } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, catchError, take } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
@@ -13,11 +13,29 @@ import { AttributeData } from '../../../models/constants/attribute-data';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { LinkEntityService } from '../../../services/entity-services/link-entity.service';
 import { LinkEntityResponseModel, RelationshipModel, RelationshipType } from 'src/app/models/incoming/link/link-entity-response-model';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 
 // Interface for relation object to improve type safety
 interface RelationObject extends RelationshipModel { }
 
-@Component({
+@Component({  
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    QuickActionsComponent,
+    LoadingIndicatorComponent
+  ],
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',
   styles: [`

@@ -20,6 +20,7 @@ import { FormControl } from '@angular/forms';
 import { XmlParseService } from '../services/xml-parsing-services/xml-parse.service';
 
 @Component({
+  standalone: true,
   selector: 'app-code-editor',
   templateUrl: './code-editor.component.html',
   styleUrls: ['./code-editor.component.css'],

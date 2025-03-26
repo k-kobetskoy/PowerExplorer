@@ -43,7 +43,7 @@ export class EntityNameServerValidatorService implements IAttributeValidator {
         refCount: true,
         bufferSize: 1,
       }),
-      tap(result=> console.log(`Entity name server validation result: ${result}`))
+      tap(result=> console.log(`Entity name server validation result`, result))
     );
   }
 }

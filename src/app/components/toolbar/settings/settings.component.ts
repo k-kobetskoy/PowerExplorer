@@ -1,8 +1,8 @@
-import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit } from '@angular/core';
-import { Icons } from '../../svg-icons/icons';
-
+import { Component, OnInit } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 @Component({
   standalone: true,
+  imports: [MatIconModule],
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],  

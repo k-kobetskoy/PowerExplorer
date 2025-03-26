@@ -1,10 +1,10 @@
 import { INodeValidators } from './../services/attribute-services/abstract/i-node-validators';
-import { BehaviorSubject, Observable, Subject } from "rxjs";
+import { BehaviorSubject, Observable, Subject, of } from "rxjs";
 import { NodeAttribute } from "./node-attribute";
 import { INodeData, QueryNodeData } from "./constants/query-node-data";
 import { IAttributeData } from "./constants/attribute-data";
 import { IAttributeFactory } from "../services/attribute-services/abstract/i-attribute-validators-factory";
-import { ValidationResult } from '../services/validation.service';
+import { ValidationResult, VALID_RESULT } from '../services/validation.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 
 export class QueryNode {
@@ -30,7 +30,7 @@ export class QueryNode {
     nodeDisplayValue$: Observable<string>;
 
     validatiors: INodeValidators;
-    validationResult$: Observable<ValidationResult>;
+    validationResult$: Observable<ValidationResult> = of(VALID_RESULT);
 
     //TODO: implement this functionality later
     hasAggregateOrGroupByAttribute: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);

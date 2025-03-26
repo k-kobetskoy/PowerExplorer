@@ -4,8 +4,19 @@ import { QueryNode } from '../../../models/query-node';
 import { AttributeData, EntityAttributeData } from '../../../models/constants/attribute-data';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { QueryNodeData } from '../../../models/constants/query-node-data';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule
+  ],  
   selector: 'app-quick-actions',
   templateUrl: './quick-actions.component.html',
   styleUrls: ['./quick-actions.component.css'],

@@ -7,8 +7,25 @@ import { BooleanEntityService } from '../../../../services/entity-services/boole
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from 'src/app/components/query-builder/services/multi-value-nodes.service';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
+import { MatOptionModule } from '@angular/material/core';
+import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatOptionModule,
+    MultiValueFormComponent,
+    LoadingIndicatorComponent
+  ],  
   selector: 'app-boolean-form',
   templateUrl: './boolean-form.component.html',
   styles: [`

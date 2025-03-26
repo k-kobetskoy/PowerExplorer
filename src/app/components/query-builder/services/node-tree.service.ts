@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
@@ -19,6 +19,9 @@ export class NodeTreeService {
 
   private validationResultSubject = new BehaviorSubject<ValidationResult>(VALID_RESULT);
   validationResult$ = this.validationResultSubject.asObservable();
+  
+  // Track validation subscription for cleanup
+  private validationSubscription: Subscription = null;
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -35,12 +38,23 @@ export class NodeTreeService {
     private nodeFactory: NodeFactoryService,
     private validationService: ValidationService,
   ) {
-
     this.initializeNodeTree();
 
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
 
-    this.validationService.setupNodeTreeValidation(this._nodeTree$).subscribe(result => {
+    this.setupValidation();
+  }
+
+  public setupValidation() {
+    // Ensure any previous subscription is cleaned up
+    if (this.validationSubscription) {
+      this.validationSubscription.unsubscribe();
+      this.validationSubscription = null;
+    }
+    
+    // Setup a new validation subscription
+    this.validationSubscription = this.validationService.setupNodeTreeValidation(this._nodeTree$).subscribe(result => {
+      console.log('Validation result received in NodeTreeService:', result);
       this.validationResultSubject.next(result);
     });
   }
@@ -286,13 +300,26 @@ export class NodeTreeService {
   }
 
   clearNodeTree() {
+    console.log('Clearing node tree and resetting validation');
     const nodeTree = this._nodeTree$.value;
+    
+    // Cleanup current validation subscription
+    if (this.validationSubscription) {
+      this.validationSubscription.unsubscribe();
+      this.validationSubscription = null;
+    }
+    
     if (nodeTree && nodeTree.root) {
       this.cleanupNodeAndChildren(nodeTree.root);
     }
 
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
+    
+    // Set up validation again after a short delay to ensure all operations are complete
+    setTimeout(() => {
+      this.setupValidation();
+    }, 0);
   }
 
   getEntityAttributeMap(): EntityAttributeMap {
@@ -411,7 +438,6 @@ export class NodeTreeService {
   }
 
   forceValidationToPass() {
-    this.validationResultSubject.next(VALID_RESULT);
     this._eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
   }
 }

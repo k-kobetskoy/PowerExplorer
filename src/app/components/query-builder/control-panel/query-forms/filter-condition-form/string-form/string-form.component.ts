@@ -3,8 +3,28 @@ import { BehaviorSubject, takeUntil } from 'rxjs';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from '../../../../services/multi-value-nodes.service';
-
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
+import { QuickActionsComponent } from '../../quick-actions/quick-actions.component';
+import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
+import { MatIconModule } from '@angular/material/icon';
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    MatIconModule,
+    MultiValueFormComponent
+  ],  
   selector: 'app-string-form',
   templateUrl: './string-form.component.html',
   styles: [`

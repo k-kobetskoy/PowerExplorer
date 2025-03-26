@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { EventData } from 'src/app/services/event-bus/event-data';
@@ -7,8 +7,24 @@ import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { NavigationService } from 'src/app/services/navigation.service';
 import { EnvironmentEntityService } from 'src/app/components/query-builder/services/entity-services/environment-entity.service';
-
+import { MatListModule } from '@angular/material/list';
+import { MatButtonModule } from '@angular/material/button';
+import { MatOptionModule, MatRippleModule } from '@angular/material/core';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
+import { MatSelectModule } from '@angular/material/select';
+import { CommonModule } from '@angular/common';
 @Component({
+  standalone: true,
+  imports: [
+    MatDialogModule,
+    MatButtonModule,
+    MatListModule,
+    MatRippleModule,
+    LoadingIndicatorComponent,
+    MatOptionModule,
+    MatSelectModule,
+    CommonModule
+  ],      
   selector: 'app-connections-dialog',
   templateUrl: './connections-dialog.component.html',
   styleUrls: ['./connections-dialog.component.css'],

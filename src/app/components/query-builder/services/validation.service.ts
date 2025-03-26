@@ -159,7 +159,10 @@ export class ValidationService {
 
         const treeValidation$ = this.requiredNodeValidator.validate(nodeTree).pipe(
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(nodeTree.value.destroyed$)
+            takeUntil(nodeTree.value.destroyed$),
+            tap(result => {
+                console.log(':::treeValidation', result);
+            })
         );
 
         const nodesValidation$ = nodeTree.pipe(
@@ -191,7 +194,10 @@ export class ValidationService {
                 );
             }),
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(nodeTree.value.destroyed$)
+            takeUntil(nodeTree.value.destroyed$),
+            tap(result => {
+                console.log(':::nodesValidation', result);
+            })
         );
 
         return combineLatest([treeValidation$, nodesValidation$]).pipe(
@@ -204,7 +210,10 @@ export class ValidationService {
                 return of(VALID_RESULT);
             }),
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(nodeTree.value.destroyed$)
+            takeUntil(nodeTree.value.destroyed$),
+            tap(result => {
+                console.log(':::treeValidation', result);
+            })
         );
     }
 } 

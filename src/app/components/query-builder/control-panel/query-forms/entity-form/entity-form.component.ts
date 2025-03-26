@@ -1,14 +1,32 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { Observable, Subject, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, startWith, takeUntil } from 'rxjs/operators';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { QueryNode } from '../../../models/query-node';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 
 @Component({
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatAutocompleteModule,
+        MatOptionModule,
+        QuickActionsComponent,
+        LoadingIndicatorComponent
+    ],
     selector: 'app-entity-form',
     templateUrl: './entity-form.component.html',
     styleUrls: ['./entity-form.component.css'],

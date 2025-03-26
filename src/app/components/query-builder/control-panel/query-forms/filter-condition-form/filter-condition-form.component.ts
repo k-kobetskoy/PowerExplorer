@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil, BehaviorSubject, catchError, debounceTime, filter } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
@@ -8,8 +8,40 @@ import { FilterOperatorTypes } from '../../../models/constants/ui/option-set-typ
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { BaseFormComponent } from '../base-form.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatOptionModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
+import { NumberFormComponent } from './number-form/number-form.component';
+import { BooleanFormComponent } from './boolean-form/boolean-form.component';
+import { IdFormComponent } from './id-form/id-form.component';
+import { PicklistFormComponent } from './picklist-form/picklist-form.component';
+import { StatusFormComponent } from './status-form/status-form.component';
+import { DateTimeFormComponent } from './date-time-form/date-time-form.component';
+import { StringFormComponent } from './string-form/string-form.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    QuickActionsComponent,
+    MatOptionModule,
+    MatAutocompleteModule,
+    LoadingIndicatorComponent,
+    NumberFormComponent,
+    BooleanFormComponent,
+    IdFormComponent,
+    PicklistFormComponent,
+    StatusFormComponent,
+    DateTimeFormComponent,
+    StringFormComponent
+  ],
   selector: 'app-filter-condition-form',
   templateUrl: './filter-condition-form.component.html',
   styleUrls: ['./filter-condition-form.component.css'],

@@ -1,13 +1,27 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../models/constants/ui/filter-static-data';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { MatInputModule } from '@angular/material/input';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatOptionModule } from '@angular/material/core';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    QuickActionsComponent,
+    MatOptionModule
+  ],
   selector: 'app-filter-form',
   templateUrl: './filter-form.component.html',
   styles: [`

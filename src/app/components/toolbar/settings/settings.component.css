@@ -1,0 +1,21 @@
+.settings-container {
+    display: flex;
+    align-items: center;
+}
+
+.settings-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0 0 10px;
+    cursor: pointer;
+}
+
+.settings-icon {
+    font-size: 1.3rem;
+    color: #303244;
+}
+
+.settings-button:hover .settings-icon {
+    color: #2250bd;
+} 

@@ -2,8 +2,23 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from '../../../../services/multi-value-nodes.service';
+import { CommonModule } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
+import { MatOptionModule } from '@angular/material/core';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatOptionModule,
+    MultiValueFormComponent
+  ],  
   selector: 'app-number-form',
   templateUrl: './number-form.component.html',
   styles: [`

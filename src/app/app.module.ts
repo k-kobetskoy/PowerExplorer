@@ -2,41 +2,16 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { ConnectionsDialogComponent } from './components/toolbar/connections/connections-dialog/connections-dialog.component';
 import { MainToolbarComponent } from './components/toolbar/main-toolbar/main-toolbar.component';
-import { QueryBuilder } from './components/query-builder/query-builder.component';
-import { ConnectionsComponent } from './components/toolbar/connections/connections.component';
 import { MenuComponent } from './components/toolbar/menu/menu.component';
 import { UserInfoComponent } from './components/toolbar/user-info/user-info.component';
-import { TreePanelComponent } from './components/query-builder/tree-panel/tree-panel.component';
-import { ControlPanelComponent } from './components/query-builder/control-panel/control-panel.component';
-import { CodeEditorComponent } from './components/query-builder/code-editor/code-editor.component';
 import { CodeEditorFooterComponent } from './components/query-builder/code-editor-footer/code-editor-footer.component';
 import { NodeStyleDirective } from './directives/node-style.directive';
-import { QuickActionsComponent } from './components/query-builder/control-panel/query-forms/quick-actions/quick-actions.component';
-import { LoadingIndicatorComponent } from './components/loading-indicator/loading-indicator.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EntityFormComponent } from './components/query-builder/control-panel/query-forms/entity-form/entity-form.component';
-import { RootFormComponent } from './components/query-builder/control-panel/query-forms/root-form/root-form.component';
-import { AttributeFormComponent } from './components/query-builder/control-panel/query-forms/attribute-form/attribute-form.component';
-import { FilterFormComponent } from './components/query-builder/control-panel/query-forms/filter-form/filter-form.component';
-import { FilterConditionFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/filter-condition-form.component';
-import { NumberFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/number-form/number-form.component';
-import { BooleanFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/boolean-form/boolean-form.component';
-import { DateTimeFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/date-time-form/date-time-form.component';
-import { IdFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/id-form/id-form.component';
-import { PicklistFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/picklist-form/picklist-form.component';
-import { StringFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/string-form/string-form.component';
-import { LinkEntityFormComponent } from './components/query-builder/control-panel/query-forms/link-entity-form/link-entity-form.component';
-import { OrderFormComponent } from './components/query-builder/control-panel/query-forms/order-form/order-form.component';
-import { ValueFormComponent } from './components/query-builder/control-panel/query-forms/value-form/value-form.component';
-import { QueryTreeButtonBlockComponent } from './components/query-builder/query-tree-button-block/query-tree-button-block.component';
 import { ValidationService } from './components/query-builder/services/validation.service';
 import { ErrorDialogComponent } from './components/error-dialog/error-dialog.component';
-
 import { MsalRedirectComponent } from '@azure/msal-angular';
 import { MsalConfigDynamicModule } from './msal-config-dynamic.module';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -58,46 +33,20 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BehaviorSubject } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
-import { ResultTableComponent } from './components/query-builder/result-table/result-table.component';
 import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MultiValueFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/multi-value-form/multi-value-form.component';
-import { StatusFormComponent } from './components/query-builder/control-panel/query-forms/filter-condition-form/status-form/status-form.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    QueryBuilder,
     MenuComponent,
-    UserInfoComponent,
-    ConnectionsDialogComponent,
-    ControlPanelComponent,
-    TreePanelComponent,
-    CodeEditorComponent,
+    UserInfoComponent,  
     CodeEditorFooterComponent,
     NodeStyleDirective,
-    QuickActionsComponent,
-    LoadingIndicatorComponent,
-    EntityFormComponent,
-    RootFormComponent,
-    AttributeFormComponent,
-    FilterFormComponent,
-    FilterConditionFormComponent,
-    NumberFormComponent,
-    BooleanFormComponent,
-    DateTimeFormComponent,
-    IdFormComponent,
-    PicklistFormComponent,
-    StringFormComponent,
-    LinkEntityFormComponent,
-    OrderFormComponent,
-    ValueFormComponent,
-    QueryTreeButtonBlockComponent,
-    ResultTableComponent,
+    
     ErrorDialogComponent,
-    MultiValueFormComponent,
-    StatusFormComponent
+
   ],
   bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule, MainToolbarComponent,
     BrowserAnimationsModule,

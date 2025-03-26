@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule    } from '@angular/forms';
 import { Observable, Subject, combineLatest, of } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, take, catchError, shareReplay } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -8,8 +8,26 @@ import { AttributeEntityService } from '../../../services/entity-services/attrib
 import { QueryNode } from '../../../models/query-node';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    QuickActionsComponent,
+    LoadingIndicatorComponent,
+  ],
   selector: 'app-order-form',
   templateUrl: './order-form.component.html',
   styles: [`
