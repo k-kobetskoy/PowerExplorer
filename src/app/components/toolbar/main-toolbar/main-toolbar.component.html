@@ -1,14 +1,16 @@
 <header class="main-toolbar">
   <div class="logo-menu">
-    <div class="logo"></div>
-    <nav class="menu"></nav>
+    <div class="logo">
+      <img src="assets/images/Logo.svg" alt="Logo">
+    </div>
+    <nav class="menu prevent-select">
+      <p class="menu-logo">Power Explorer</p> <p>/</p> <p class="menu-item">XML Builder</p>
+    </nav>
   </div>
-  <div class="burger-menu">☰</div>
- <app-connections></app-connections>
+  <div class="toolbar-right">
+    <app-connections></app-connections>
+    <app-settings></app-settings>
+  </div>
   
-  <app-user-info></app-user-info>
-  <!-- <div class="user-info">
-    <div class="avatar"></div>
-    <div class="user-details"></div>
-  </div> -->
+  <!-- <app-user-info></app-user-info> -->
 </header>
