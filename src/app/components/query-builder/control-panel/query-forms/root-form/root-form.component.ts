@@ -11,6 +11,7 @@ import { QuickActionsComponent } from '../quick-actions/quick-actions.component'
 import { MatOptionModule } from '@angular/material/core';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 @Component({    
     standalone: true,
@@ -22,7 +23,8 @@ import { MatSelectModule } from '@angular/material/select';
         MatCheckboxModule,
         MatSelectModule,
         QuickActionsComponent,
-        MatOptionModule
+        MatOptionModule,
+        MatExpansionModule
     ],
     selector: 'app-root-form',
     templateUrl: './root-form.component.html',

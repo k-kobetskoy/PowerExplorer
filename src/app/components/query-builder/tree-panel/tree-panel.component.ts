@@ -9,7 +9,7 @@ import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
 @Component({
   selector: 'app-tree-panel',
   templateUrl: './tree-panel.component.html',
@@ -20,6 +20,7 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [
       CommonModule,
       MatIconModule,
+      MatTooltipModule
   ],
   schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
 })
@@ -43,6 +44,10 @@ selectNode(node: QueryNode) {
 
 toggleNode(node: QueryNode) {
   this.nodeTreeProcessor.toggleNode(node)
+}
+
+removeNode(node: QueryNode) {
+  this.nodeTreeProcessor.removeNode(node)
 }
 
 getNodeIcon(node: QueryNode) {

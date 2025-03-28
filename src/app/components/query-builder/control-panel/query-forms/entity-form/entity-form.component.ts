@@ -14,6 +14,10 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
 import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
+import { MatIconModule } from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import {FormsModule} from '@angular/forms';
+import { NodeTreeService } from '../../../services/node-tree.service';
 
 @Component({
     standalone: true,
@@ -25,7 +29,10 @@ import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/
         MatAutocompleteModule,
         MatOptionModule,
         QuickActionsComponent,
-        LoadingIndicatorComponent
+        LoadingIndicatorComponent,
+        MatIconModule,
+        MatButtonModule,
+        FormsModule
     ],
     selector: 'app-entity-form',
     templateUrl: './entity-form.component.html',
@@ -34,6 +41,9 @@ import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/
 })
 
 export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
+dublicateNode() {
+throw new Error('Method not implemented.');
+}
     private destroy$ = new Subject<void>();
     @Input() selectedNode: QueryNode;
     entityForm: FormGroup;
@@ -43,7 +53,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     private nameInputName = this.nameAttributeData.EditorName;
 
-    constructor(private entityService: EntityEntityService, private fb: FormBuilder) { super(); }
+    constructor(private entityService: EntityEntityService, private fb: FormBuilder, private nodeTreeProcessorService: NodeTreeService) { super(); }
 
     ngOnInit() {
         this.initializeForm();
@@ -54,6 +64,10 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
             this.destroy$.next();
             this.initializeForm();
         }
+    }
+
+    removeNode() {
+        this.nodeTreeProcessorService.removeNode(this.selectedNode);
     }
 
     private initializeForm() {

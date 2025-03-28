@@ -1,4 +1,4 @@
-<div class="form-container">
+
   <div>
     <mat-form-field class="form-field">
       <mat-label>Operator</mat-label>
@@ -15,6 +15,11 @@
       <mat-form-field class="form-field">
         <mat-label>Value</mat-label>
         <input matInput type="datetime-local" [formControl]="valueFormControl" placeholder="Choose a date and time">
+        @if (valueFormControl.value) {
+          <button matSuffix mat-icon-button aria-label="Clear" (click)="valueFormControl.patchValue('')">
+            <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+          </button>
+        }
       </mat-form-field>
     </ng-container>
 
@@ -25,4 +30,3 @@
 
 
   </div>
-</div>

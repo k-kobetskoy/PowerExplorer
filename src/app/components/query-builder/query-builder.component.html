@@ -9,7 +9,7 @@
           <app-query-tree-button-block (executeXmlRequest)="handleExecuteXmlRequest()"></app-query-tree-button-block>
           <app-tree-panel></app-tree-panel>
         </as-split-area>
-        <as-split-area [size]="417" order="4" [minSize]="417" [maxSize]="600">
+        <as-split-area [size]="417" order="4" [minSize]="218" [maxSize]="600">
           <app-control-panel></app-control-panel>
         </as-split-area>
       </as-split>
@@ -23,8 +23,14 @@
           <div class="toggle-button">
             <div class="toggle-slider" [class.slide-right]="selectedTabIndex === 1"></div>
             <div class="toggle-options">
-              <div class="option" [class.active]="selectedTabIndex === 0" (click)="selectedTabIndex = 0">Xml</div>
-              <div class="option" [class.active]="selectedTabIndex === 1" (click)="selectedTabIndex = 1">Result</div>
+              <div class="option" [class.active]="selectedTabIndex === 0" (click)="selectedTabIndex = 0">
+    
+                Xml
+              </div>
+              <div class="option" [class.active]="selectedTabIndex === 1" (click)="selectedTabIndex = 1">
+                
+                Result
+              </div>
             </div>
           </div>
         </div>

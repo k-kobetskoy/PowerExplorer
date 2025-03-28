@@ -18,7 +18,9 @@ import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../../quick-actions/quick-actions.component';
 import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component'; 
-
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { MatIconModule } from '@angular/material/icon';
 @Component({
   standalone: true,
   imports: [
@@ -29,7 +31,10 @@ import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.co
     MatAutocompleteModule,
     MatOptionModule,
     LoadingIndicatorComponent,
-    MultiValueFormComponent
+    MultiValueFormComponent,
+    MatButtonModule,
+    FormsModule,
+    MatIconModule
   ],  
   selector: 'app-picklist-form',
   templateUrl: './picklist-form.component.html',

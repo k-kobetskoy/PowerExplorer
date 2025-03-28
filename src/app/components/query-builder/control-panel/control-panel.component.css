@@ -1,0 +1,25 @@
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+:host > ng-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+app-entity-form,
+app-root-form,
+app-attribute-form,
+app-filter-form,
+app-filter-condition-form,
+app-link-entity-form,
+app-order-form,
+app-value-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}

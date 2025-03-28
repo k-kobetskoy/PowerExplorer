@@ -2,11 +2,44 @@
     display: flex;
     flex: 1;
     flex-direction: column;
-    padding: 10px 5px 10px 5px;
+    padding: 10px 5px 10px 5px;    
+}
+
+.quick-actions-header-text{
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--main-text-color);    
+}   
+
+.quick-actions-header{
+   padding: 0px 0px 5px 10px    ;
 }
 
 .quick-actions{
     display: flex;
     flex-direction: row;
-    
+}
+
+.quick-actions{
+    gap: 10px;
+}
+
+.quick-actions button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: -1; /* Helps with text alignment */
+}
+
+.add-button-icon {
+    vertical-align: middle;
+}
+
+.add-button-text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+    vertical-align: middle;
+    padding-left: 5px;
 }

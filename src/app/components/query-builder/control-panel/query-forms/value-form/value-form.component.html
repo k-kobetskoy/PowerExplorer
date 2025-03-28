@@ -1,12 +1,19 @@
-<div class="form-container">
-  <mat-form-field class="form-field">
-    <mat-label>Value</mat-label>
-    <input matInput
-           type="text"
-           [formControl]="valueFormControl"
-           placeholder="Enter value">
-    <mat-hint class="hint-text">
-      Value content for the XML node
-    </mat-hint>
-  </mat-form-field>
-</div> 
+<div class="control-panel-container">
+  <div class="form-scrollable-content">
+    <div class="form-container">
+      <div class="form-header">
+        <span class="form-header-text">Node Properties</span>
+      </div>
+      <div class="form-body">
+
+
+        <div class="form-flex">
+          <mat-form-field class="input-full-width">
+            <mat-label>Value</mat-label>
+            <input matInput type="text" [formControl]="valueFormControl" placeholder="Enter value">
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

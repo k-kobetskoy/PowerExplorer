@@ -1,29 +1,61 @@
-<app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+<div class="control-panel-container">
+    <!-- Quick actions - will be sticky -->
+    <div class="sticky-actions">
+        <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+    </div>
 
-<div class="form-container">
-    <form [formGroup]="attributeForm">
-        <mat-form-field class="form-field">
-            <mat-label>Attribute</mat-label>
-            <input type="text" matInput
-                formControlName="name"
-                [matAutocomplete]="auto"
-                placeholder="Select an attribute">
-            <mat-autocomplete #auto="matAutocomplete" >
-                <mat-option *ngFor="let attr of filteredAttributes$ | async" [value]="attr.logicalName">
-                    <div class="option-content">
-                        <span class="logical-name">{{attr.logicalName}}</span>
-                        <span class="display-name">{{attr.displayName}}</span>
+    <div class="form-scrollable-content">
+        <div class="form-container">
+            <div class="form-header">
+                <span class="form-header-text">Node Properties</span>
+                <div class="form-header-actions">                                                
+                    <!-- <div class="form-header-button" (click)="dublicateNode()">
+                        <img class="form-header-copy-icon" src="assets/icons/copy.svg" alt="copy">
+                        <img class="form-header-copy-icon-hover" src="assets/icons/copy-hover.svg" alt="copy">
+                    </div> -->
+                    <div class="form-header-button" (click)="removeNode()">
+                        <img class="form-header-delete-icon" src="assets/icons/trash-2.svg" alt="delete">
+                        <img class="form-header-delete-icon-hover" src="assets/icons/trash-2-hover.svg" alt="delete">
+                    </div>           
+                </div>
+            </div>
+            <div class="form-body">
+                <form [formGroup]="attributeForm">
+                    <div class="form-flex">
+                        <mat-form-field class="input-full-width">
+                            <mat-label>Attribute</mat-label>
+                            <input type="text" matInput formControlName="name" [matAutocomplete]="auto"
+                                placeholder="Select an attribute">
+                            <mat-autocomplete #auto="matAutocomplete">
+                                <mat-option *ngFor="let attr of filteredAttributes$ | async" [value]="attr.logicalName">
+                                    <div class="option-content">
+                                        <span class="logical-name">{{attr.logicalName}}</span>
+                                        <span class="display-name">{{attr.displayName}}</span>
+                                    </div>
+                                </mat-option>
+                            </mat-autocomplete>
+                            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
+                        
+                        @if (attributeForm.value.name) {
+                            <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({name: ''})">
+                              <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+                            </button>
+                          }
+                        </mat-form-field>
+
+                        <mat-form-field class="input-full-width">
+                            <mat-label>Alias</mat-label>
+                            <input type="text" matInput formControlName="alias" placeholder="Enter an alias">
+                       
+                        @if (attributeForm.value.alias) {
+                            <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({alias: ''})">
+                              <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+                            </button>
+                          }
+                        </mat-form-field>
                     </div>
-                </mat-option>
-            </mat-autocomplete>
-            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
-        </mat-form-field>
-
-        <mat-form-field class="form-field">
-            <mat-label>Alias</mat-label>
-            <input type="text" matInput
-                formControlName="alias"
-                placeholder="Enter an alias">
-        </mat-form-field>
-    </form>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

@@ -26,13 +26,13 @@
 
 .env-name{
     font-weight: 600 !important;
-    font-size: 0.85 rem !important;
+    font-size: 0.83rem !important;
     color: var(--main-text-color);
 }
 
 .env-url.small {
     margin: 0;
-    font-size: 0.8rem !important;
+    font-size: 0.78rem !important;
     color: var(--main-text-color);
 }
 

@@ -1,51 +1,73 @@
-<app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+<div class="control-panel-container">
+  <!-- Quick actions - will be sticky -->
+  <div class="sticky-actions">
+    <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+  </div>
 
-<mat-form-field>
-  <mat-label>Attrubute</mat-label>
-  <input type="text" matInput [formControl]="attributeFormControl" [matAutocomplete]="auto" (keyup)="onKeyPressed($event)">
+  <!-- Scrollable content -->
+  <div class="form-scrollable-content">
+    <div class="form-container">
+      <div class="form-header">
+        <span class="form-header-text">Node Properties</span>
+        <div class="form-header-actions">                                                
+            <!-- <div class="form-header-button" (click)="dublicateNode()">
+                <img class="form-header-copy-icon" src="assets/icons/copy.svg" alt="copy">
+                <img class="form-header-copy-icon-hover" src="assets/icons/copy-hover.svg" alt="copy">
+            </div> -->
+            <div class="form-header-button" (click)="removeNode()">
+                <img class="form-header-delete-icon" src="assets/icons/trash-2.svg" alt="delete">
+                <img class="form-header-delete-icon-hover" src="assets/icons/trash-2-hover.svg" alt="delete">
+            </div>           
+        </div>
+    </div>      <div class="form-body">
 
-  <mat-autocomplete #auto="matAutocomplete">
-    <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
-      {{option.logicalName + ' ' + option.displayName}}
+        <div class="form-flex">
 
-    </mat-option>
-    <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
-  </mat-autocomplete>
-</mat-form-field>
+          <mat-form-field class="input-full-width">
+            <mat-label>Attrubute</mat-label>
+            <input type="text" matInput [formControl]="attributeFormControl" [matAutocomplete]="auto"
+              (keyup)="onKeyPressed($event)">
 
-<ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
-  <ng-container [ngSwitch]="getFilterOperatorType(attribute)">
-    <app-number-form 
-      *ngSwitchCase='FilterOperatorTypes.NUMBER'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-number-form>
-    <app-boolean-form 
-      *ngSwitchCase='FilterOperatorTypes.BOOLEAN'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-boolean-form>
-    <app-id-form 
-      *ngSwitchCase='FilterOperatorTypes.ID'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-id-form>
-    <app-picklist-form 
-      *ngSwitchCase='FilterOperatorTypes.PICKLIST'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-picklist-form>
-    <app-status-form 
-      *ngSwitchCase='FilterOperatorTypes.STATUS'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-status-form>
-    <app-date-time-form 
-      *ngSwitchCase='FilterOperatorTypes.DATE_TIME'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-date-time-form>
-    <app-string-form 
-      *ngSwitchCase='FilterOperatorTypes.STRING'
-      [selectedNode]="selectedNode" 
-      [attributeValue]="attribute.logicalName"></app-string-form>
-  </ng-container>
-</ng-container>
+            <mat-autocomplete #auto="matAutocomplete">
+              <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
+                <div class="option-content">
+                  <span class="logical-name"> {{option.logicalName}} </span>
+                  <span class="display-name">{{option.displayName}}</span>
+                </div>
+              </mat-option>
+              <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
+            </mat-autocomplete>
+            @if (attributeFormControl.value) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeFormControl.patchValue('')">
+                <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+              </button>
+            }
+          </mat-form-field>
 
-<ng-template #elseBlock>
-  <div>no data</div>
-</ng-template>
+          <ng-container *ngIf="selectedAttribute$ | async as attribute; else elseBlock">
+            <ng-container [ngSwitch]="getFilterOperatorType(attribute)">
+              <app-number-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.NUMBER'
+                [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"></app-number-form>
+              <app-boolean-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.BOOLEAN'
+                [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"></app-boolean-form>
+              <app-id-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.ID' [selectedNode]="selectedNode"
+                [attributeValue]="attribute.logicalName"></app-id-form>
+              <app-picklist-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.PICKLIST'
+                [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"></app-picklist-form>
+              <app-status-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.STATUS'
+                [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"></app-status-form>
+              <app-date-time-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.DATE_TIME'
+                [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"></app-date-time-form>
+              <app-string-form class="input-full-width" *ngSwitchCase='FilterOperatorTypes.STRING'
+                [selectedNode]="selectedNode" [attributeValue]="attribute.logicalName"></app-string-form>
+            </ng-container>
+          </ng-container>
+
+          <ng-template #elseBlock>
+            <div></div> <!-- no data -->
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

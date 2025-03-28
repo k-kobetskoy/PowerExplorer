@@ -6,10 +6,15 @@ app-tree-panel {
 app-tree-panel .tree-container {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  /* background-color: rgb(245, 245, 248); */
+  border-radius: 10px;
+  padding: 10px 0px;
 }
 
 app-tree-panel .node-container {
   margin-bottom: 2px;
+  
 }
 
 app-tree-panel .tree {
@@ -57,7 +62,7 @@ app-tree-panel .node-element-select-area:active {
 }
 
 app-tree-panel .active {
-  background-color: #d9dbe6 !important;
+  background-color: #ffffff !important;
   height: 24px;
 }
 
@@ -119,5 +124,54 @@ app-tree-panel .expand-icon-disabled {
 
 /* Hover effect on the node */
 app-tree-panel .node-element-select-area:hover {
-  background-color: #f1f2f5;
+  background-color: #f7f8fa;
 }
+
+.invisible-icon {
+  visibility: hidden;
+}
+
+.remove-icon-container {
+  border-radius: 4px;
+  background-color: rgb(244, 246, 248);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: rgb(231, 234, 238);
+  }
+}
+
+.icons-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.warning-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.remove-icon {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  font-size: 20px;
+  background-color: rgb(236, 239, 243);
+  border-radius: 4px;
+  &:hover {
+    background-color: rgb(213, 218, 224);
+  }
+}
+
+.placeholder-icon {
+  visibility: hidden;
+  cursor: default;
+  pointer-events: none;
+}
+

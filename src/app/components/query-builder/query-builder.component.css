@@ -176,6 +176,11 @@ app-tree-panel, app-control-panel {
   height: 100%;
 }
 
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+}
+
 .option {
   flex: 1;
   display: flex;
@@ -190,7 +195,7 @@ app-tree-panel, app-control-panel {
 }
 
 .option.active {
-  color: #45485e;
+  color: #303244;
   font-weight: 600;
 }
 

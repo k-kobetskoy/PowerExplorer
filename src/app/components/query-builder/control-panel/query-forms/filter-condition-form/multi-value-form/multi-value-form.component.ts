@@ -11,7 +11,8 @@ import { CommonModule } from '@angular/common';
 import { MatOptionModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatIconModule } from '@angular/material/icon';
-
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 @Component({
     standalone: true,
     imports: [
@@ -21,7 +22,9 @@ import { MatIconModule } from '@angular/material/icon';
         MatInputModule,
         MatOptionModule,
         MatAutocompleteModule,
-        MatIconModule
+        MatIconModule,
+        MatButtonModule,
+        FormsModule
     ],      
     selector: 'app-multi-value-form',
     templateUrl: './multi-value-form.component.html',

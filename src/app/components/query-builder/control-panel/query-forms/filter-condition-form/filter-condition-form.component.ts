@@ -22,7 +22,10 @@ import { PicklistFormComponent } from './picklist-form/picklist-form.component';
 import { StatusFormComponent } from './status-form/status-form.component';
 import { DateTimeFormComponent } from './date-time-form/date-time-form.component';
 import { StringFormComponent } from './string-form/string-form.component';
-
+import { MatIconModule } from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import {FormsModule} from '@angular/forms';
+import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
 @Component({
   standalone: true,
   imports: [
@@ -40,7 +43,10 @@ import { StringFormComponent } from './string-form/string-form.component';
     PicklistFormComponent,
     StatusFormComponent,
     DateTimeFormComponent,
-    StringFormComponent
+    StringFormComponent,
+    MatIconModule,
+    MatButtonModule,
+    FormsModule
   ],
   selector: 'app-filter-condition-form',
   templateUrl: './filter-condition-form.component.html',
@@ -68,7 +74,8 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   isValidAttributeSelected = false;
 
   constructor(
-    private attributeEntityService: AttributeEntityService) { super(); }
+    private attributeEntityService: AttributeEntityService,
+    private nodeTreeService: NodeTreeService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -90,6 +97,10 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
     this.setupFormToModelBinding();
 
     this.setupFiltering();
+  }
+
+  removeNode() {
+    this.nodeTreeService.removeNode(this.selectedNode);
   }
 
   setupFormToModelBinding() {

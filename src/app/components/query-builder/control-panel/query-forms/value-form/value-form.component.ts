@@ -19,24 +19,7 @@ import { MatInputModule } from '@angular/material/input';
   ],
   selector: 'app-value-form',
   templateUrl: './value-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .hint-text {
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.6);
-      margin-top: 4px;
-    }
-  `]
+  styles: []
 })
 export class ValueFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   protected destroy$ = new Subject<void>();

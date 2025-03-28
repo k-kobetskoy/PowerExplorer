@@ -8,7 +8,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatOptionModule } from '@angular/material/core';
 import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
-
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 @Component({
   standalone: true,
   imports: [
@@ -16,28 +20,17 @@ import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.co
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
+    MatAutocompleteModule,
     MatOptionModule,
-    MultiValueFormComponent
+    MatIconModule,
+    MultiValueFormComponent,
+    MatSelectModule,  
+    MatButtonModule,
+    FormsModule
   ],    
   selector: 'app-id-form',
   templateUrl: './id-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-  `],
+  styleUrls: ['./id-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class IdFormComponent extends OperatorValueBaseFormComponent {

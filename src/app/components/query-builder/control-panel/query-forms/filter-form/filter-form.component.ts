@@ -11,6 +11,10 @@ import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
 import { MatOptionModule } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import {FormsModule} from '@angular/forms';
+import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
 
 @Component({
   standalone: true,
@@ -20,28 +24,14 @@ import { MatOptionModule } from '@angular/material/core';
     MatFormFieldModule,
     MatInputModule,
     QuickActionsComponent,
-    MatOptionModule
+    MatOptionModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    FormsModule
   ],
   selector: 'app-filter-form',
   templateUrl: './filter-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-  `],
+  styleUrls: ['./filter-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FilterFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
@@ -56,7 +46,7 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
 
   readonly filterTypeOptions = FilterStaticData.FilterTypes;
 
-  constructor() { super(); }
+  constructor(private nodeTreeService: NodeTreeService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -73,6 +63,10 @@ export class FilterFormComponent extends BaseFormComponent implements OnInit, On
     this.setInitialValues();
 
     this.setupFormToModelBindings();
+  }
+
+  removeNode() {
+    this.nodeTreeService.removeNode(this.selectedNode);
   }
 
   setupFormToModelBindings() {

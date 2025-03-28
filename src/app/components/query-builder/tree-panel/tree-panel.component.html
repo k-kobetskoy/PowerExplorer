@@ -16,6 +16,7 @@
               [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}"
               [matTooltip]="(node.validationResult$|async)?.isValid === false ? ((node.validationResult$|async)?.errors || []).join('\n') : ''"
               [matTooltipDisabled]="(node.validationResult$|async)?.isValid !== false"
+              [matTooltipPosition]="'below'"
               matTooltipClass="validation-error-tooltip">
               
               <!-- Node icon -->
@@ -33,7 +34,7 @@
                 @case ('filter') {
                 <img class="tree-element-icon prevent-select" src="assets/icons/filter-icon.svg" alt="filter-icon">
                 }
-                @case ('link') {
+                @case ('link-entity') {
                 <img class="tree-element-icon prevent-select" src="assets/icons/link-icon.svg" alt="link-icon">
                 }
                 @case ('order') {
@@ -47,10 +48,16 @@
                 {{node.nodeDisplayValue$|async}}
               </p>
               
-              <!-- Warning icon -->
-              <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
-                <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
-              </ng-container>
+              <!-- Warning icon should alway be on the fixed position so when node is not selected it should left the place for remove icon -->
+              <div class="icons-container">
+                <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
+                  <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
+                </ng-container>
+                
+                <img class="remove-icon" *ngIf="(selectedNode$ | async) === node" (click)="removeNode(node)" src="assets/icons/x.svg" alt="x">
+                
+                <img class="remove-icon placeholder-icon" *ngIf="(selectedNode$ | async) !== node" src="assets/icons/x.svg" alt="x">                
+              </div>
             </div>
           </div>
         </div>
@@ -67,6 +74,7 @@
               [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}"
               [matTooltip]="(node.validationResult$|async)?.isValid === false ? ((node.validationResult$|async)?.errors || []).join('\n') : ''"
               [matTooltipDisabled]="(node.validationResult$|async)?.isValid !== false"
+              [matTooltipPosition]="'below'"
               matTooltipClass="validation-error-tooltip">
 
               <ng-container *ngIf="getNodeIcon(node)">
@@ -83,7 +91,7 @@
                 @case ('filter') {
                 <img class="tree-element-icon prevent-select" src="assets/icons/filter-icon.svg" alt="filter-icon">
                 }
-                @case ('link') {
+                @case ('link-entity') {
                 <img class="tree-element-icon prevent-select" src="assets/icons/link-icon.svg" alt="link-icon">
                 }
                 @case ('order') {
@@ -94,9 +102,15 @@
               <p class="small prevent-select">
                 {{node.nodeDisplayValue$|async}}
               </p>
-              <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
-                <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
-              </ng-container>
+              <!-- Warning icon should alway be on the fixed position so when node is not selected it should left the place for remove icon -->
+              <div class="icons-container">
+                <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
+                  <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
+                </ng-container>
+                <img class="remove-icon" *ngIf="(selectedNode$ | async) === node" (click)="removeNode(node)" src="assets/icons/x.svg" alt="x">
+                
+                <img class="remove-icon placeholder-icon" *ngIf="(selectedNode$ | async) !== node" src="assets/icons/x.svg" alt="x">                
+              </div>
             </div>
           </div>
         </div>

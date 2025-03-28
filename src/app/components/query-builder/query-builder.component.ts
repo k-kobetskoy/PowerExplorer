@@ -10,6 +10,7 @@ import { ResultTableComponent } from './result-table/result-table.component';
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationService } from 'src/app/services/navigation.service';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
 
 @Component({
@@ -31,7 +32,7 @@ export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
     ControlPanelComponent,
     MatIconModule,
     CodeEditorComponent,
-    MatButtonModule
+    MatButtonModule    
   ]
 })
 export class QueryBuilder implements OnInit {

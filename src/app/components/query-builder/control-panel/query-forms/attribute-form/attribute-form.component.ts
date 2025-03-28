@@ -13,7 +13,10 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
 import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
-
+import { MatIconModule } from '@angular/material/icon';
+import {MatButtonModule} from '@angular/material/button';
+import {FormsModule} from '@angular/forms';
+import { NodeTreeService } from '../../../services/node-tree.service';
 @Component({
   standalone: true,
   imports: [
@@ -24,41 +27,14 @@ import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/
     MatAutocompleteModule,
     MatOptionModule,
     QuickActionsComponent,
-    LoadingIndicatorComponent
+    LoadingIndicatorComponent,
+    MatIconModule,
+    MatButtonModule,
+    FormsModule
   ],    
   selector: 'app-attribute-form',
   templateUrl: './attribute-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-
-    .logical-name {
-      font-weight: 500;
-    }
-
-    .display-name {
-      font-size: 0.85em;
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    mat-option {
-      height: auto;
-      line-height: 1.2;
-    }
-  `],
+  styleUrls: ['./attribute-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 
@@ -79,6 +55,7 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   constructor(
     private attributeService: AttributeEntityService,
     private fb: FormBuilder,
+    private nodeTreeProcessorService: NodeTreeService
   ) {
     super();
   }
@@ -92,6 +69,10 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
       this.destroy$.next();
       this.initializeForm();
     }
+  }
+
+  removeNode() {
+    this.nodeTreeProcessorService.removeNode(this.selectedNode);
   }
 
   private initializeForm() {

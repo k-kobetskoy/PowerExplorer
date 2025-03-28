@@ -1,6 +1,6 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, ViewEncapsulation } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, combineLatest, of, shareReplay, tap } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, catchError, take } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
@@ -20,7 +20,12 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
 import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
-
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatButtonModule } from '@angular/material/button';
+import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
 // Interface for relation object to improve type safety
 interface RelationObject extends RelationshipModel { }
 
@@ -30,75 +35,23 @@ interface RelationObject extends RelationshipModel { }
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
+    MatCheckboxModule,
     MatInputModule,
     MatAutocompleteModule,
+    MatSelectModule,
     MatOptionModule,
+    MatIconModule,
+    MatTooltipModule,
     QuickActionsComponent,
-    LoadingIndicatorComponent
+    LoadingIndicatorComponent,
+    MatButtonModule,
+    FormsModule
   ],
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .checkbox-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-
-    .logical-name {
-      font-weight: 500;
-    }
-
-    .display-name {
-      font-size: 0.85em;
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    /* New styles for relationship dropdown */
-    .relationship-option {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-
-    .entity-name {
-      font-weight: 500;
-      font-size: 14px;
-      color: #333;
-    }
-
-    .relation-name {
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.6);
-      margin-top: 2px;
-    }
-
-    .info-message {
-      margin-bottom: 15px; 
-      padding: 10px; 
-      background-color: #f8f9fa; 
-      border-radius: 4px; 
-      border-left: 4px solid #17a2b8;
-    }
-  `],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./link-entity-form.component.css'],    
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None
 })
 export class LinkEntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   @Input() selectedNode: QueryNode;
@@ -134,7 +87,8 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   constructor(
     private entityService: EntityEntityService,
     private linkEntityService: LinkEntityService,
-    private attributeService: AttributeEntityService) { super(); }
+    private attributeService: AttributeEntityService,
+    private nodeTreeService: NodeTreeService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -165,6 +119,10 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
     this.setupToAttributeAutocomplete();
 
     this.setupFormToModelBindings();
+  }
+
+  removeNode() {
+    this.nodeTreeService.removeNode(this.selectedNode);
   }
 
   subscribeOnFetchAllEntitiesFormControlChanges() {

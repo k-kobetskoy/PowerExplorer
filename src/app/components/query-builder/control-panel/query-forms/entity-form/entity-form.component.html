@@ -1,16 +1,57 @@
-<app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+<div class="control-panel-container">
+    <!-- Quick actions - will be sticky -->
+    <div class="sticky-actions">
+        <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+    </div>
 
-<form [formGroup]="entityForm">
-    <mat-form-field>
-        <mat-label>Name</mat-label>
-        <input type="text" matInput
-            formControlName="name"
-            [matAutocomplete]="auto">
-        <mat-autocomplete #auto="matAutocomplete">
-            <mat-option *ngFor="let entity of filteredEntities$ | async" [value]="entity.logicalName">
-                {{entity.logicalName}} {{entity.displayName}}
-            </mat-option>
-        </mat-autocomplete>
-        <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
-    </mat-form-field>
-</form>
+    <!-- Scrollable content -->
+    <div class="form-scrollable-content">
+        <div class="form-container">
+            <div class="form-header">
+                <span class="form-header-text">Node Properties</span>
+                <div class="form-header-actions">                                                
+                    <!-- <div class="form-header-button" (click)="dublicateNode()">
+                        <img class="form-header-copy-icon" src="assets/icons/copy.svg" alt="copy">
+                        <img class="form-header-copy-icon-hover" src="assets/icons/copy-hover.svg" alt="copy">
+                    </div> -->
+                    <div class="form-header-button" (click)="removeNode()">
+                        <img class="form-header-delete-icon" src="assets/icons/trash-2.svg" alt="delete">
+                        <img class="form-header-delete-icon-hover" src="assets/icons/trash-2-hover.svg" alt="delete">
+                    </div>           
+                </div>
+            </div>
+            <div class="form-body">
+                <form [formGroup]="entityForm">
+                    <div class="form-flex">
+                        <!-- First row: Two inputs in separate columns -->
+                        <mat-form-field class="input-full-width">
+                            <mat-label>Name</mat-label>
+                            <input type="text" matInput formControlName="name" [matAutocomplete]="auto">
+                            <mat-autocomplete #auto="matAutocomplete">
+                                <mat-option *ngFor="let entity of filteredEntities$ | async"
+                                    [value]="entity.logicalName">
+                                    <div class="option-content">
+                                        <span class="logical-name"> {{entity.logicalName}} </span>
+                                        <span class="display-name">{{entity.displayName}}</span>
+                                    </div>
+                                </mat-option>
+                            </mat-autocomplete>
+                            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
+                            @if (entityForm.value.name) {
+                                <button matSuffix mat-icon-button aria-label="Clear" (click)="entityForm.patchValue({name: ''})">
+                                  <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+                                </button>
+                              }
+                        </mat-form-field>
+
+                        <!-- Second column in first row -->
+
+
+                        <!-- Second row: Full width input spanning both columns -->
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

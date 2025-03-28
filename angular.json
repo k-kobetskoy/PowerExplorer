@@ -25,7 +25,11 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.css"
+              "@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/styles.css",
+              "src/styles/material-customizations.css",
+              "src/styles/syling.scss",
+              "src/styles/forms-styles.css"
             ],
             "scripts": []
           },
