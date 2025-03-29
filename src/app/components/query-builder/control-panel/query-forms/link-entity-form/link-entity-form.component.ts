@@ -84,15 +84,22 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   fetchAllEntities$: Observable<boolean>;
   parentEntityLogicalName$: Observable<string>;
 
-  isLoadingAttributes$ : BehaviorSubject<boolean>;
+  isLoadingToAttributes$ : BehaviorSubject<boolean>;
+  isLoadingFromAttributes$ : BehaviorSubject<boolean>;
+  isLoadingLinkEntities$ : BehaviorSubject<boolean>;
+  isLoadingEntities$ : BehaviorSubject<boolean>;
 
   constructor(
     private entityService: EntityEntityService,
     private linkEntityService: LinkEntityService,
     private attributeService: AttributeEntityService,
     private nodeTreeService: NodeTreeService) { super();
-      this.isLoadingAttributes$ = this.attributeService.getAttributesIsLoading$;
+      this.isLoadingLinkEntities$ = this.linkEntityService.getLinkEntitiesIsLoading$;
+      this.isLoadingEntities$ = this.entityService.getEntitiesIsLoading$;
+      this.isLoadingFromAttributes$ = this.attributeService.getFromAttributesIsLoading$;
+      this.isLoadingToAttributes$ = this.attributeService.getToAttributesIsLoading$;
     }
+  
 
   ngOnInit() {
     this.initializeForm();
@@ -212,6 +219,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
           return of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
         }
         return this.linkEntityService.getLinkEntities(entityName, true).pipe(
+          takeUntil(this.destroy$)
         );
       })
     );

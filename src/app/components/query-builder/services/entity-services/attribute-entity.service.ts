@@ -35,13 +35,33 @@ export class AttributeEntityService extends BaseRequestService {
   }
 
   getAttributesIsLoading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  getToAttributesIsLoading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  getFromAttributesIsLoading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  getAttributes(entityLogicalName: string, isLoading: boolean = false): Observable<AttributeModel[]> {
+  getAttributes(entityLogicalName: string, isLoading: boolean = false, isToAttribute: boolean = false, isFromAttribute: boolean = false): Observable<AttributeModel[]> {
     return this.activeEnvironmentUrl$.pipe(
-      tap(() => isLoading ? this.getAttributesIsLoading$.next(true) : null),
+      tap(() => {
+        if (isLoading) {
+          if (isToAttribute) {
+            this.getToAttributesIsLoading$.next(true);
+          } else if (isFromAttribute) {
+            this.getFromAttributesIsLoading$.next(true);
+          } else {
+            this.getAttributesIsLoading$.next(true);
+          }
+        }
+      }),
       switchMap(envUrl => {
         if (!envUrl) {
-          isLoading ? this.getAttributesIsLoading$.next(false) : null;
+          if (isLoading) {
+            if (isToAttribute) {
+              this.getToAttributesIsLoading$.next(false);
+            } else if (isFromAttribute) {
+              this.getFromAttributesIsLoading$.next(false);
+            } else {
+              this.getAttributesIsLoading$.next(false);
+            }
+          }
           return of([]);
         }
 
@@ -49,9 +69,17 @@ export class AttributeEntityService extends BaseRequestService {
         const cacheKey = `${this.prepareEnvUrl(envUrl)}_${CacheKeys.EntityAttributes}_${normalizedEntityName}`;
         const attributes$ = this.cacheService.getItem<AttributeModel[]>(cacheKey);
 
-        if (attributes$.value) { 
-          isLoading ? this.getAttributesIsLoading$.next(false) : null;
-          return attributes$.asObservable(); 
+        if (attributes$.value) {
+          if (isLoading) {
+            if (isToAttribute) {
+              this.getToAttributesIsLoading$.next(false);
+            } else if (isFromAttribute) {
+              this.getFromAttributesIsLoading$.next(false);
+            } else {
+              this.getAttributesIsLoading$.next(false);
+            }
+          }
+          return attributes$.asObservable();
         }
 
         const url = API_ENDPOINTS.attributes.getResourceUrl(envUrl, entityLogicalName);
@@ -66,8 +94,18 @@ export class AttributeEntityService extends BaseRequestService {
             displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
             attributeType
           }))),
-          tap(data => {this.cacheService.setItem(data, cacheKey); console.log('AttributeEntityService: getAttributes()', data)}),
-          tap(() => isLoading ? this.getAttributesIsLoading$.next(false) : null),
+          tap(data => { this.cacheService.setItem(data, cacheKey); console.log('AttributeEntityService: getAttributes()', data) }),
+          tap(() => {
+            if (isLoading) {
+              if (isToAttribute) {
+                this.getToAttributesIsLoading$.next(false);
+              } else if (isFromAttribute) {
+                this.getFromAttributesIsLoading$.next(false);
+              } else {
+                this.getAttributesIsLoading$.next(false);
+              }
+            }
+          }),
           shareReplay(1)
         );
       }));
@@ -83,17 +121,17 @@ export class AttributeEntityService extends BaseRequestService {
     if (!entityAttributeMap || Object.keys(entityAttributeMap).length === 0) {
       return of({});
     }
-    
+
     // Check if all attributeData arrays are empty - if so, get all attributes
     const allAttributeDataEmpty = Object.values(entityAttributeMap).every(
       entityData => !entityData.attributeData || entityData.attributeData.length === 0
     );
-    
+
     if (allAttributeDataEmpty) {
       console.log('AttributeEntityService: All attributeData arrays are empty, getting all attributes');
       return this.getAllAttributesForEntities(Object.keys(entityAttributeMap));
     }
-    
+
     // Check the number of entities and call the appropriate method
     if (Object.keys(entityAttributeMap).length === 1) {
       return this.getSpecificAttributesForSingleEntity(entityAttributeMap);
@@ -101,7 +139,7 @@ export class AttributeEntityService extends BaseRequestService {
       return this.getSpecificAttributesForMultipleEntities(entityAttributeMap);
     }
   }
-  
+
   /**
    * Get ALL attributes for the specified entities without filtering
    * This is useful when attributeData is empty and we want to include all possible fields
@@ -112,19 +150,19 @@ export class AttributeEntityService extends BaseRequestService {
     if (!entityLogicalNames || entityLogicalNames.length === 0) {
       return of({});
     }
-    
+
     console.log(`AttributeEntityService: Getting all attributes for entities: ${entityLogicalNames.join(', ')}`);
-    
+
     // Create a result map right away
     const resultMap: AttributeMapResult = {};
-    
+
     return this.activeEnvironmentUrl$.pipe(
       take(1), // Only take one environment URL
       switchMap(envUrl => {
         if (!envUrl) {
           return of(resultMap);
         }
-        
+
         // Create an array of observables, one for each entity
         const entityObservables: Observable<void>[] = entityLogicalNames.map(entityLogicalName => {
           return new Observable<void>(subscriber => {
@@ -134,17 +172,17 @@ export class AttributeEntityService extends BaseRequestService {
                 try {
                   // Create a Map with ALL attributes
                   const attributeMap = new Map<string, AttributeModel>();
-                  
+
                   // Add ALL attributes to the map
                   attributes.forEach(attr => {
                     attributeMap.set(attr.logicalName, attr);
                   });
-                  
+
                   console.log(`AttributeEntityService: Got ${attributeMap.size} attributes for entity ${entityLogicalName}`);
-                  
+
                   // Store in result map
                   resultMap[entityLogicalName] = attributeMap;
-                  
+
                   subscriber.next();
                   subscriber.complete();
                 } catch (error) {
@@ -167,7 +205,7 @@ export class AttributeEntityService extends BaseRequestService {
             })
           );
         });
-        
+
         // Use forkJoin to process all entities (it will wait for all to complete)
         return forkJoin(entityObservables).pipe(
           map(() => {
@@ -186,7 +224,7 @@ export class AttributeEntityService extends BaseRequestService {
       })
     );
   }
-  
+
   /**
    * Get specific attributes for a single entity
    * @param entityAttributeMap Map containing a single entity and its required attributes
@@ -195,49 +233,49 @@ export class AttributeEntityService extends BaseRequestService {
   private getSpecificAttributesForSingleEntity(entityAttributeMap: EntityAttributeMap): Observable<AttributeMapResult> {
     const entityLogicalName = Object.keys(entityAttributeMap)[0];
     const entityData = entityAttributeMap[entityLogicalName];
-    
+
     return this.activeEnvironmentUrl$.pipe(
       switchMap(envUrl => {
         if (!envUrl) {
           return of({});
         }
-        
+
         // Validate attributeData
         if (!Array.isArray(entityData.attributeData)) {
           console.error(`AttributeEntityService: attributeData is not an array for entity ${entityLogicalName}`);
           return of({ [entityLogicalName]: new Map<string, AttributeModel>() });
         }
-        
+
         // If attributeData is empty, get all attributes
         if (entityData.attributeData.length === 0) {
           console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, getting all attributes`);
           return this.getAllAttributesForEntities([entityLogicalName]);
         }
-        
+
         // Get attribute logical names
         const attributeLogicalNames = entityData.attributeData
           .filter(attr => attr && attr.attributeLogicalName)
           .map(attr => attr.attributeLogicalName as string);
-          
+
         if (attributeLogicalNames.length === 0) {
           console.log(`AttributeEntityService: No valid attributes found for entity ${entityLogicalName}, getting all attributes`);
           return this.getAllAttributesForEntities([entityLogicalName]);
         }
-        
+
         // For single entity, we can directly return the result without using tuples or forkJoin
         return this.getAttributes(entityLogicalName).pipe(
           map(attributes => {
             const attributeMap = new Map<string, AttributeModel>();
-            
+
             // Filter only the attributes we need
-            const matchedAttributes = attributes.filter(attr => 
+            const matchedAttributes = attributes.filter(attr =>
               attributeLogicalNames.includes(attr.logicalName)
             );
-            
+
             matchedAttributes.forEach(attr => {
               attributeMap.set(attr.logicalName, attr);
             });
-            
+
             // Return the result in the expected format
             const result: AttributeMapResult = {};
             result[entityLogicalName] = attributeMap;
@@ -251,7 +289,7 @@ export class AttributeEntityService extends BaseRequestService {
       })
     );
   }
-  
+
   /**
    * Get specific attributes for multiple entities
    * @param entityAttributeMap Map of entities and their required attributes
@@ -260,24 +298,24 @@ export class AttributeEntityService extends BaseRequestService {
   private getSpecificAttributesForMultipleEntities(entityAttributeMap: EntityAttributeMap): Observable<AttributeMapResult> {
     // Create a result map right away
     const resultMap: AttributeMapResult = {};
-    
+
     return this.activeEnvironmentUrl$.pipe(
       take(1), // Only take one environment URL
       switchMap(envUrl => {
         if (!envUrl) {
           return of(resultMap);
         }
-        
+
         const entityLogicalNames = Object.keys(entityAttributeMap);
         if (entityLogicalNames.length === 0) {
           return of(resultMap);
         }
-        
+
         // Create an array of observables, one for each entity
         const entityObservables: Observable<void>[] = entityLogicalNames.map(entityLogicalName => {
           return new Observable<void>(subscriber => {
             const entityData = entityAttributeMap[entityLogicalName];
-            
+
             // Skip invalid entity data
             if (!entityData || !Array.isArray(entityData.attributeData)) {
               resultMap[entityLogicalName] = new Map<string, AttributeModel>();
@@ -285,25 +323,25 @@ export class AttributeEntityService extends BaseRequestService {
               subscriber.complete();
               return;
             }
-            
+
             // If attributeData is empty, get all attributes
             if (entityData.attributeData.length === 0) {
               console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, getting all attributes`);
-              
+
               // Get all attributes for this entity
               this.getAttributes(entityLogicalName).subscribe({
                 next: (attributes) => {
                   try {
                     const attributeMap = new Map<string, AttributeModel>();
-                    
+
                     // Store all attributes
                     attributes.forEach(attr => {
                       attributeMap.set(attr.logicalName, attr);
                     });
-                    
+
                     // Store in result map
                     resultMap[entityLogicalName] = attributeMap;
-                    
+
                     subscriber.next();
                     subscriber.complete();
                   } catch (error) {
@@ -320,30 +358,30 @@ export class AttributeEntityService extends BaseRequestService {
                   subscriber.complete();
                 }
               });
-              
+
               return;
             }
-            
+
             // Get attribute names
             const attributeLogicalNames = entityData.attributeData
               .filter(attr => attr && attr.attributeLogicalName)
               .map(attr => attr.attributeLogicalName as string);
-            
+
             if (attributeLogicalNames.length === 0) {
               // Get all attributes if no specific attributes are defined
               this.getAttributes(entityLogicalName).subscribe({
                 next: (attributes) => {
                   try {
                     const attributeMap = new Map<string, AttributeModel>();
-                    
+
                     // Add all attributes
                     attributes.forEach(attr => {
                       attributeMap.set(attr.logicalName, attr);
                     });
-                    
+
                     // Store in result map
                     resultMap[entityLogicalName] = attributeMap;
-                    
+
                     subscriber.next();
                     subscriber.complete();
                   } catch (error) {
@@ -360,28 +398,28 @@ export class AttributeEntityService extends BaseRequestService {
                   subscriber.complete();
                 }
               });
-              
+
               return;
             }
-            
+
             // Get attributes for this entity
             this.getAttributes(entityLogicalName).subscribe({
               next: (attributes) => {
                 try {
                   // Filter to requested attributes
                   const attributeMap = new Map<string, AttributeModel>();
-                  const matchedAttributes = attributes.filter(attr => 
+                  const matchedAttributes = attributes.filter(attr =>
                     attributeLogicalNames.includes(attr.logicalName)
                   );
-                  
+
                   // Add to map
                   matchedAttributes.forEach(attr => {
                     attributeMap.set(attr.logicalName, attr);
                   });
-                  
+
                   // Store in result map
                   resultMap[entityLogicalName] = attributeMap;
-                  
+
                   subscriber.next();
                   subscriber.complete();
                 } catch (error) {
@@ -404,7 +442,7 @@ export class AttributeEntityService extends BaseRequestService {
             })
           );
         });
-        
+
         // Use forkJoin to process all entities (it will wait for all to complete)
         return forkJoin(entityObservables).pipe(
           map(() => resultMap),
