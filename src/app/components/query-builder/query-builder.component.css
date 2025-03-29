@@ -126,11 +126,11 @@ app-tree-panel, app-control-panel {
 .code-editor-toolbar {
   display: flex;
   height: var(--tab-bar-height);
-  flex-shrink: 0;
-  width: 100%;
+  align-items: center;
   justify-content: space-between;
   padding: 0px 10px 0px 15px;
-  align-items: center;
+  box-sizing: border-box;
+  z-index: 2;
 }
 
 .toggle-wrapper {
@@ -143,8 +143,9 @@ app-tree-panel, app-control-panel {
   width: 130px;
   height: 28px;
   background-color: #CCCFDB;
-  border-radius: 11px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: inset 0 0px 10px  rgba(64, 64, 70, 0.123);
 
   &:hover {
     background-color: #b8bbc9;
@@ -153,12 +154,12 @@ app-tree-panel, app-control-panel {
 
 .toggle-slider {
   position: absolute;
-  width: 60px;
-  height: 22px;
+  width: 62px;
+  height: 24px;
   background-color: white;
-  border-radius: 9px;
-  top: 3px;
-  left: 3px;
+  border-radius: 10px;
+  top: 2px;
+  left: 2px;
   transition: transform 0.3s ease;
   z-index: 1;
   box-shadow: 0 0px 6px rgba(0, 0, 0, 0.05);
@@ -187,7 +188,6 @@ app-tree-panel, app-control-panel {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-family: "Work Sans", sans-serif;
   font-size: 13px;
   font-weight: 500;
   color: #ffffff;
@@ -270,7 +270,7 @@ as-split[direction="vertical"] > as-split-area {
 .tab-content {
   display: flex;
   margin-top: 10px;
-  background-color: #555969;
+  background-color: #ffffff;
   border-radius: 10px;
   flex: 1 1 auto;
   flex-direction: column;
@@ -315,4 +315,11 @@ as-split[direction="vertical"] > as-split-area {
   font-weight: 500;
   line-height: 1;
   margin-top: 1px; /* Fine-tuning vertical alignment */
+}
+
+.query-builder-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }

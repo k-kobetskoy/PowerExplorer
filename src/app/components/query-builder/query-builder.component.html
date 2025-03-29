@@ -23,11 +23,11 @@
           <div class="toggle-button">
             <div class="toggle-slider" [class.slide-right]="selectedTabIndex === 1"></div>
             <div class="toggle-options">
-              <div class="option" [class.active]="selectedTabIndex === 0" (click)="selectedTabIndex = 0">
+              <div class="option" [class.active]="selectedTabIndex === 0" (click)="switchToTab(0)">
     
                 Xml
               </div>
-              <div class="option" [class.active]="selectedTabIndex === 1" (click)="selectedTabIndex = 1">
+              <div class="option" [class.active]="selectedTabIndex === 1" (click)="switchToTab(1)">
                 
                 Result
               </div>
@@ -43,8 +43,6 @@
 
         <div *ngIf="selectedTabIndex === 1" class="switch-wrapper">
 
-          <span class="switch-label">Show Display Values</span>
-          <input tuiSwitch type="checkbox" [ngModel]="true"/>
         </div>
 
 
@@ -52,11 +50,11 @@
 
 
       <div class="tab-content">
-        <div *ngIf="selectedTabIndex === 0" class="fetch-xml-content">
+        <div [style.display]="selectedTabIndex === 0 ? 'block' : 'none'" class="fetch-xml-content">
           <app-code-editor #codeEditor></app-code-editor>
         </div>
-        <div *ngIf="selectedTabIndex === 1" class="fetch-result-content">
-          <app-result-table #resultTable (resultTableGetResult)="toggleTab()"></app-result-table>
+        <div [style.display]="selectedTabIndex === 1 ? 'block' : 'none'" class="fetch-result-content">
+          <app-result-table #resultTable></app-result-table>
         </div>
       </div>
     </as-split-area>
