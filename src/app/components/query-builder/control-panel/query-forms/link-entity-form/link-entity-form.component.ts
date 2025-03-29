@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, ViewEncapsulation } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Observable, Subject, combineLatest, of, shareReplay, tap } from 'rxjs';
+import { Observable, Subject, combineLatest, of, shareReplay, tap, BehaviorSubject } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, catchError, take } from 'rxjs/operators';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -84,11 +84,15 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   fetchAllEntities$: Observable<boolean>;
   parentEntityLogicalName$: Observable<string>;
 
+  isLoadingAttributes$ : BehaviorSubject<boolean>;
+
   constructor(
     private entityService: EntityEntityService,
     private linkEntityService: LinkEntityService,
     private attributeService: AttributeEntityService,
-    private nodeTreeService: NodeTreeService) { super(); }
+    private nodeTreeService: NodeTreeService) { super();
+      this.isLoadingAttributes$ = this.attributeService.getAttributesIsLoading$;
+    }
 
   ngOnInit() {
     this.initializeForm();
@@ -207,7 +211,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
         if (!entityName) {
           return of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
         }
-        return this.linkEntityService.getLinkEntities(entityName).pipe(
+        return this.linkEntityService.getLinkEntities(entityName, true).pipe(
         );
       })
     );
@@ -380,7 +384,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
   private setupEntityAutocomplete() {
     this.filteredEntities$ = combineLatest([
       this.entityNameFormControl.valueChanges.pipe(startWith(this.entityNameFormControl.value || '')),
-      this.entityService.getEntities()
+      this.entityService.getEntities(true)
     ]).pipe(
       map(([value, entities]) => this.filterEntities(value, entities))
     );
@@ -402,7 +406,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
             return entityAttribute.value$.pipe(
               takeUntil(this.destroy$),
               distinctUntilChanged(),
-              switchMap(entityName => this.attributeService.getAttributes(entityName)),
+              switchMap(entityName => this.attributeService.getAttributes(entityName, true)),
               catchError(error => {
                 console.error(`[LinkEntityFormComponent] Error fetching attributes`, error);
                 return of([] as AttributeModel[]);
@@ -440,7 +444,7 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
         return entityAttribute.value$.pipe(
           takeUntil(this.destroy$),
           distinctUntilChanged(),
-          switchMap(entityName => this.attributeService.getAttributes(entityName)),
+          switchMap(entityName => this.attributeService.getAttributes(entityName, true)),
           catchError(error => {
             console.error(`[LinkEntityFormComponent] Error fetching attributes`, error);
             return of([] as AttributeModel[]);

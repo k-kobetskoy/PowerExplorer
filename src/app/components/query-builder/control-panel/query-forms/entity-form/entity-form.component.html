@@ -39,9 +39,9 @@
                                     </div>
                                 </mat-option>
                             </mat-autocomplete>
-                            <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
+                            <mat-spinner class="loading-spinner" diameter="20" matSuffix *ngIf="isLoading$ | async"></mat-spinner>
                             @if (entityForm.value.name) {
-                                <button matSuffix mat-icon-button aria-label="Clear" (click)="entityForm.patchValue({name: ''})">
+                                <button *ngIf="!(isLoading$ | async)" matSuffix mat-icon-button aria-label="Clear" (click)="entityForm.patchValue({name: ''})">
                                   <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
                                 </button>
                               }

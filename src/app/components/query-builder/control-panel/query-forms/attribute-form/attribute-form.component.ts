@@ -48,8 +48,7 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   filteredAttributes$: Observable<AttributeModel[]>;
 
   // Add loading indicator state
-  isLoadingAttributes$ = new BehaviorSubject<boolean>(false);
-
+  isLoadingAttributes$ : BehaviorSubject<boolean>;
   private nameAttributeData = AttributeData.Attribute.Name;
   private aliasAttributeData = AttributeData.Attribute.Alias;
 
@@ -62,6 +61,7 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
     private nodeTreeProcessorService: NodeTreeService,
   ) {
     super();
+    this.isLoadingAttributes$ = this.attributeService.getAttributesIsLoading$;
   }
 
   ngOnInit() {
@@ -165,7 +165,7 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
         // Set loading state to true before making the request
         this.isLoadingAttributes$.next(true);
 
-        return this.attributeService.getAttributes(entityName).pipe(
+        return this.attributeService.getAttributes(entityName, true).pipe(
           map(attributes => {
             return attributes;
           }),

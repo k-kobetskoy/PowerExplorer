@@ -74,7 +74,7 @@ export class StatusFormComponent extends OperatorValueBaseFormComponent {
             }
             return entityAttribute.value$.pipe(
               switchMap(entityName => {
-                return this.statusService.getStateOrStatusCodeValues(entityName, this.attributeValue);
+                return this.statusService.getStateOrStatusCodeValues(entityName, this.attributeValue, true);
               })
             );
           })

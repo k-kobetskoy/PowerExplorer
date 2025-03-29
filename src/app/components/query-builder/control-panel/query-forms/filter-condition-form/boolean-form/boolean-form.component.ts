@@ -72,7 +72,7 @@ export class BooleanFormComponent extends OperatorValueBaseFormComponent {
                 return entityAttribute.value$.pipe(
                   distinctUntilChanged(),
                   switchMap(entityName => {
-                    return this.booleanService.getBooleanValues(entityName, this.attributeValue);
+                    return this.booleanService.getBooleanValues(entityName, this.attributeValue, true);
                   })
                 );
               }

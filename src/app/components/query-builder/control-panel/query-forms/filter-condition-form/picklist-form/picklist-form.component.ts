@@ -105,7 +105,7 @@ export class PicklistFormComponent extends OperatorValueBaseFormComponent {
                 return entityAttribute.value$.pipe(
                   distinctUntilChanged(),
                   switchMap(entityName => {
-                    return this.picklistService.getOptions(entityName, this.attributeValue, AttributeType.PICKLIST);
+                    return this.picklistService.getOptions(entityName, this.attributeValue, AttributeType.PICKLIST, true);
                   })
                 );
               }

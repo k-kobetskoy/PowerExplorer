@@ -2,7 +2,7 @@ import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetection
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { Observable, Subject, combineLatest } from 'rxjs';
+import { Observable, Subject, combineLatest, BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, startWith, takeUntil } from 'rxjs/operators';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 import { AttributeData } from '../../../models/constants/attribute-data';
@@ -14,8 +14,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
 import { MatIconModule } from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
-import {FormsModule} from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 import { NodeTreeService } from '../../../services/node-tree.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -42,19 +42,24 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 })
 
 export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
-dublicateNode() {
-throw new Error('Method not implemented.');
-}
+    dublicateNode() {
+        throw new Error('Method not implemented.');
+    }
     private destroy$ = new Subject<void>();
     @Input() selectedNode: QueryNode;
     entityForm: FormGroup;
     filteredEntities$: Observable<EntityModel[]>;
 
+    isLoading$: Observable<boolean>;
+
     private nameAttributeData = AttributeData.Entity.Name;
 
     private nameInputName = this.nameAttributeData.EditorName;
 
-    constructor(private entityService: EntityEntityService, private fb: FormBuilder, private nodeTreeProcessorService: NodeTreeService) { super(); }
+    constructor(private entityService: EntityEntityService, private fb: FormBuilder, private nodeTreeProcessorService: NodeTreeService) {
+        super();
+        this.isLoading$ = this.entityService.getEntitiesIsLoading$;
+    }
 
     ngOnInit() {
         this.initializeForm();
@@ -126,7 +131,7 @@ throw new Error('Method not implemented.');
     private setupEntityAutocomplete() {
         this.filteredEntities$ = combineLatest([
             this.entityForm.get(this.nameInputName).valueChanges.pipe(startWith(this.entityForm.get(this.nameInputName).value || '')),
-            this.entityService.getEntities()
+            this.entityService.getEntities(true)
         ]).pipe(
             debounceTime(50),
             distinctUntilChanged((prev, curr) => prev.every((value, index) => value === curr[index])),

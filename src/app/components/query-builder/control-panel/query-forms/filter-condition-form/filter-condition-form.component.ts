@@ -22,11 +22,11 @@ import { StatusFormComponent } from './status-form/status-form.component';
 import { DateTimeFormComponent } from './date-time-form/date-time-form.component';
 import { StringFormComponent } from './string-form/string-form.component';
 import { MatIconModule } from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
-import {FormsModule} from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-  @Component({
+@Component({
   standalone: true,
   imports: [
     CommonModule,
@@ -63,6 +63,8 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   @Input() selectedNode: QueryNode;
   private previousAttribute: string = null;
 
+  isLoadingAttributes$: BehaviorSubject<boolean>;
+
   attributes$: Observable<AttributeModel[]>;
   filteredAttributes$: Observable<AttributeModel[]>;
   entityName$: Observable<string>;
@@ -75,7 +77,10 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
 
   constructor(
     private attributeEntityService: AttributeEntityService,
-    private nodeTreeService: NodeTreeService) { super(); }
+    private nodeTreeService: NodeTreeService) {
+    super();
+    this.isLoadingAttributes$ = this.attributeEntityService.getAttributesIsLoading$;
+  }
 
   ngOnInit() {
     this.initializeForm();
@@ -124,7 +129,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
         return this.selectedNode.getParentEntityName(parentEntityNode).pipe(
           distinctUntilChanged(),
           switchMap(entityName => {
-            return this.attributeEntityService.getAttributes(entityName);
+            return this.attributeEntityService.getAttributes(entityName, true);
           })
         );
       }),
@@ -164,7 +169,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
         const attribute = attributes.find(attr => attr.logicalName.toLowerCase() === filterValue);
         if (attribute) {
           const currentAttributeValue = attribute.logicalName;
-          
+
           // If attribute changed, clear operator and value attributes
           if (this.previousAttribute !== null && this.previousAttribute !== currentAttributeValue) {
             // Remove operator and value when attribute changes

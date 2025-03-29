@@ -39,7 +39,7 @@
                             <mat-spinner class="loading-spinner" *ngIf="(isLoadingAttributes$ | async)" matSuffix [diameter]="20"></mat-spinner>
                         
                             @if (attributeForm.value.name) {
-                                <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({name: ''})">
+                                <button *ngIf="!(isLoadingAttributes$ | async)" matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({name: ''})">
                                 <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
                                 </button>
                             }

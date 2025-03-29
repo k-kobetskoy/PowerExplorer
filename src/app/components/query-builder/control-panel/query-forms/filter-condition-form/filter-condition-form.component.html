@@ -35,10 +35,10 @@
                   <span class="display-name">{{option.displayName}}</span>
                 </div>
               </mat-option>
-              <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
+              <mat-spinner class="loading-spinner" diameter="20" matSuffix *ngIf="isLoadingAttributes$ | async"></mat-spinner>
             </mat-autocomplete>
             @if (attributeFormControl.value) {
-              <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeFormControl.patchValue('')">
+              <button *ngIf="!(isLoadingAttributes$ | async)" matSuffix mat-icon-button aria-label="Clear" (click)="attributeFormControl.patchValue('')">
                 <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
               </button>
             }

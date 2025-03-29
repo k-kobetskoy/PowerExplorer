@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, switchMap, map, catchError, filter, from, mergeMap, tap, shareReplay, forkJoin, reduce, finalize, take, concatMap, toArray } from 'rxjs';
+import { Observable, of, switchMap, map, catchError, filter, from, mergeMap, tap, shareReplay, forkJoin, reduce, finalize, take, concatMap, toArray, BehaviorSubject } from 'rxjs';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeResponseModel } from 'src/app/models/incoming/attrubute/attribute-response-model';
@@ -34,16 +34,25 @@ export class AttributeEntityService extends BaseRequestService {
     super();
   }
 
-  getAttributes(entityLogicalName: string): Observable<AttributeModel[]> {
+  getAttributesIsLoading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
+  getAttributes(entityLogicalName: string, isLoading: boolean = false): Observable<AttributeModel[]> {
     return this.activeEnvironmentUrl$.pipe(
+      tap(() => isLoading ? this.getAttributesIsLoading$.next(true) : null),
       switchMap(envUrl => {
-        if (!envUrl) return of([]);
+        if (!envUrl) {
+          isLoading ? this.getAttributesIsLoading$.next(false) : null;
+          return of([]);
+        }
 
         const normalizedEntityName = entityLogicalName.trim().toLowerCase();
         const cacheKey = `${this.prepareEnvUrl(envUrl)}_${CacheKeys.EntityAttributes}_${normalizedEntityName}`;
         const attributes$ = this.cacheService.getItem<AttributeModel[]>(cacheKey);
 
-        if (attributes$.value) { return attributes$.asObservable(); }
+        if (attributes$.value) { 
+          isLoading ? this.getAttributesIsLoading$.next(false) : null;
+          return attributes$.asObservable(); 
+        }
 
         const url = API_ENDPOINTS.attributes.getResourceUrl(envUrl, entityLogicalName);
 
@@ -58,6 +67,7 @@ export class AttributeEntityService extends BaseRequestService {
             attributeType
           }))),
           tap(data => {this.cacheService.setItem(data, cacheKey); console.log('AttributeEntityService: getAttributes()', data)}),
+          tap(() => isLoading ? this.getAttributesIsLoading$.next(false) : null),
           shareReplay(1)
         );
       }));

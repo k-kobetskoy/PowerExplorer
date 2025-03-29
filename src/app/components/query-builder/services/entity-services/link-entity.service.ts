@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, map, of, switchMap, tap, catchError } from 'rxjs';
+import { Observable, map, of, switchMap, tap, catchError, BehaviorSubject } from 'rxjs';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { CacheKeys } from 'src/app/config/cache-keys';
 import { BaseRequestService } from './abstract/base-request.service';
@@ -8,12 +8,16 @@ import { LinkEntityResponseModel, RelationshipModel, RelationshipType } from 'sr
 @Injectable({ providedIn: 'root' })
 export class LinkEntityService extends BaseRequestService {
 
+  getLinkEntitiesIsLoading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+
   constructor() { super(); }
 
-  getLinkEntities(entityLogicalName: string): Observable<LinkEntityResponseModel> {
+  getLinkEntities(entityLogicalName: string, isLoading: boolean = false): Observable<LinkEntityResponseModel> {
     return this.activeEnvironmentUrl$.pipe(
+      tap(() => isLoading ? this.getLinkEntitiesIsLoading$.next(true) : null),
       switchMap(envUrl => {
-        if (!envUrl) {
+          if (!envUrl) {
+          isLoading ? this.getLinkEntitiesIsLoading$.next(false) : null;
           return of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
         }
 
@@ -21,7 +25,10 @@ export class LinkEntityService extends BaseRequestService {
 
         const linkEntities$ = this.cacheService.getItem<LinkEntityResponseModel>(key);
 
-        if (linkEntities$.value) { return linkEntities$.asObservable(); }
+        if (linkEntities$.value) { 
+          isLoading ? this.getLinkEntitiesIsLoading$.next(false) : null;
+          return linkEntities$.asObservable(); 
+        }
 
         const url = API_ENDPOINTS.link.getResourceUrl(envUrl, entityLogicalName);
 
@@ -43,6 +50,7 @@ export class LinkEntityService extends BaseRequestService {
             };
           }),
           tap(data => { this.cacheService.setItem(data, key); }),
+          tap(() => isLoading ? this.getLinkEntitiesIsLoading$.next(false) : null),
           catchError(error => {
             console.error('Error fetching link entities:', error);
             return of({ OneToManyRelationships: [], ManyToOneRelationships: [] });
