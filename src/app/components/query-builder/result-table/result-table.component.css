@@ -145,23 +145,28 @@ app-result-table .format-toggle-label{
     color: #2c70b9 !important;
     font-family: 'Hack', monospace !important;
     font-size: 0.79rem !important;
-    /* text-decoration: underline !important; */
 }
 
 /* Formatted lookup style - more user-friendly appearance */
-.mat-mdc-cell.lookup-cell-formatted {
+.mat-mdc-cell.lookup-cell.lookup-cell-formatted {
   font-family: 'Inter', sans-serif !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
-  color: var(--main-text-color) !important;
+  color: #333333 !important;
+  text-align: left !important;
+  padding-left: 12px !important;
+  background-color: transparent !important;
+  letter-spacing: normal !important;
 }
 
 /* Raw lookup style - technical appearance */
-.mat-mdc-cell.lookup-cell-raw {
+.mat-mdc-cell.lookup-cell.lookup-cell-raw {
   color: #2c70b9 !important;
   font-family: 'Hack', monospace !important;
   font-size: 0.79rem !important;
   letter-spacing: -0.02em !important;
+  background-color: transparent !important;
+  text-align: left !important;
 }
 
 .mat-mdc-cell.uniqueidentifier-cell {
@@ -226,15 +231,34 @@ tr.mat-mdc-row:hover {
 
 .null-value {
   font-style: italic !important;
-  color: #bdbdbd !important;
+  color: #a0a0a0 !important;
   font-weight: normal !important;
   /* Override type-specific styles */
-  text-align: left !important;
-  background-color: transparent !important;
+  text-align: center !important;
   text-decoration: none !important;
   font-family: "Inter", sans-serif !important;
   letter-spacing: normal !important;
   font-size: 13px !important;
+  background-color: #f9f9f9 !important;
+}
+
+/* Ensure null value formatting takes precedence over cell type formatting */
+.mat-mdc-cell.lookup-cell.null-value,
+.mat-mdc-cell.number-cell.null-value,
+.mat-mdc-cell.date-cell.null-value,
+.mat-mdc-cell.boolean-cell.null-value,
+.mat-mdc-cell.uniqueidentifier-cell.null-value,
+.mat-mdc-cell.picklist-cell.null-value,
+.mat-mdc-cell.code-cell.null-value {
+  font-style: italic !important;
+  color: #a0a0a0 !important;
+  font-weight: normal !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  font-family: "Inter", sans-serif !important;
+  letter-spacing: normal !important;
+  font-size: 13px !important;
+  background-color: #f9f9f9 !important;
 }
 
 .dynamics-link {
@@ -341,11 +365,6 @@ tr.mat-mdc-row:hover {
 
 .date-cell {
   white-space: nowrap;
-}
-
-.null-value {
-  color: rgba(0, 0, 0, 0.38);
-  font-style: italic;
 }
 
 /* .has-formatted-value {
@@ -461,10 +480,11 @@ ng-container {
 /* Style for empty cells (to make them visually distinct) */
 .empty-cell {
   background-color: #f9f9f9 !important;
-  position: relative;
+  /* No need for position styling since we removed the after pseudo-element */
 }
 
-/* Add a subtle pattern for empty cells */
+/* Remove or comment out the striped pattern for empty cells */
+/*
 .empty-cell::after {
   content: '';
   position: absolute;
@@ -476,3 +496,4 @@ ng-container {
   background-size: 8px 8px;
   opacity: 0.6;
 }
+*/

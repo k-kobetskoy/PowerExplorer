@@ -377,7 +377,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     if (!fieldInfo) return 'string';
 
     // Check for lookup fields by name pattern (_*_value)
-    if (columnName.startsWith('_') && columnName.endsWith('_value')) {
+    if (columnName.includes('_value') || (fieldInfo.type && fieldInfo.type.toLowerCase() === 'lookup')) {
       return 'lookup';
     }
 
@@ -387,7 +387,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     }
 
     // Convert field types from the header to our internal types
-    switch (fieldInfo.type.toLowerCase()) {
+    switch (fieldInfo.type?.toLowerCase()) {
       case 'money':
       case 'decimal':
       case 'double':
@@ -510,20 +510,31 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       }
     }
 
-    // For lookup fields (GUIDs), display differently based on view mode
+    // For lookup fields, display differently based on view mode
     if (columnName && this.getFieldType(columnName) === 'lookup') {
-      if (!this.showFormattedValues && typeof value === 'string' && 
+      // Check if we should use formatted values
+      if (this.showFormattedValues) {
+        // If the value is already formatted (not a GUID), use it directly
+        if (typeof value === 'string' && 
+            !value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          return value;
+        }
+      }
+      
+      // For raw view or if the value is a GUID
+      if (typeof value === 'string' && 
           value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-        // In raw view, show the GUID
-        return value;
-      } else if (this.showFormattedValues && typeof value === 'string' && 
-                value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        // In raw view, show the full GUID
+        if (!this.showFormattedValues) {
+          return value;
+        } 
         // In formatted view but value is a GUID, show a friendly indicator + truncated ID
         const shortId = value.substring(0, 8) + '...';
         return `ID: ${shortId}`;
       }
-      // In formatted view, already showing the display name
-      return value;
+      
+      // Default case
+      return value.toString();
     }
     
     // For uniqueidentifier fields, ensure we return the raw value
