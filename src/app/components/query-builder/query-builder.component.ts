@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ViewEncapsulation, ChangeDetectionStrategy, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewEncapsulation, ChangeDetectionStrategy, CUSTOM_ELEMENTS_SCHEMA, NO_ERRORS_SCHEMA, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AngularSplitModule } from 'angular-split';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +10,6 @@ import { ResultTableComponent } from './result-table/result-table.component';
 import { MatIconModule } from '@angular/material/icon';
 import { NavigationService } from 'src/app/services/navigation.service';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTooltipModule } from '@angular/material/tooltip';
 export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
 
 @Component({
@@ -32,38 +31,58 @@ export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
     ControlPanelComponent,
     MatIconModule,
     CodeEditorComponent,
-    MatButtonModule    
-  ]
+    MatButtonModule
+  ],
 })
 export class QueryBuilder implements OnInit {
-
   selectedTabIndex = 0;
 
   @ViewChild('resultTable') resultTable: ResultTableComponent;
   @ViewChild('codeEditor') codeEditor: CodeEditorComponent;
 
-  constructor(private navigationService: NavigationService) { }
+  constructor(
+    private navigationService: NavigationService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit() {
-    this.navigationService.handleUrlParamOnComponentInit(QUERY_BUILDER_COMPONENT_URL)
+    this.navigationService.handleUrlParamOnComponentInit(QUERY_BUILDER_COMPONENT_URL);
+  }
+
+  switchToTab(tabIndex: number) {
+    if (this.selectedTabIndex === tabIndex) return;
+
+    this.selectedTabIndex = tabIndex;
+    this.cdr.markForCheck();
+    
+    // If switching to result tab, only trigger query execution if we already have results
+    if (tabIndex === 1 && this.resultTable) {
+      console.log('Switching to results tab - showing cached results only');
+      // Don't automatically trigger a new query
+    }
   }
 
   toggleTab() {
-    this.selectedTabIndex = this.selectedTabIndex === 0 ? 1 : 0;
+    this.switchToTab(this.selectedTabIndex === 0 ? 1 : 0);
   }
 
   handleExecuteXmlRequest() {
-    // Switch to the results tab if not already there
+    console.log('QueryBuilder: handleExecuteXmlRequest called');
+    
+    // Switch to the results tab
     if (this.selectedTabIndex !== 1) {
       this.selectedTabIndex = 1;
+      this.cdr.markForCheck();
     }
-
-    // Safely access resultTable
+    
+    // Now make sure the result table executes the query
+    // Need to use setTimeout to ensure ViewChild is initialized
     setTimeout(() => {
       if (this.resultTable) {
+        console.log('Triggering getResult on resultTable');
         this.resultTable.getResult();
       } else {
-        console.error('Result table not initialized yet');
+        console.error('ResultTable component not found');
       }
     }, 0);
   }

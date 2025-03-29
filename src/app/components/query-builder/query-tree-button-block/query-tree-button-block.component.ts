@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ValidationResult } from '../services/validation.service';
+import { XmlExecutorService } from '../services/xml-executor.service';
+import { QueryRenderService } from '../services/query-render.service';
 
 @Component({
   selector: 'app-query-tree-button-block',
@@ -39,7 +41,11 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
   errorMessages$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
   private destroy$ = new Subject<void>();
 
-  constructor(private nodeTreeProcessor: NodeTreeService) { }
+  constructor(
+    private nodeTreeProcessor: NodeTreeService,
+    private xmlExecutorService: XmlExecutorService,
+    private queryRenderService: QueryRenderService
+  ) { }
 
   ngOnInit() {
     this.buttonDisabled$ = this.nodeTreeProcessor.validationResult$;
@@ -51,6 +57,38 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
   } 
 
   execute() {
+    console.log('Executing query...');
+    
+    // First notify parent component that execution was requested
     this.executeXmlRequest.emit();
+    
+    // Render the XML query
+    this.queryRenderService.renderXmlRequest();
+    
+    // Get the current XML and entity node
+    const xml = this.nodeTreeProcessor.xmlRequest$.value;
+    const entityNode = this.nodeTreeProcessor.getNodeTree().value.root.next;
+    
+    if (!xml || !entityNode) {
+      console.error('Cannot execute query: XML or entity node is missing');
+      return;
+    }
+    
+    console.log('Executing XML query:', xml.substring(0, 100) + '...');
+    
+    // Execute the XML query and update the cache
+    this.xmlExecutorService.executeAndCacheResult(xml, entityNode)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        result => {
+          console.log('Query execution completed successfully:', {
+            rowCount: result.rawValues?.length || 0,
+            headerCount: Object.keys(result.header || {}).length || 0
+          });
+        },
+        error => {
+          console.error('Error executing query:', error);
+        }
+      );
   }
 }

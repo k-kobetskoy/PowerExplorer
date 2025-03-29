@@ -33,7 +33,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BehaviorSubject } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
-import { LoadingInterceptor } from './components/loading-indicator/loading.interceptor';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 
@@ -75,14 +74,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
     { provide: ACTIVE_ENVIRONMENT_URL, useValue: new BehaviorSubject<string>('') },
     { provide: USER_IS_LOGGED_IN, useValue: new BehaviorSubject<boolean>(false) },
-    provideHttpClient(withInterceptorsFromDi()),
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: LoadingInterceptor,
-      multi: true
-    },
+    provideHttpClient(withInterceptorsFromDi()),    
     ValidationService
-
   ]
 })
 export class AppModule { }

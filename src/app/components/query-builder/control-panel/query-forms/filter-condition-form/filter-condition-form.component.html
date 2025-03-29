@@ -35,7 +35,7 @@
                   <span class="display-name">{{option.displayName}}</span>
                 </div>
               </mat-option>
-              <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
+              <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
             </mat-autocomplete>
             @if (attributeFormControl.value) {
               <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeFormControl.patchValue('')">

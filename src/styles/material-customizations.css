@@ -1,5 +1,5 @@
 .mat-mdc-unelevated-button.mat-primary {
-  --mdc-filled-button-container-color: #3B82F6;
+  --mdc-filled-button-container-color: #24272e;
 }
 
 html {
@@ -86,4 +86,35 @@ html {
     font-weight: 600;
     padding-left: 24px;
   }
+  
+  .mat-mdc-progress-bar {
+    --mdc-linear-progress-active-indicator-color: #585d64;
+    --mdc-linear-progress-track-color: rgb(202, 200, 214);
+    --mdc-linear-progress-track-height: 3px;
+    --mdc-linear-progress-active-indicator-height: 3px;
+  }
+
+  .mat-mdc-row, .mdc-data-table__content {
+    line-height: 1.8rem !important;
+    font-family: "Inter", sans-serif !important;
+    font-size: 0.85rem !important;
+  }
+  .mat-mdc-row {
+    height: 0.8rem !important;
+  }
+}
+
+
+html .mat-mdc-slide-toggle.mat-accent {
+  --mdc-switch-selected-focus-state-layer-color: #263238;
+  --mdc-switch-selected-handle-color: #263238;
+  --mdc-switch-selected-hover-state-layer-color: #263238;
+  --mdc-switch-selected-pressed-state-layer-color: #263238;
+  --mdc-switch-selected-focus-handle-color: #0d1b24;
+  --mdc-switch-selected-hover-handle-color: #0d1b24;
+  --mdc-switch-selected-pressed-handle-color: #0d1b24;
+  --mdc-switch-selected-focus-track-color: #454d64;
+  --mdc-switch-selected-hover-track-color: #454b64;
+  --mdc-switch-selected-pressed-track-color: #454d64;
+  --mdc-switch-selected-track-color: #454c64;
 }

@@ -1,6 +1,6 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest, of, catchError, filter } from 'rxjs';
+import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest, of, catchError, filter, finalize, BehaviorSubject, tap } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { BaseFormComponent } from '../base-form.component';
@@ -12,11 +12,12 @@ import { CommonModule } from '@angular/common';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
-import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { MatIconModule } from '@angular/material/icon';
-import {MatButtonModule} from '@angular/material/button';
-import {FormsModule} from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
 import { NodeTreeService } from '../../../services/node-tree.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 @Component({
   standalone: true,
   imports: [
@@ -27,11 +28,11 @@ import { NodeTreeService } from '../../../services/node-tree.service';
     MatAutocompleteModule,
     MatOptionModule,
     QuickActionsComponent,
-    LoadingIndicatorComponent,
     MatIconModule,
     MatButtonModule,
-    FormsModule
-  ],    
+    FormsModule,
+    MatProgressSpinnerModule,
+  ],
   selector: 'app-attribute-form',
   templateUrl: './attribute-form.component.html',
   styleUrls: ['./attribute-form.component.css'],
@@ -46,6 +47,9 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   attributeForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
 
+  // Add loading indicator state
+  isLoadingAttributes$ = new BehaviorSubject<boolean>(false);
+
   private nameAttributeData = AttributeData.Attribute.Name;
   private aliasAttributeData = AttributeData.Attribute.Alias;
 
@@ -55,7 +59,7 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   constructor(
     private attributeService: AttributeEntityService,
     private fb: FormBuilder,
-    private nodeTreeProcessorService: NodeTreeService
+    private nodeTreeProcessorService: NodeTreeService,
   ) {
     super();
   }
@@ -158,6 +162,9 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
           return of([]);
         }
 
+        // Set loading state to true before making the request
+        this.isLoadingAttributes$.next(true);
+
         return this.attributeService.getAttributes(entityName).pipe(
           map(attributes => {
             return attributes;
@@ -165,6 +172,9 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
           catchError(error => {
             console.error(`[AttributeFormComponent] Error fetching attributes for entity: ${entityName}`, error);
             return of([]);
+          }),
+          tap(() => {
+            this.isLoadingAttributes$.next(false);
           })
         );
       })

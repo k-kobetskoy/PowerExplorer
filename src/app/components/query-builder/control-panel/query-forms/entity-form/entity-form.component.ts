@@ -13,12 +13,12 @@ import { CommonModule } from '@angular/common';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
-import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { MatIconModule } from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import { NodeTreeService } from '../../../services/node-tree.service';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 @Component({
     standalone: true,
     imports: [
@@ -29,10 +29,11 @@ import { NodeTreeService } from '../../../services/node-tree.service';
         MatAutocompleteModule,
         MatOptionModule,
         QuickActionsComponent,
-        LoadingIndicatorComponent,
         MatIconModule,
         MatButtonModule,
-        FormsModule
+        FormsModule,
+        MatTooltipModule,
+        MatProgressSpinnerModule
     ],
     selector: 'app-entity-form',
     templateUrl: './entity-form.component.html',

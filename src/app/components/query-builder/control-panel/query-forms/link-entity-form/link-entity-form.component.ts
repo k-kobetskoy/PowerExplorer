@@ -19,13 +19,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
-import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 // Interface for relation object to improve type safety
 interface RelationObject extends RelationshipModel { }
 
@@ -43,9 +43,9 @@ interface RelationObject extends RelationshipModel { }
     MatIconModule,
     MatTooltipModule,
     QuickActionsComponent,
-    LoadingIndicatorComponent,
     MatButtonModule,
-    FormsModule
+    FormsModule,
+    MatProgressSpinnerModule
   ],
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',

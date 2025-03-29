@@ -1,6 +1,6 @@
 // ControlPanelComponent - Added to fix component declaration issue
 import { NodeTreeService } from '../services/node-tree.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QueryNodeData } from '../models/constants/query-node-data';
 import { QueryNode } from '../models/query-node';
@@ -36,7 +36,8 @@ import { RootFormComponent } from './query-forms/root-form/root-form.component';
   ],
   selector: 'app-control-panel',
   templateUrl: './control-panel.component.html',
-  styleUrls: ['./control-panel.component.css']
+  styleUrls: ['./control-panel.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ControlPanelComponent implements OnInit {
 

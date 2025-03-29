@@ -14,7 +14,6 @@ import { MatInputModule } from '@angular/material/input';
 import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
 import { MatOptionModule } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { NumberFormComponent } from './number-form/number-form.component';
 import { BooleanFormComponent } from './boolean-form/boolean-form.component';
 import { IdFormComponent } from './id-form/id-form.component';
@@ -26,7 +25,8 @@ import { MatIconModule } from '@angular/material/icon';
 import {MatButtonModule} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
-@Component({
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+  @Component({
   standalone: true,
   imports: [
     CommonModule,
@@ -36,7 +36,6 @@ import { NodeTreeService } from 'src/app/components/query-builder/services/node-
     QuickActionsComponent,
     MatOptionModule,
     MatAutocompleteModule,
-    LoadingIndicatorComponent,
     NumberFormComponent,
     BooleanFormComponent,
     IdFormComponent,
@@ -46,7 +45,8 @@ import { NodeTreeService } from 'src/app/components/query-builder/services/node-
     StringFormComponent,
     MatIconModule,
     MatButtonModule,
-    FormsModule
+    FormsModule,
+    MatProgressSpinnerModule
   ],
   selector: 'app-filter-condition-form',
   templateUrl: './filter-condition-form.component.html',

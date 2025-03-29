@@ -6,7 +6,7 @@
   <div class="quick-actions">
     <ng-container *ngFor="let nodeName of getNodeActions()">
       <button mat-button (click)="addNode(nodeName)">
-        <img *ngIf="nodeName!='Value'" class="add-button-icon" src="assets/icons/plus-button.svg" alt="entity-icon">
+        <img *ngIf="nodeName!='Value'" class="add-button-icon" src="assets/icons/plus-button-alt.svg" alt="entity-icon">
         <span class="add-button-text">{{nodeName}}</span>
       </button>
     </ng-container>

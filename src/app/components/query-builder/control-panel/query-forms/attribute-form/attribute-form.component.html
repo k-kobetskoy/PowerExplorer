@@ -34,13 +34,15 @@
                                     </div>
                                 </mat-option>
                             </mat-autocomplete>
-                            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
+                            
+                            <!-- Use async pipe with the loading state observable -->
+                            <mat-spinner class="loading-spinner" *ngIf="(isLoadingAttributes$ | async)" matSuffix [diameter]="20"></mat-spinner>
                         
-                        @if (attributeForm.value.name) {
-                            <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({name: ''})">
-                              <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
-                            </button>
-                          }
+                            @if (attributeForm.value.name) {
+                                <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({name: ''})">
+                                <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+                                </button>
+                            }
                         </mat-form-field>
 
                         <mat-form-field class="input-full-width">

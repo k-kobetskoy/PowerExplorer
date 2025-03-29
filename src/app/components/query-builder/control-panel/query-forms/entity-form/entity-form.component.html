@@ -14,7 +14,10 @@
                         <img class="form-header-copy-icon" src="assets/icons/copy.svg" alt="copy">
                         <img class="form-header-copy-icon-hover" src="assets/icons/copy-hover.svg" alt="copy">
                     </div> -->
-                    <div class="form-header-button" (click)="removeNode()">
+                    <div class="form-header-button" 
+                         (click)="removeNode()" 
+                         matTooltip="Delete node" 
+                         [matTooltipShowDelay]="500">
                         <img class="form-header-delete-icon" src="assets/icons/trash-2.svg" alt="delete">
                         <img class="form-header-delete-icon-hover" src="assets/icons/trash-2-hover.svg" alt="delete">
                     </div>           
@@ -36,7 +39,7 @@
                                     </div>
                                 </mat-option>
                             </mat-autocomplete>
-                            <app-loading-indicator matSuffix [diameter]="20"></app-loading-indicator>
+                            <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
                             @if (entityForm.value.name) {
                                 <button matSuffix mat-icon-button aria-label="Clear" (click)="entityForm.patchValue({name: ''})">
                                   <span class="form-clear-icon"><mat-icon>close</mat-icon></span>

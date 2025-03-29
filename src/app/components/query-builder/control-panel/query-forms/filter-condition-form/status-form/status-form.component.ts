@@ -13,10 +13,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatOptionModule } from '@angular/material/core';
 import { QuickActionsComponent } from '../../quick-actions/quick-actions.component';
-import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 @Component({
   standalone: true,
   imports: [
@@ -26,11 +26,11 @@ import { MatIconModule } from '@angular/material/icon';
     MatInputModule,
     MatAutocompleteModule,
     MatOptionModule,
-    LoadingIndicatorComponent,
     MultiValueFormComponent,
     MatButtonModule,
     FormsModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressSpinnerModule
   ],  
   selector: 'app-status-form',
   templateUrl: './status-form.component.html',

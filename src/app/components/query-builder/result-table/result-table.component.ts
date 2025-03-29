@@ -1,6 +1,6 @@
-import { Component, EventEmitter, OnInit, Output, OnDestroy, ViewEncapsulation, ChangeDetectionStrategy, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, OnDestroy, ViewEncapsulation, ChangeDetectionStrategy, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef } from '@angular/core';
 import { catchError, of, Subscription, takeUntil, tap, Subject } from 'rxjs';
-import { XmlExecutorService } from '../services/xml-executor.service';
+import { XmlExecutionResult, XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
 import { EnvironmentEntityService } from '../services/entity-services/environment-entity.service';
@@ -9,70 +9,151 @@ import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-interface ResultData {
-  header: { [key: string]: { displayName: string, logicalName: string, type: string } };
-  rawValues: any[];
-  formatedValues: any[];
-  linkValues?: any[];
-}
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { CacheStorageService } from '../../../services/data-sorage/cache-storage.service';
 
 @Component({
     selector: 'app-result-table',
-    templateUrl: './result-table.component.html',
-    styleUrls: ['./result-table.component.css'],
-    encapsulation: ViewEncapsulation.None,
-    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [
         CommonModule,
         FormsModule,
         MatSlideToggleModule,
+        MatTableModule,
+        MatProgressBarModule,
         MatIconModule,
-        MatTableModule
+        MatPaginatorModule
     ],
-    schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],   
+    templateUrl: './result-table.component.html',
+    styleUrls: ['./result-table.component.css'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ResultTableComponent implements OnInit, OnDestroy {
-
-  // Using same key defined in interceptor or a standard key for HTTP requests
-  readonly LOADING_KEY = 'http-requests';
-
   selectedRow: any;
   selectedOverflowCell: any;
+  selectedColumn: string | null = null;
 
   showFormattedValues = true; // Toggle for formatted/raw values
 
   displayedColumns: string[] = [];
   dataSource: any[] = [];
+  
+  // Pagination properties
+  paginatedData: any[] = [];
+  pageSize = 50;
+  pageSizeOptions: number[] = [10, 25, 50, 100];
+  pageIndex = 0;
+  totalRows = 0;
 
   // Store the complete result data
-  resultData: ResultData | null = null;
-
-  // Store the latest XML without executing it
-  private latestXml: string = '';
-  private xmlSubscription: Subscription;
+  resultData: XmlExecutionResult | null = null;
+  isLoading = false;
+  hasError = false;
+  errorMessage = '';
 
   // Track current environment URL
   private currentEnvironmentUrl: string = '';
   private environmentSubscription: Subscription;
+
+  // Result subscription
+  private resultSubscription: Subscription;
+  
+  // Add execution state subscription
+  private executionStateSubscription: Subscription;
 
   // Add destroy$ Subject
   private destroy$ = new Subject<void>();
 
   constructor(
     private xmlExecutor: XmlExecutorService,
+    private environmentService: EnvironmentEntityService,
     private nodeTreeService: NodeTreeService,
-    private environmentService: EnvironmentEntityService
-  ) { }
+    private cacheStorageService: CacheStorageService,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.destroy$ = new Subject<void>();
+  }
   @Output() resultTableGetResult = new EventEmitter<void>();
 
   ngOnInit() {
-    // Subscribe to XML changes but don't execute requests automatically
-    this.xmlSubscription = this.nodeTreeService.xmlRequest$.subscribe(xml => {
-      this.latestXml = xml;
-    });
+    // Check the initial loading state
+    this.isLoading = this.xmlExecutor.isLoading();
+    
+    // Subscribe to result updates from XmlExecutorService
+    this.resultSubscription = this.xmlExecutor.getMostRecentCachedResult()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        // Update loading state with each result update
+        this.isLoading = this.xmlExecutor.isLoading();
+        
+        if (!result) {
+          this.displayedColumns = ['No results available'];
+          this.dataSource = [];
+          this.cdr.markForCheck();
+          return;
+        }
+        
+        // Only process results when not in loading state and no errors
+        if (!this.isLoading && !this.hasError && result.rawValues?.length > 0) {
+          this.resultData = result;
+          this.processResultData();
+          this.cdr.markForCheck();
+        } else if (this.hasError) {
+          // Show error in table
+          this.displayedColumns = ['Error'];
+          this.dataSource = [{ 'Error': this.errorMessage || 'An error occurred' }];
+          this.cdr.markForCheck();
+        } else if (!this.isLoading && (!result.rawValues || result.rawValues.length === 0)) {
+          // Show no results message
+          this.displayedColumns = ['No results'];
+          this.dataSource = [];
+          this.cdr.markForCheck();
+        }
+      });
+    
+    // Subscribe to loading state changes to detect new executions
+    this.executionStateSubscription = this.xmlExecutor.isLoadingState$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(isLoading => {
+        this.isLoading = isLoading;
+        
+        // Reset error state when a new execution starts
+        if (isLoading) {
+          this.hasError = false;
+          this.errorMessage = '';
+          this.cdr.markForCheck();
+        } else {
+          // When loading finishes
+          // Check for errors when loading completes
+          const error = this.xmlExecutor.getLastError();
+          if (error) {
+            this.hasError = true;
+            this.errorMessage = typeof error === 'string' 
+              ? error 
+              : ((error as any)?.message || 'An error occurred during execution');
+            
+            // Show error in table
+            this.displayedColumns = ['Error'];
+            this.dataSource = [{ 'Error': this.errorMessage }];
+            this.cdr.markForCheck();
+          } else {
+            // No errors - check for fresh results from cache
+            console.log('Execution completed, checking for fresh results');
+            const freshResult = this.xmlExecutor.getMostRecentCachedResult().value;
+            if (freshResult && freshResult.rawValues?.length > 0) {
+              console.log('Fresh results found after execution');
+              this.resultData = freshResult;
+              this.processResultData();
+            }
+          }
+          this.cdr.markForCheck();
+        }
+      });
 
-    // Subscribe to environment changes
+    // Subscribe to environment changes for URL building
     this.environmentSubscription = this.environmentService.getActiveEnvironment()
       .pipe(takeUntil(this.destroy$))
       .subscribe(env => {
@@ -93,16 +174,24 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           if (!this.currentEnvironmentUrl.endsWith('/')) {
             this.currentEnvironmentUrl += '/';
           }
+          
+          // If we already have results, refresh data source to update URLs
+          if (this.resultData && this.resultData.rawValues?.length > 0) {
+            this.refreshDataSource();
+          }
         }
       });
   }
 
   ngOnDestroy() {
-    if (this.xmlSubscription) {
-      this.xmlSubscription.unsubscribe();
-    }
     if (this.environmentSubscription) {
       this.environmentSubscription.unsubscribe();
+    }
+    if (this.resultSubscription) {
+      this.resultSubscription.unsubscribe();
+    }
+    if (this.executionStateSubscription) {
+      this.executionStateSubscription.unsubscribe();
     }
     // Complete the destroy$ Subject
     this.destroy$.next();
@@ -110,57 +199,134 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   }
 
   getResult() {
-    this.resultTableGetResult.emit();
-    const entityNode = this.getEntityNode();
-
-    if (!entityNode) {
-      console.error('Entity node not found');
-      this.displayedColumns = ['No information available'];
-      this.dataSource = [];
+    // Reset error state when getting new results
+    this.hasError = false;
+    this.errorMessage = '';
+    
+    // Set loading state
+    this.isLoading = true;
+    this.cdr.markForCheck();
+    
+    // First check for cached results
+    const cachedResult = this.xmlExecutor.getMostRecentCachedResult().value;
+    if (cachedResult && cachedResult.rawValues && cachedResult.rawValues.length > 0) {
+      console.log('Using cached result data without a new query');
+      this.resultData = cachedResult;
+      this.isLoading = false;
+      this.processResultData();
+      this.cdr.markForCheck();
       return;
     }
-
-    // Use the stored XML to execute the request only when explicitly called
-    this.executeQuery(this.latestXml, entityNode);
+    
+    // Emit the event for parent components to handle
+    this.resultTableGetResult.emit();
+    
+    // Try to get current XML for direct execution
+    try {
+      // Get current XML and node from nodeTreeService
+      const xml = this.nodeTreeService.xmlRequest$.value;
+      const entityNode = this.getEntityNode();
+      
+      // Validate we have both valid XML and entity node before attempting execution
+      if (!xml) {
+        this.isLoading = false;
+        this.hasError = true;
+        this.errorMessage = 'No query defined';
+        this.displayedColumns = ['Error'];
+        this.dataSource = [{ 'Error': this.errorMessage }];
+        this.cdr.markForCheck();
+        return;
+      }
+      
+      if (!entityNode || !entityNode.entitySetName$ || !entityNode.entitySetName$.value) {
+        this.isLoading = false;
+        this.hasError = true;
+        this.errorMessage = 'No entity selected';
+        this.displayedColumns = ['Error'];
+        this.dataSource = [{ 'Error': this.errorMessage }];
+        this.cdr.markForCheck();
+        return;
+      }
+      
+      if (xml && entityNode) {
+        // Execute the query and subscribe to the result using executeAndCacheResult
+        // This will update the observable in XmlExecutorService, which we're already subscribed to
+        this.xmlExecutor.executeAndCacheResult(xml, entityNode)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(
+            result => {
+              console.log('Result table direct execution completed successfully');
+              
+              // For immediate feedback, process the result directly
+              if (result && result.rawValues && result.rawValues.length > 0) {
+                this.resultData = result;
+                this.processResultData();
+              }
+            },
+            error => {
+              // Error will be handled by our isLoadingState$ subscription
+              console.error('Error in direct execution:', error);
+            }
+          );
+      }
+    } catch (error) {
+      this.hasError = true;
+      this.errorMessage = error?.message || 'Error in query execution';
+      this.isLoading = false;
+      this.cdr.markForCheck();
+    }
   }
 
-  private executeQuery(xml: string, entityNode: QueryNode) {
-    if (!xml) {
-      console.error('No XML available');
-      this.displayedColumns = ['No query available'];
+  private processResultData() {
+    if (!this.resultData) {
+      this.displayedColumns = ['No data'];
       this.dataSource = [];
+      this.cdr.markForCheck();
       return;
     }
 
-    this.xmlExecutor.executeXmlRequest(xml, entityNode)
-      .pipe(
-        catchError(error => {
-          console.error('Error in query execution:', error);
-          return of({ header: {}, rawValues: [], formatedValues: [] } as ResultData);
-        }), takeUntil(this.destroy$)
-      )
-      .subscribe({
-        next: (data: ResultData) => {
-          this.resultData = data;
+    // Reset cell selection when new data is loaded
+    this.selectedOverflowCell = null;
+    this.selectedColumn = null;
+    this.selectedRow = null;
 
-          if (!data || !data['rawValues'] || data['rawValues'].length === 0) {
-            this.displayedColumns = ['No results'];
-            this.dataSource = [];
-            return;
-          }
+    // Get all columns from header but exclude __entity_url
+    // This will include columns with null values after our processing strategy has run
+    const headerColumns = Object.keys(this.resultData.header || {}).filter(col => col !== '__entity_url');
+    
+    // Sort columns to ensure consistent display order
+    // First attempt to put ID fields at the beginning
+    headerColumns.sort((a, b) => {
+      // Put ID fields first
+      const aIsId = a.toLowerCase().endsWith('id') || a.toLowerCase() === 'id';
+      const bIsId = b.toLowerCase().endsWith('id') || b.toLowerCase() === 'id';
+      
+      if (aIsId && !bIsId) return -1;
+      if (!aIsId && bIsId) return 1;
+      
+      // Then sort alphabetically
+      return a.localeCompare(b);
+    });
+    
+    // Add the __entity_url column to the end if it exists in the data
+    if (this.resultData.rawValues?.length > 0 && this.resultData.rawValues[0]['__entity_url']) {
+      this.displayedColumns = ['No.', ...headerColumns, '__entity_url'];
+    } else {
+      this.displayedColumns = ['No.', ...headerColumns];
+    }
 
-          // Get columns from header but exclude __entity_url
-          this.displayedColumns = ['No.', ...Object.keys(data.header).filter(col => col !== '__entity_url')];
-
-          // Set the data source based on the toggle state
-          this.refreshDataSource();
-        },
-        error: error => {
-          console.error('Error getting results:', error);
-          this.displayedColumns = ['Error'];
-          this.dataSource = [{ 'Error': 'Failed to fetch results. See console for details.' }];
-        }
-      });
+    // Set the data source based on the toggle state
+    this.refreshDataSource();
+    
+    // Force change detection immediately
+    this.cdr.markForCheck();
+    this.cdr.detectChanges();
+    
+    // Force an update on the next tick to ensure Angular has processed the changes
+    setTimeout(() => {
+      this.cdr.markForCheck();
+      this.cdr.detectChanges();
+    }, 0);
   }
 
   private getEntityNode(): QueryNode {
@@ -173,11 +339,29 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
   selectCell(element: Object, event: MouseEvent) {
     const cell = event.target as HTMLElement;
-    if (this.isTextHidden(cell)) {
-      this.selectedOverflowCell = element;
-    } else if (this.selectedOverflowCell != element) {
+    const td = cell.closest('td');
+    
+    if (!td) return;
+    
+    // Get the column index
+    const columnIndex = Array.from(td.parentElement?.children || []).indexOf(td);
+    if (columnIndex < 0) return;
+    
+    // Get the column name
+    const columnName = this.displayedColumns[columnIndex];
+    
+    // If clicking on the same cell as previously selected, toggle it off
+    if (this.selectedOverflowCell === element && this.selectedColumn === columnName) {
       this.selectedOverflowCell = null;
+      this.selectedColumn = null;
+    } else {
+      // Otherwise, select this cell
+      this.selectedOverflowCell = element;
+      this.selectedColumn = columnName;
     }
+    
+    // Force Angular to detect changes
+    this.cdr.detectChanges();
   }
 
   isTextHidden(cell: HTMLElement): boolean {
@@ -191,6 +375,16 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
     const fieldInfo = this.resultData.header[columnName];
     if (!fieldInfo) return 'string';
+
+    // Check for lookup fields by name pattern (_*_value)
+    if (columnName.startsWith('_') && columnName.endsWith('_value')) {
+      return 'lookup';
+    }
+
+    // Check if this column contains GUIDs in raw data
+    if (this.hasGuidValues(columnName)) {
+      return 'uniqueidentifier';
+    }
 
     // Convert field types from the header to our internal types
     switch (fieldInfo.type.toLowerCase()) {
@@ -216,6 +410,32 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       default:
         return 'string';
     }
+  }
+
+  // Helper method to check if a column contains GUID values
+  private hasGuidValues(columnName: string): boolean {
+    if (!this.resultData || !this.resultData.rawValues || this.resultData.rawValues.length === 0) {
+      return false;
+    }
+    
+    // Regular expression for GUID validation
+    const guidRegEx = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
+    // Check the first few rows to see if they contain GUID values
+    const sampleSize = Math.min(5, this.resultData.rawValues.length);
+    let guidCount = 0;
+    
+    for (let i = 0; i < sampleSize; i++) {
+      const row = this.resultData.rawValues[i];
+      if (row && row[columnName] && 
+          typeof row[columnName] === 'string' && 
+          guidRegEx.test(row[columnName])) {
+        guidCount++;
+      }
+    }
+    
+    // If more than half of the sampled rows contain GUIDs, consider it a GUID column
+    return guidCount > sampleSize / 2;
   }
 
   getCellClass(columnName: string): string {
@@ -270,7 +490,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatCellValue(value: any): string {
+  formatCellValue(value: any, columnName?: string): string {
     // Handle null or undefined values consistently
     if (value === null || value === undefined) {
       return '';
@@ -290,6 +510,32 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       }
     }
 
+    // For lookup fields (GUIDs), display differently based on view mode
+    if (columnName && this.getFieldType(columnName) === 'lookup') {
+      if (!this.showFormattedValues && typeof value === 'string' && 
+          value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        // In raw view, show the GUID
+        return value;
+      } else if (this.showFormattedValues && typeof value === 'string' && 
+                value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        // In formatted view but value is a GUID, show a friendly indicator + truncated ID
+        const shortId = value.substring(0, 8) + '...';
+        return `ID: ${shortId}`;
+      }
+      // In formatted view, already showing the display name
+      return value;
+    }
+    
+    // For uniqueidentifier fields, ensure we return the raw value
+    // This ensures the GUID gets the proper styling
+    if (columnName && this.getFieldType(columnName) === 'uniqueidentifier') {
+      // Always return the raw GUID for uniqueidentifier fields
+      if (typeof value === 'string' && 
+          value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        return value;
+      }
+    }
+
     return value.toString();
   }
 
@@ -298,6 +544,10 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     const currentSelectedRow = this.selectedRow ? { ...this.selectedRow } : null;
 
     this.showFormattedValues = !this.showFormattedValues;
+
+    // Reset cell selection when toggling format
+    this.selectedOverflowCell = null;
+    this.selectedColumn = null;
 
     // Refresh the data source with the new format
     this.refreshDataSource();
@@ -316,376 +566,148 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('Full result data structure:', {
-      headerKeys: Object.keys(this.resultData.header || {}),
-      rawValuesCount: this.resultData['rawValues']?.length || 0,
-      formattedValuesCount: this.resultData['formatedValues']?.length || 0
-    });
-
-    // Example of first raw record if available
-    if (this.resultData['rawValues']?.length > 0) {
-      console.log('First raw record structure:', {
-        keys: Object.keys(this.resultData['rawValues'][0]),
-        sample: this.resultData['rawValues'][0]
-      });
-
-      // Check if cr1fc_orderid exists in the first record
-      const firstRaw = this.resultData['rawValues'][0];
-      if (firstRaw['cr1fc_orderid']) {
-        console.log('Found cr1fc_orderid in first raw record:', firstRaw['cr1fc_orderid']);
-      } else {
-        console.log('cr1fc_orderid not found in first raw record');
-      }
-    }
-
     // Choose the data source based on the toggle state
     let sourceData;
 
     if (this.showFormattedValues) {
-      sourceData = this.resultData['formatedValues'];
+      sourceData = this.resultData.formatedValues;
     } else {
-      sourceData = this.resultData['rawValues'];
+      sourceData = this.resultData.rawValues;
     }
 
     if (!sourceData || sourceData.length === 0) {
       this.dataSource = [];
+      this.paginatedData = [];
+      this.totalRows = 0;
+      this.cdr.markForCheck();
       return;
     }
 
-    console.log('Raw data being processed to add URLs:', sourceData.slice(0, 1));
-
     // Store raw data for reference in both views
-    const rawData = this.resultData['rawValues'];
+    const rawData = this.resultData.rawValues;
 
     // Initialize linkValues if not already present
     if (!this.resultData.linkValues) {
       this.resultData.linkValues = [];
     }
 
-    // Add row numbers and ensure entity URLs for all rows
-    this.dataSource = sourceData.map((item, index) => {
-      // Create a working copy with row number
-      const newItem = { 'No.': index + 1, ...item };
-
-      // Store reference to raw data for ID lookup
-      if (rawData && rawData[index]) {
-        // Store full raw record reference
-        newItem['__raw_data'] = rawData[index];
-
-        // Debugging for first record
-        if (index === 0) {
-          console.log('Raw data for first record:', {
-            keys: Object.keys(rawData[index]),
-            hasOrderId: !!rawData[index]['cr1fc_orderid']
-          });
-        }
-      }
-
-      // Determine entity type first - needed for both real and generated IDs
-      const entityName = this.getEntityType(newItem);
-
-      // FIRST ATTEMPT: Try to get the actual entity ID from the data returned by Dataverse
-      const entityId = this.findEntityId(newItem);
-
-      // If we found a real ID, use it for URL generation
-      if (entityId) {
-        console.log(`Row ${index + 1}: Using real entity ID: ${entityId}`);
-
-        // Create the URL based on environment or fallback
-        let url;
-        if (this.currentEnvironmentUrl) {
-          // Use current environment URL
-          url = `${this.currentEnvironmentUrl}main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
-        } else {
-          // Fallback to a sample URL when no environment is available
-          url = `https://org2d6763a7.crm4.dynamics.com/main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
-        }
-
-        console.log(`Row ${index + 1}: Generated URL: ${url}`);
-
-        // Create link info
-        const linkInfo = {
-          id: entityId,
-          url: url,
-          text: '🔗',
-          entityName: entityName,
-          isRealId: true
-        };
-
-        // Store in linkValues array
-        if (this.resultData.linkValues.length <= index) {
-          this.resultData.linkValues.push(linkInfo);
-        } else {
-          this.resultData.linkValues[index] = linkInfo;
-        }
-
-        // Add the entity URL to the item
-        newItem['__entity_url'] = {
-          ...linkInfo,
-          isRawView: !this.showFormattedValues
-        };
-      }
-      // If no real ID was found, try to use a related ID as a fallback
-      else {
-        console.log(`Row ${index + 1}: No primary entity ID found, using fallback ID generation`);
-
-        // Generate a fallback ID based on the data
-        const fallbackId = this.generateConsistentId(newItem, index);
-
-        // Create a URL using the fallback ID
-        const url = this.currentEnvironmentUrl
-          ? `${this.currentEnvironmentUrl}main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${fallbackId}`
-          : `https://org2d6763a7.crm4.dynamics.com/main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${fallbackId}`;
-
-        console.log(`Row ${index + 1}: Generated fallback URL: ${url}`);
-
-        // Create link info
-        const linkInfo = {
-          id: fallbackId,
-          url: url,
-          text: '🔗',
-          entityName: entityName,
-          isFallbackId: true
-        };
-
-        // Store in linkValues array
-        if (this.resultData.linkValues.length <= index) {
-          this.resultData.linkValues.push(linkInfo);
-        } else {
-          this.resultData.linkValues[index] = linkInfo;
-        }
-
-        // Add the entity URL with fallback ID to the item
-        newItem['__entity_url'] = {
-          ...linkInfo,
-          isRawView: !this.showFormattedValues
-        };
-      }
-
-      return newItem;
-    });
-
-    // Log the first few rows of processed data for debugging
-    console.log('First few rows with entity URLs:', this.dataSource.slice(0, 1));
-  }
-
-  // Try to determine entity type from data
-  private getEntityType(item: any): string | null {
-    // First try to get entity info from the node tree service
     try {
-      const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap();
-
-      if (entityAttributeMap) {
-        // Find the primary entity from the map
-        for (const [entityName, entityData] of Object.entries(entityAttributeMap)) {
-          if (entityData.isPrimaryEntity) {
-            console.log(`Using primary entity from node tree: ${entityName}`);
-            return entityName;
-          }
+      // Add row numbers and ensure entity URLs for all rows
+      this.dataSource = sourceData.map((item, index) => {
+        // Create a working copy with row number
+        const newItem = { 'No.': index + 1, ...item };
+        
+        // Store reference to raw data for ID lookup
+        if (rawData && rawData[index]) {
+          // Store full raw record reference
+          newItem['__raw_data'] = rawData[index];
         }
-      }
+
+        // Check if we already have entity URL information in the result data
+        const existingLinkInfo = this.resultData.linkValues && this.resultData.linkValues[index];
+        if (existingLinkInfo) {
+          // Use existing link info without making any calls
+          newItem['__entity_url'] = {
+            ...existingLinkInfo,
+            isRawView: !this.showFormattedValues
+          };
+          return newItem;
+        }
+
+        // Only try to determine entity type if we don't have existing link info
+        // Use a simpler fallback approach without making service calls
+        const entityName = this.getSimpleEntityType(item);
+
+        // Look for entity ID only in the current item data without service calls
+        const entityId = this.findSimpleEntityId(item);
+
+        // If we found a real ID, use it for URL generation
+        if (entityId) {
+          // Create the URL based on environment or fallback
+          let url;
+          if (this.currentEnvironmentUrl) {
+            // Use current environment URL
+            url = `${this.currentEnvironmentUrl}main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
+          } else {
+            // Fallback to a sample URL when no environment is available
+            url = `https://org2d6763a7.crm4.dynamics.com/main.aspx?forceUCI=1&pagetype=entityrecord&etn=${entityName}&id=${entityId}`;
+          }
+
+          // Create link info
+          const linkInfo = {
+            id: entityId,
+            url: url,
+            text: '🔗',
+            entityName: entityName,
+            isRealId: true
+          };
+
+          // Store in linkValues array
+          if (!this.resultData.linkValues) this.resultData.linkValues = [];
+          if (this.resultData.linkValues.length <= index) {
+            this.resultData.linkValues.push(linkInfo);
+          } else {
+            this.resultData.linkValues[index] = linkInfo;
+          }
+
+          // Add the entity URL to the item
+          newItem['__entity_url'] = {
+            ...linkInfo,
+            isRawView: !this.showFormattedValues
+          };
+        } else {
+          // Use simple ID generation without service calls
+          const fallbackId = `00000000-0000-0000-0000-${index.toString().padStart(12, '0')}`;
+          newItem['__entity_url'] = {
+            id: fallbackId,
+            url: fallbackId,
+            text: '🔗',
+            entityName: 'entity',
+            isRealId: false
+          };
+        }
+
+        return newItem;
+      });
+      
+      // Update total rows
+      this.totalRows = this.dataSource.length;
+      
+      // Reset to first page when data source changes
+      this.pageIndex = 0;
+      
+      // Update paginated view
+      this.updatePaginatedData();
+      
     } catch (error) {
-      console.error('Error getting entity type from node tree:', error);
+      console.error('Error refreshing data source:', error);
+      this.dataSource = [];
+      this.paginatedData = [];
+      this.totalRows = 0;
+      this.cdr.markForCheck();
     }
-
-    // Fallback to detection based on field presence
-    if (item['cr1fc_cost'] !== undefined || item['Cost'] !== undefined) {
-      return 'cr1fc_order';
-    } else if (item['currencytype'] !== undefined || item['Currency Type'] !== undefined) {
-      return 'transactioncurrency';
-    } else if (item['createdby'] !== undefined || item['Created By'] !== undefined) {
-      return 'account';
-    }
-
-    // Last resort fallback
-    return 'cr1fc_order';
   }
 
-  // Find an entity ID in the record data - prioritize actual IDs from Dataverse
-  private findEntityId(item: any): string | null {
-    if (!item) return null;
-
-    // Regular expression for GUID validation
-    const guidRegEx = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-    // DEBUG: Log the keys in the item to help troubleshoot
-    const itemKeys = Object.keys(item);
-    console.log('Available keys in item:', itemKeys);
-
-    // PRIORITY 0: Direct check for cr1fc_orderid as seen in the sample data
-    if (item['cr1fc_orderid'] && typeof item['cr1fc_orderid'] === 'string' && guidRegEx.test(item['cr1fc_orderid'])) {
-      console.log(`Found direct cr1fc_orderid field with value: ${item['cr1fc_orderid']}`);
-      return item['cr1fc_orderid'];
-    }
-
-    // Also check raw data for cr1fc_orderid
-    if (item['__raw_data'] && item['__raw_data']['cr1fc_orderid'] &&
-        typeof item['__raw_data']['cr1fc_orderid'] === 'string' &&
-        guidRegEx.test(item['__raw_data']['cr1fc_orderid'])) {
-      console.log(`Found cr1fc_orderid in __raw_data: ${item['__raw_data']['cr1fc_orderid']}`);
-      return item['__raw_data']['cr1fc_orderid'];
-    }
-
-    // Get entity type and primary ID field name from node tree if possible
-    const entityType = this.getEntityType(item);
-    let primaryIdField = null;
-
-    if (entityType) {
-      try {
-        const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap();
-        if (entityAttributeMap && entityAttributeMap[entityType]) {
-          primaryIdField = entityAttributeMap[entityType].primaryIdAttribute || `${entityType}id`;
-          console.log(`Primary ID field for ${entityType}: ${primaryIdField}`);
-        } else {
-          primaryIdField = `${entityType}id`;
-          console.log(`Using default ID field format: ${primaryIdField}`);
-        }
-      } catch (error) {
-        console.error('Error getting primary ID field:', error);
-        primaryIdField = `${entityType}id`;
-      }
-    }
-
-    // HIGHEST PRIORITY: Check for the primary ID field from the entity type
-    if (primaryIdField && item[primaryIdField] && typeof item[primaryIdField] === 'string' &&
-        guidRegEx.test(item[primaryIdField])) {
-      console.log(`Found primary ID field ${primaryIdField} with value ${item[primaryIdField]}`);
-      return item[primaryIdField];
-    }
-
-    // SECOND PRIORITY: Check for common ID patterns with the entity name
-    if (entityType) {
-      // Common patterns:
-      // 1. entitynameid (e.g., accountid)
-      const standardIdField = `${entityType}id`;
-      if (item[standardIdField] && typeof item[standardIdField] === 'string' &&
-          guidRegEx.test(item[standardIdField])) {
-        console.log(`Found standard ID field ${standardIdField} with value ${item[standardIdField]}`);
-        return item[standardIdField];
-      }
-
-      // 2. id (just 'id' field)
-      if (item['id'] && typeof item['id'] === 'string' && guidRegEx.test(item['id'])) {
-        console.log(`Found generic id field with value ${item['id']}`);
-        return item['id'];
-      }
-    }
-
-    // If we have raw data, perform more intensive inspection
-    if (item['__raw_data']) {
-      console.log('Inspecting __raw_data keys:', Object.keys(item['__raw_data']));
-
-      // Special case: Look for cr1fc_orderid in raw data (from sample)
-      if (item['__raw_data']['cr1fc_orderid'] &&
-          typeof item['__raw_data']['cr1fc_orderid'] === 'string' &&
-          guidRegEx.test(item['__raw_data']['cr1fc_orderid'])) {
-        console.log(`Found cr1fc_orderid in __raw_data: ${item['__raw_data']['cr1fc_orderid']}`);
-        return item['__raw_data']['cr1fc_orderid'];
-      }
-
-      // Look for primary ID field in raw data
-      if (primaryIdField && item['__raw_data'][primaryIdField] &&
-          typeof item['__raw_data'][primaryIdField] === 'string' &&
-          guidRegEx.test(item['__raw_data'][primaryIdField])) {
-        console.log(`Found primary ID ${primaryIdField} in __raw_data: ${item['__raw_data'][primaryIdField]}`);
-        return item['__raw_data'][primaryIdField];
-      }
-
-      // Look for any field ending with 'id' in raw data
-      const rawIdFields = Object.keys(item['__raw_data']).filter(key =>
-        key.toLowerCase().endsWith('id') &&
-        typeof item['__raw_data'][key] === 'string' &&
-        guidRegEx.test(item['__raw_data'][key])
-      );
-
-      if (rawIdFields.length > 0) {
-        rawIdFields.sort((a, b) => {
-          // Exact match for entity ID gets highest priority
-          if (a.toLowerCase() === `${entityType}id`) return -1;
-          if (b.toLowerCase() === `${entityType}id`) return 1;
-
-          // Regular ID fields get next priority
-          if (a.toLowerCase() === 'id') return -1;
-          if (b.toLowerCase() === 'id') return 1;
-
-          // If both end with 'id', prefer shorter ones (more likely to be primary)
-          return a.length - b.length;
-        });
-
-        console.log(`Found ID field in raw data: ${rawIdFields[0]} with value ${item['__raw_data'][rawIdFields[0]]}`);
-        return item['__raw_data'][rawIdFields[0]];
-      }
-    }
-
-    // FOURTH PRIORITY: look for any fields ending with "id" that contain GUIDs
-    const idFields = Object.keys(item).filter(key =>
-      key.toLowerCase().endsWith('id') &&
-      typeof item[key] === 'string' &&
-      guidRegEx.test(item[key])
-    );
-
-    if (idFields.length > 0) {
-      // Sort to prioritize fields that are named exactly 'id' or end with 'id'
-      idFields.sort((a, b) => {
-        // Exact match for entity ID gets highest priority
-        if (entityType) {
-          if (a.toLowerCase() === `${entityType}id`) return -1;
-          if (b.toLowerCase() === `${entityType}id`) return 1;
-        }
-
-        // Fields named exactly 'id' get next priority
-        if (a.toLowerCase() === 'id') return -1;
-        if (b.toLowerCase() === 'id') return 1;
-
-        // Fields ending with 'id' get next priority
-        const aEndsWithId = a.toLowerCase().endsWith('id');
-        const bEndsWithId = b.toLowerCase().endsWith('id');
-
-        if (aEndsWithId && !bEndsWithId) return -1;
-        if (!aEndsWithId && bEndsWithId) return 1;
-
-        // If both end with 'id', prefer shorter ones (more likely to be primary)
-        return a.length - b.length;
-      });
-
-      console.log(`Found ID field ${idFields[0]} with value ${item[idFields[0]]}`);
-      return item[idFields[0]];
-    }
-
-    // FIFTH PRIORITY: Look for common lookup reference patterns (_entityname_value)
-    const lookupFields = Object.keys(item).filter(key =>
-      key.startsWith('_') &&
-      key.endsWith('_value') &&
-      typeof item[key] === 'string' &&
-      guidRegEx.test(item[key])
-    );
-
-    if (lookupFields.length > 0) {
-      console.log(`Found lookup field ${lookupFields[0]} with value ${item[lookupFields[0]]}`);
-      return item[lookupFields[0]];
-    }
-
-    // FINALLY: Look for any field containing a valid GUID
-    for (const key of Object.keys(item)) {
-      if (typeof item[key] === 'string' && guidRegEx.test(item[key])) {
-        console.log(`Found GUID in field ${key} with value ${item[key]}`);
-        return item[key];
-      }
-    }
-
-    // Also check any fields in raw data
-    if (item['__raw_data']) {
-      for (const key of Object.keys(item['__raw_data'])) {
-        if (typeof item['__raw_data'][key] === 'string' &&
-            guidRegEx.test(item['__raw_data'][key])) {
-          console.log(`Found GUID in raw data field ${key}: ${item['__raw_data'][key]}`);
-          return item['__raw_data'][key];
-        }
-      }
-    }
-
-    console.log('No valid GUID found in item, will use generated ID');
-    return null;
+  // Handle page events from the paginator
+  onPageChange(event: PageEvent) {
+    this.pageSize = event.pageSize;
+    this.pageIndex = event.pageIndex;
+    
+    // Reset cell selection on page change
+    this.selectedOverflowCell = null;
+    this.selectedColumn = null;
+    
+    this.updatePaginatedData();
+    this.cdr.detectChanges();
+  }
+  
+  // Update the paginated data based on the current page and page size
+  private updatePaginatedData() {
+    const startIndex = this.pageIndex * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    
+    this.paginatedData = this.dataSource.slice(startIndex, endIndex);
+    this.cdr.markForCheck();
   }
 
   // Check if a field has different formatted and raw values
@@ -724,30 +746,124 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
     return formattedValues[rowIndex][columnName];
   }
-
-  // Generate a consistent ID for a record when a real one can't be found
-  private generateConsistentId(item: any, index: number): string {
-    // Check raw response data for possible fallback IDs
-
-    // Try to use transactioncurrencyid as a fallback
-    if (item['_transactioncurrencyid_value'] &&
-        typeof item['_transactioncurrencyid_value'] === 'string' &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item['_transactioncurrencyid_value'])) {
-      console.log(`Using _transactioncurrencyid_value as fallback ID: ${item['_transactioncurrencyid_value']}`);
-      return item['_transactioncurrencyid_value'];
+  
+  // Simple entity type detection that doesn't use service calls
+  private getSimpleEntityType(item: any): string {
+    // Try to determine the entity name from the query node
+    try {
+      const entityNode = this.getEntityNode();
+      if (entityNode && entityNode.entitySetName$ && entityNode.entitySetName$.value) {
+        return entityNode.entitySetName$.value;
+      }
+    } catch (error) {
+      console.error('Error getting entity type from node:', error);
     }
 
-    // Try to use ATTRIBUTE_ACCOUNT as a fallback
-    if (item['ATTRIBUTE_ACCOUNT'] &&
-        typeof item['ATTRIBUTE_ACCOUNT'] === 'string' &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item['ATTRIBUTE_ACCOUNT'])) {
-      console.log(`Using ATTRIBUTE_ACCOUNT as fallback ID: ${item['ATTRIBUTE_ACCOUNT']}`);
-      return item['ATTRIBUTE_ACCOUNT'];
+    // Look for typical ID field patterns to guess entity name
+    for (const key of Object.keys(item)) {
+      // Common pattern: entityname + id (e.g. accountid, contactid)
+      if (key.toLowerCase().endsWith('id') && !key.includes('_')) {
+        const entityName = key.substring(0, key.length - 2);
+        if (entityName.length > 0) {
+          return entityName;
+        }
+      }
     }
 
-    // If no valid ID was found in the data, create a last resort fallback
-    // This should rarely be needed since the Dataverse response contains real IDs
-    console.log(`No fallback ID found in data, creating a last resort ID for row ${index + 1}`);
-    return `00000000-0000-0000-0000-${index.toString().padStart(12, '0')}`;
+    // Look for custom entity prefixes (like cr1fc_)
+    const customEntityPrefix = this.detectCustomEntityPrefix(item);
+    if (customEntityPrefix) {
+      return customEntityPrefix;
+    }
+
+    // Fallback to a generic entity type
+    return 'entity';
+  }
+
+  // Detect common custom entity prefixes
+  private detectCustomEntityPrefix(item: any): string | null {
+    // Look for field name patterns like prefix_fieldname
+    const prefixPattern = /^([a-z0-9]+_)([a-z0-9_]+)$/i;
+    
+    let mostCommonPrefix = null;
+    const prefixCounts = new Map<string, number>();
+    
+    for (const key of Object.keys(item)) {
+      const match = key.match(prefixPattern);
+      if (match && match[1]) {
+        const prefix = match[1].slice(0, -1); // Remove trailing underscore
+        const count = (prefixCounts.get(prefix) || 0) + 1;
+        prefixCounts.set(prefix, count);
+      }
+    }
+    
+    // Find the most common prefix
+    let maxCount = 0;
+    for (const [prefix, count] of prefixCounts.entries()) {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommonPrefix = prefix;
+      }
+    }
+    
+    // Only return if we have a somewhat confident match (at least 2 fields)
+    return maxCount >= 2 ? mostCommonPrefix : null;
+  }
+
+  // Simplified ID finder that doesn't make service calls
+  private findSimpleEntityId(item: any): string | null {
+    if (!item) return null;
+
+    // Regular expression for GUID validation
+    const guidRegEx = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    // Try to get entity name
+    const entityType = this.getSimpleEntityType(item);
+    
+    // First, look for entityname + id pattern
+    if (entityType && entityType !== 'entity') {
+      const idField = `${entityType}id`;
+      if (item[idField] && typeof item[idField] === 'string' && guidRegEx.test(item[idField])) {
+        return item[idField];
+      }
+    }
+
+    // Look for any field ending with 'id' that contains a valid GUID
+    for (const key of Object.keys(item)) {
+      if (key.toLowerCase().endsWith('id') && typeof item[key] === 'string' && guidRegEx.test(item[key])) {
+        return item[key];
+      }
+    }
+
+    // Check raw data as a fallback
+    if (item['__raw_data']) {
+      // First check entity-specific ID
+      if (entityType && entityType !== 'entity') {
+        const idField = `${entityType}id`;
+        if (item['__raw_data'][idField] && 
+            typeof item['__raw_data'][idField] === 'string' && 
+            guidRegEx.test(item['__raw_data'][idField])) {
+          return item['__raw_data'][idField];
+        }
+      }
+      
+      // Then check any id field
+      for (const key of Object.keys(item['__raw_data'])) {
+        if (key.toLowerCase().endsWith('id') && 
+            typeof item['__raw_data'][key] === 'string' && 
+            guidRegEx.test(item['__raw_data'][key])) {
+          return item['__raw_data'][key];
+        }
+      }
+    }
+
+    // Last resort: look for any GUID in the data
+    for (const key of Object.keys(item)) {
+      if (typeof item[key] === 'string' && guidRegEx.test(item[key])) {
+        return item[key];
+      }
+    }
+
+    return null;
   }
 }

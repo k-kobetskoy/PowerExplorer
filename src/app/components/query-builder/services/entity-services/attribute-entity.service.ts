@@ -15,6 +15,8 @@ interface AttributeData {
 interface EntityAttributeData {
   entityAlias: string | null;
   attributeData: AttributeData[];
+  isPrimaryEntity?: boolean; // Add optional property for primary entity
+  primaryIdAttribute?: string; // Add optional property for primary ID attribute
 }
 
 export interface EntityAttributeMap {
@@ -33,7 +35,6 @@ export class AttributeEntityService extends BaseRequestService {
   }
 
   getAttributes(entityLogicalName: string): Observable<AttributeModel[]> {
-
     return this.activeEnvironmentUrl$.pipe(
       switchMap(envUrl => {
         if (!envUrl) return of([]);
@@ -56,7 +57,8 @@ export class AttributeEntityService extends BaseRequestService {
             displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
             attributeType
           }))),
-          tap(data => this.cacheService.setItem(data, cacheKey))
+          tap(data => {this.cacheService.setItem(data, cacheKey); console.log('AttributeEntityService: getAttributes()', data)}),
+          shareReplay(1)
         );
       }));
   }
@@ -72,12 +74,107 @@ export class AttributeEntityService extends BaseRequestService {
       return of({});
     }
     
+    // Check if all attributeData arrays are empty - if so, get all attributes
+    const allAttributeDataEmpty = Object.values(entityAttributeMap).every(
+      entityData => !entityData.attributeData || entityData.attributeData.length === 0
+    );
+    
+    if (allAttributeDataEmpty) {
+      console.log('AttributeEntityService: All attributeData arrays are empty, getting all attributes');
+      return this.getAllAttributesForEntities(Object.keys(entityAttributeMap));
+    }
+    
     // Check the number of entities and call the appropriate method
     if (Object.keys(entityAttributeMap).length === 1) {
       return this.getSpecificAttributesForSingleEntity(entityAttributeMap);
     } else {
       return this.getSpecificAttributesForMultipleEntities(entityAttributeMap);
     }
+  }
+  
+  /**
+   * Get ALL attributes for the specified entities without filtering
+   * This is useful when attributeData is empty and we want to include all possible fields
+   * @param entityLogicalNames Array of entity logical names
+   * @returns Observable with a map of entity logical names to their full attribute maps
+   */
+  getAllAttributesForEntities(entityLogicalNames: string[]): Observable<AttributeMapResult> {
+    if (!entityLogicalNames || entityLogicalNames.length === 0) {
+      return of({});
+    }
+    
+    console.log(`AttributeEntityService: Getting all attributes for entities: ${entityLogicalNames.join(', ')}`);
+    
+    // Create a result map right away
+    const resultMap: AttributeMapResult = {};
+    
+    return this.activeEnvironmentUrl$.pipe(
+      take(1), // Only take one environment URL
+      switchMap(envUrl => {
+        if (!envUrl) {
+          return of(resultMap);
+        }
+        
+        // Create an array of observables, one for each entity
+        const entityObservables: Observable<void>[] = entityLogicalNames.map(entityLogicalName => {
+          return new Observable<void>(subscriber => {
+            // Get ALL attributes for this entity without filtering
+            this.getAttributes(entityLogicalName).subscribe({
+              next: (attributes) => {
+                try {
+                  // Create a Map with ALL attributes
+                  const attributeMap = new Map<string, AttributeModel>();
+                  
+                  // Add ALL attributes to the map
+                  attributes.forEach(attr => {
+                    attributeMap.set(attr.logicalName, attr);
+                  });
+                  
+                  console.log(`AttributeEntityService: Got ${attributeMap.size} attributes for entity ${entityLogicalName}`);
+                  
+                  // Store in result map
+                  resultMap[entityLogicalName] = attributeMap;
+                  
+                  subscriber.next();
+                  subscriber.complete();
+                } catch (error) {
+                  console.error(`Error processing attributes for ${entityLogicalName}:`, error);
+                  resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+                  subscriber.next();
+                  subscriber.complete();
+                }
+              },
+              error: (error) => {
+                console.error(`Error fetching attributes for ${entityLogicalName}:`, error);
+                resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+                subscriber.next();
+                subscriber.complete();
+              }
+            });
+          }).pipe(
+            finalize(() => {
+              // Ensure resource cleanup
+            })
+          );
+        });
+        
+        // Use forkJoin to process all entities (it will wait for all to complete)
+        return forkJoin(entityObservables).pipe(
+          map(() => {
+            console.log(`AttributeEntityService: Completed fetching attributes for ${entityLogicalNames.length} entities`);
+            return resultMap;
+          }),
+          catchError(error => {
+            console.error('Error processing entities:', error);
+            return of(resultMap);
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('Error retrieving environment URL:', error);
+        return of(resultMap);
+      })
+    );
   }
   
   /**
@@ -101,13 +198,20 @@ export class AttributeEntityService extends BaseRequestService {
           return of({ [entityLogicalName]: new Map<string, AttributeModel>() });
         }
         
+        // If attributeData is empty, get all attributes
+        if (entityData.attributeData.length === 0) {
+          console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, getting all attributes`);
+          return this.getAllAttributesForEntities([entityLogicalName]);
+        }
+        
         // Get attribute logical names
         const attributeLogicalNames = entityData.attributeData
           .filter(attr => attr && attr.attributeLogicalName)
           .map(attr => attr.attributeLogicalName as string);
           
         if (attributeLogicalNames.length === 0) {
-          return of({ [entityLogicalName]: new Map<string, AttributeModel>() });
+          console.log(`AttributeEntityService: No valid attributes found for entity ${entityLogicalName}, getting all attributes`);
+          return this.getAllAttributesForEntities([entityLogicalName]);
         }
         
         // For single entity, we can directly return the result without using tuples or forkJoin
@@ -172,15 +276,81 @@ export class AttributeEntityService extends BaseRequestService {
               return;
             }
             
+            // If attributeData is empty, get all attributes
+            if (entityData.attributeData.length === 0) {
+              console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, getting all attributes`);
+              
+              // Get all attributes for this entity
+              this.getAttributes(entityLogicalName).subscribe({
+                next: (attributes) => {
+                  try {
+                    const attributeMap = new Map<string, AttributeModel>();
+                    
+                    // Store all attributes
+                    attributes.forEach(attr => {
+                      attributeMap.set(attr.logicalName, attr);
+                    });
+                    
+                    // Store in result map
+                    resultMap[entityLogicalName] = attributeMap;
+                    
+                    subscriber.next();
+                    subscriber.complete();
+                  } catch (error) {
+                    console.error(`Error processing attributes for ${entityLogicalName}:`, error);
+                    resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+                    subscriber.next();
+                    subscriber.complete();
+                  }
+                },
+                error: (error) => {
+                  console.error(`Error fetching attributes for ${entityLogicalName}:`, error);
+                  resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+                  subscriber.next();
+                  subscriber.complete();
+                }
+              });
+              
+              return;
+            }
+            
             // Get attribute names
             const attributeLogicalNames = entityData.attributeData
               .filter(attr => attr && attr.attributeLogicalName)
               .map(attr => attr.attributeLogicalName as string);
             
             if (attributeLogicalNames.length === 0) {
-              resultMap[entityLogicalName] = new Map<string, AttributeModel>();
-              subscriber.next();
-              subscriber.complete();
+              // Get all attributes if no specific attributes are defined
+              this.getAttributes(entityLogicalName).subscribe({
+                next: (attributes) => {
+                  try {
+                    const attributeMap = new Map<string, AttributeModel>();
+                    
+                    // Add all attributes
+                    attributes.forEach(attr => {
+                      attributeMap.set(attr.logicalName, attr);
+                    });
+                    
+                    // Store in result map
+                    resultMap[entityLogicalName] = attributeMap;
+                    
+                    subscriber.next();
+                    subscriber.complete();
+                  } catch (error) {
+                    console.error(`Error processing attributes for ${entityLogicalName}:`, error);
+                    resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+                    subscriber.next();
+                    subscriber.complete();
+                  }
+                },
+                error: (error) => {
+                  console.error(`Error fetching attributes for ${entityLogicalName}:`, error);
+                  resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+                  subscriber.next();
+                  subscriber.complete();
+                }
+              });
+              
               return;
             }
             

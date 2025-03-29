@@ -11,14 +11,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { LoadingIndicatorComponent } from 'src/app/components/loading-indicator/loading-indicator.component';
 import { MatOptionModule } from '@angular/material/core';
 import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete'; 
 import { MatButtonModule } from '@angular/material/button';
-
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 @Component({
   standalone: true,
   imports: [
@@ -28,12 +27,12 @@ import { MatButtonModule } from '@angular/material/button';
     MatInputModule,
     MatOptionModule,
     MultiValueFormComponent,
-    LoadingIndicatorComponent,
     MatSelectModule,    
     MatAutocompleteModule,
     MatButtonModule,
     FormsModule,
-    MatIconModule
+    MatIconModule,
+    MatProgressSpinnerModule
   ],  
   selector: 'app-boolean-form',
   templateUrl: './boolean-form.component.html',

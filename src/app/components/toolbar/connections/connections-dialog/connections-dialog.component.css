@@ -61,3 +61,17 @@ app-connections-dialog .mat-mdc-dialog-actions {
 .mdc-list-item.mdc-list-item--with-two-lines {
     border-radius: 10px;
 }
+
+/* Add loading container styling */
+.dialog-loading-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none; /* Allow clicking through the loading container */
+}

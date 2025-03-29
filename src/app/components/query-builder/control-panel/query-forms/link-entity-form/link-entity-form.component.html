@@ -47,8 +47,7 @@
                                 </div>
                             </mat-option>
                         </mat-autocomplete>
-                        <app-loading-indicator matSuffix [diameter]="20"
-                            loadingKey="entityName"></app-loading-indicator>
+                        <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
                         @if (entityNameFormControl.value) {
                             <button matSuffix mat-icon-button aria-label="Clear" (click)="entityNameFormControl.patchValue('')">
                               <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
@@ -84,8 +83,7 @@
                                 </mat-option>
                             </mat-optgroup>
                         </mat-autocomplete>
-                        <app-loading-indicator matSuffix [diameter]="20"
-                            loadingKey="linkEntity"></app-loading-indicator>
+                        <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
                         @if (linkEntityFormControl.value) {
                             <button matSuffix mat-icon-button aria-label="Clear" (click)="linkEntityFormControl.patchValue('')">
                               <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
@@ -105,8 +103,7 @@
                                 </div>
                             </mat-option>
                         </mat-autocomplete>
-                        <app-loading-indicator matSuffix [diameter]="20"
-                            loadingKey="fromAttribute"></app-loading-indicator>
+                        <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
                         @if (fromAttributeFormControl.value) {
                             <button matSuffix mat-icon-button aria-label="Clear" (click)="fromAttributeFormControl.patchValue('')">
                               <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
@@ -126,8 +123,7 @@
                                 </div>
                             </mat-option>
                         </mat-autocomplete>
-                        <app-loading-indicator matSuffix [diameter]="20"
-                            loadingKey="toAttribute"></app-loading-indicator>
+                        <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
                         @if (toAttributeFormControl.value) {
                             <button matSuffix mat-icon-button aria-label="Clear" (click)="toAttributeFormControl.patchValue('')">
                               <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
