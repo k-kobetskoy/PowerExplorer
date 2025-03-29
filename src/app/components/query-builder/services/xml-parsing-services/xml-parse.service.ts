@@ -207,8 +207,8 @@ export class XmlParseService {
       
       console.log('XML parsing complete');
       
-      // Force validation to pass
-      this.nodeTreeService.forceValidationToPass();
+      // Don't force validation to pass, let actual validation happen
+      // this.nodeTreeService.forceValidationToPass();
       
       this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     }

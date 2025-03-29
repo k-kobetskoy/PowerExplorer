@@ -30,7 +30,7 @@ export class QueryNode {
     nodeDisplayValue$: Observable<string>;
 
     validatiors: INodeValidators;
-    validationResult$: Observable<ValidationResult> = of(VALID_RESULT);
+    validationResult$: Observable<ValidationResult>;
 
     //TODO: implement this functionality later
     hasAggregateOrGroupByAttribute: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);

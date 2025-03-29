@@ -17,9 +17,8 @@ export class NodeTreeService {
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
-  private validationResultSubject = new BehaviorSubject<ValidationResult>(VALID_RESULT);
-  validationResult$ = this.validationResultSubject.asObservable();
-  
+  validationResult$: Observable<ValidationResult>;
+    
   // Track validation subscription for cleanup
   private validationSubscription: Subscription = null;
 
@@ -36,7 +35,7 @@ export class NodeTreeService {
   constructor(
     private _eventBus: EventBusService,
     private nodeFactory: NodeFactoryService,
-    private validationService: ValidationService,
+    private validationService: ValidationService
   ) {
     this.initializeNodeTree();
 
@@ -46,17 +45,16 @@ export class NodeTreeService {
   }
 
   public setupValidation() {
-    // Ensure any previous subscription is cleaned up
+    console.log('Setting up node tree validation');
+    
+    // Clean up any existing subscription
     if (this.validationSubscription) {
       this.validationSubscription.unsubscribe();
       this.validationSubscription = null;
     }
     
-    // Setup a new validation subscription
-    this.validationSubscription = this.validationService.setupNodeTreeValidation(this._nodeTree$).subscribe(result => {
-      console.log('Validation result received in NodeTreeService:', result);
-      this.validationResultSubject.next(result);
-    });
+    // Create a new validation observable
+    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$);
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -105,6 +103,9 @@ export class NodeTreeService {
       this._nodeTree$.next(nodeTree);
       this._selectedNode$.next(newNode);
 
+      // First-time setup of the validation is still needed
+      this.setupValidation();
+      
       return newNode;
     }
 
@@ -125,6 +126,9 @@ export class NodeTreeService {
       this.expandNode(parentNode);
     }
     this.selectedNode$ = newNode;
+
+    // Explicitly emit from nodeTree$ to ensure validation is triggered
+    this._nodeTree$.next(this._nodeTree$.value);
 
     return newNode;
   }
@@ -157,6 +161,10 @@ export class NodeTreeService {
     }
 
     this.selectedNode$ = newNode;
+    
+    // Explicitly emit from nodeTree$ to ensure validation is triggered
+    this._nodeTree$.next(this._nodeTree$.value);
+    
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
 
     if (newNodeName === QueryNodeData.Filter.NodeName) {
@@ -245,6 +253,10 @@ export class NodeTreeService {
     }
 
     this._selectedNode$.next(previousNode);
+    
+    // Explicitly emit from nodeTree$ to ensure validation is updated after node removal
+    this._nodeTree$.next(this._nodeTree$.value);
+    
     this._eventBus.emit({ name: AppEvents.NODE_REMOVED });
   }
 
@@ -310,16 +322,19 @@ export class NodeTreeService {
     }
     
     if (nodeTree && nodeTree.root) {
+      // First signal that tree is being destroyed to complete any ongoing validations
+      nodeTree.destroyed$.next();
+      nodeTree.destroyed$.complete();
+      
+      // Then clean up all nodes
       this.cleanupNodeAndChildren(nodeTree.root);
     }
 
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
     
-    // Set up validation again after a short delay to ensure all operations are complete
-    setTimeout(() => {
-      this.setupValidation();
-    }, 0);
+    // Set up validation again after tree is recreated
+    this.setupValidation();
   }
 
   getEntityAttributeMap(): EntityAttributeMap {
@@ -427,14 +442,16 @@ export class NodeTreeService {
 
     const nextNode = node.next;
 
+    // Properly dispose of the node to clean up all its subscriptions
     node.dispose();
 
+    // Recursively clean up any children nodes
     if (nextNode && nextNode.level > node.level) {
       this.cleanupNodeAndChildren(nextNode);
     }
-
-    this._nodeTree$.value.destroyed$.next();
-    this._nodeTree$.value.destroyed$.complete();
+    
+    // Don't complete the tree's destroyed$ subject here, as it would affect all validation
+    // subscriptions. We only want to complete it when the entire tree is being destroyed.
   }
 
   forceValidationToPass() {
