@@ -132,6 +132,9 @@ app-tree-panel, app-control-panel {
   box-sizing: border-box;
   z-index: 2;
   height: 40px!important;
+  min-height: 40px!important;
+  max-height: 40px!important;
+  line-height: 40px;
 }
 
 .toggle-wrapper {
