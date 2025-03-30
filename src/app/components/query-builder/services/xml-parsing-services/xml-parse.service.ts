@@ -187,6 +187,7 @@ export class XmlParseService {
     try {
       console.log('Starting XML parsing...');
       this.resetParserState();
+
       this.nodeTreeService.clearNodeTree();
       this.isParsingEnabled = true;
 
@@ -205,10 +206,19 @@ export class XmlParseService {
         this.nodeTreeService.initializeNodeTree();
       }
       
-      console.log('XML parsing complete');
+      // Set up validation after the tree is built
+      this.nodeTreeService.setupValidation();
       
-      // Don't force validation to pass, let actual validation happen
-      // this.nodeTreeService.forceValidationToPass();
+      // Check the validation state directly and force validation if valid
+      setTimeout(() => {
+        this.nodeTreeService.validationResult$.subscribe(validationResult => {
+          if (validationResult.isValid) {
+            this.nodeTreeService.forceValidationToPass();
+          }
+        });
+      }, 100);
+      
+      console.log('XML parsing complete');
       
       this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     }

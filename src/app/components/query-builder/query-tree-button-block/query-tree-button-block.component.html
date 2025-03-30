@@ -33,7 +33,9 @@
       <!-- <span>Save</span> -->
     <!-- </button> -->
 
-    <button mat-flat-button color="primary" type="button" class="custom-run-button" [disabled]="!(buttonDisabled$ | async).isValid" (click)="execute()">
+    <button mat-flat-button color="primary" type="button" class="custom-run-button" 
+      [disabled]="!(buttonDisabled$ | async)?.isValid" 
+      (click)="execute()">
       <!-- <mat-icon>slideshow</mat-icon> -->
       <!-- <mat-icon>build</mat-icon> -->
       <!-- <mat-icon>arrow_forward_ios</mat-icon> -->

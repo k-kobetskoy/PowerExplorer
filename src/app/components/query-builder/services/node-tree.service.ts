@@ -9,6 +9,7 @@ import { ValueAttributeData } from '../models/constants/attribute-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
 import { VALID_RESULT, ValidationResult, ValidationService } from './validation.service';
 import { AttributeNames } from '../models/constants/attribute-names';
+import { tap, shareReplay } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class NodeTreeService {
   private _nodeTree$: BehaviorSubject<QueryNodeTree> = new BehaviorSubject<QueryNodeTree>(null);
@@ -53,8 +54,14 @@ export class NodeTreeService {
       this.validationSubscription = null;
     }
     
-    // Create a new validation observable
-    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$);
+    // Create a new validation observable with shareReplay to ensure all subscribers get the same values
+    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$)
+      .pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      
+    // Subscribe to validation to keep it active even if the UI doesn't subscribe yet
+    this.validationSubscription = this.validationResult$.subscribe();
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -63,6 +70,8 @@ export class NodeTreeService {
     }
 
     this.initializeNodeTree();
+  
+    this.setupValidation();
 
     return this._nodeTree$;
   }
@@ -104,7 +113,7 @@ export class NodeTreeService {
       this._selectedNode$.next(newNode);
 
       // First-time setup of the validation is still needed
-      this.setupValidation();
+      //this.setupValidation();
       
       return newNode;
     }
@@ -333,8 +342,7 @@ export class NodeTreeService {
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
     
-    // Set up validation again after tree is recreated
-    this.setupValidation();
+    // Don't set up validation here - it will be set up after the new tree is built
   }
 
   getEntityAttributeMap(): EntityAttributeMap {

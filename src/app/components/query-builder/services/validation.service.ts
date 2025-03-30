@@ -182,20 +182,14 @@ export class ValidationService {
 
         const treeValidation$ = this.requiredNodeValidator.validate(nodeTree).pipe(
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(destroyed$),
-            tap(result => {
-                console.log(':::treeValidation', result);
-            })
+            takeUntil(destroyed$)
         );
 
         // Create an observable that emits whenever a new node is added to the tree
         // or when an existing node's validation state changes
         const nodesValidation$ = nodeTree.pipe(
-            // This will re-evaluate whenever the tree changes
-            tap(() => console.log('Tree structure changed, re-evaluating node validations')),
             switchMap(tree => {
                 if (!tree || !tree.root) {
-                    console.log('Tree is empty or has no root node');
                     return of(VALID_RESULT);
                 }                
 
@@ -210,17 +204,13 @@ export class ValidationService {
                     }
                 }
                 
-                console.log(`Collected validations from ${nodeValidations.length} nodes out of ${nodeCount} total nodes`);
-
                 if (nodeValidations.length === 0) {
-                    console.log('No node validations found');
                     return of(VALID_RESULT);
                 }
 
                 // combineLatest will emit whenever any of the node validation observables emit
                 return combineLatest(nodeValidations)
                     .pipe(
-                        tap(validations => {console.log(`:::validations from ${validations.length} nodes`, validations)}),
                         map(results => {
                             // Combine all validation results into one
                             const combinedResult = results.reduce((acc, result) => ({
@@ -228,16 +218,12 @@ export class ValidationService {
                                 errors: [...acc.errors, ...result.errors]
                             }), VALID_RESULT);
                             
-                            console.log(':::combined node validations', combinedResult);
                             return combinedResult;
                         })
                     );
             }),
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(destroyed$),
-            tap(result => {
-                console.log(':::nodesValidation final result', result);
-            })
+            takeUntil(destroyed$)
         );
 
         return combineLatest([treeValidation$, nodesValidation$]).pipe(
@@ -245,8 +231,6 @@ export class ValidationService {
                 // Make sure overall validation fails if any node validation fails
                 const isValid = treeValidation.isValid && nodesValidation.isValid;
                 const errors = [...treeValidation.errors, ...nodesValidation.errors];
-                
-                console.log('Final tree validation result:', { isValid, errorCount: errors.length });
                 
                 return {
                     isValid,
@@ -258,10 +242,7 @@ export class ValidationService {
                 return of(VALID_RESULT);
             }),
             shareReplay({ bufferSize: 1, refCount: true }),
-            takeUntil(destroyed$),
-            tap(result => {
-                console.log(':::combined tree validation', result);
-            })
+            takeUntil(destroyed$)
         );
     }
 } 
