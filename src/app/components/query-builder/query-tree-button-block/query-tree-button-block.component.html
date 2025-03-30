@@ -1,8 +1,51 @@
 <div class="button-container">
-  <button 
-    mat-flat-button 
-    color="primary" 
-    (click)="execute()" 
-    [disabled]="buttonDisabled$|async">Execute</button>
+  <div class="button-container-left">
+    
+    <span class="query-constructor-title">Query Constructor</span>
+
+    <!-- <div class="custom-query-name-button">
+      <div class="button-content"> -->
+        <!-- <form [formGroup]="testForm">
+          <mat-form-field>
+            <input formControlName="testValue1" matInput />
+          </mat-form-field>
+        </form>
+        <div class="query-name-gutter"></div> -->
+        <!-- Remove or hide the chevron -->
+        <!-- <div class="chevron-container" (click)="toggleQueryOptions()">
+          <mat-icon>chevron_right</mat-icon>
+        </div> -->
+      <!-- </div>
+    </div> -->
+  </div>
+
+  <div class="button-container-right">
+    <!-- <button mat-button  type="button" class="custom-mat-button"> -->
+      <!-- <span>Add</span> -->
+      <!-- <mat-icon>add</mat-icon> -->
+      <!-- <mat-icon>add_to_photos</mat-icon> -->
+      <!-- <mat-icon>add_box</mat-icon> -->
+    <!-- </button> -->
+
+    <!-- <button mat-button  type="button" class="custom-mat-button"> -->
+      <!-- <mat-icon>beenhere</mat-icon> -->
+      <!-- <mat-icon>collections_bookmark</mat-icon> -->
+      <!-- <mat-icon>bookmark_border</mat-icon> -->
+      <!-- <mat-icon>cloud_done</mat-icon> -->
+      <!-- <mat-icon>save</mat-icon> -->
+      <!-- <span>Save</span> -->
+    <!-- </button> -->
+
+    <button mat-flat-button color="primary" type="button" class="custom-run-button" 
+      [disabled]="!(buttonDisabled$ | async)?.isValid" 
+      (click)="execute()">
+      <!-- <mat-icon>slideshow</mat-icon> -->
+      <!-- <mat-icon>build</mat-icon> -->
+      <!-- <mat-icon>arrow_forward_ios</mat-icon> -->
+      <!-- <mat-icon>play_arrow</mat-icon> -->
+      <!-- <mat-icon>play_arrow</mat-icon> -->
+      <!-- <mat-icon>play_circle_outline</mat-icon> -->
+      <span class="custom-button-text">Run</span>
+    </button>
+  </div>
 </div>
-  

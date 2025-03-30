@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, distinctUntilChanged, map, of, startWith, switchMap, takeUntil, BehaviorSubject, catchError, debounceTime, filter } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from 'src/app/components/query-builder/services/entity-services/attribute-entity.service';
@@ -8,8 +8,49 @@ import { FilterOperatorTypes } from '../../../models/constants/ui/option-set-typ
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { BaseFormComponent } from '../base-form.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatOptionModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { NumberFormComponent } from './number-form/number-form.component';
+import { BooleanFormComponent } from './boolean-form/boolean-form.component';
+import { IdFormComponent } from './id-form/id-form.component';
+import { PicklistFormComponent } from './picklist-form/picklist-form.component';
+import { StatusFormComponent } from './status-form/status-form.component';
+import { DateTimeFormComponent } from './date-time-form/date-time-form.component';
+import { StringFormComponent } from './string-form/string-form.component';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    QuickActionsComponent,
+    MatOptionModule,
+    MatAutocompleteModule,
+    NumberFormComponent,
+    BooleanFormComponent,
+    IdFormComponent,
+    PicklistFormComponent,
+    StatusFormComponent,
+    DateTimeFormComponent,
+    StringFormComponent,
+    MatIconModule,
+    MatButtonModule,
+    FormsModule,
+    MatProgressSpinnerModule,
+    NodeActionsComponent
+  ],
   selector: 'app-filter-condition-form',
   templateUrl: './filter-condition-form.component.html',
   styleUrls: ['./filter-condition-form.component.css'],
@@ -25,6 +66,8 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   @Input() selectedNode: QueryNode;
   private previousAttribute: string = null;
 
+  isLoadingAttributes$: BehaviorSubject<boolean>;
+
   attributes$: Observable<AttributeModel[]>;
   filteredAttributes$: Observable<AttributeModel[]>;
   entityName$: Observable<string>;
@@ -36,7 +79,11 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
   isValidAttributeSelected = false;
 
   constructor(
-    private attributeEntityService: AttributeEntityService) { super(); }
+    private attributeEntityService: AttributeEntityService,
+    private nodeTreeService: NodeTreeService) {
+    super();
+    this.isLoadingAttributes$ = this.attributeEntityService.getAttributesIsLoading$;
+  }
 
   ngOnInit() {
     this.initializeForm();
@@ -60,6 +107,10 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
     this.setupFiltering();
   }
 
+  removeNode() {
+    this.nodeTreeService.removeNode(this.selectedNode);
+  }
+
   setupFormToModelBinding() {
     this.attributeFormControl.valueChanges.pipe(
       distinctUntilChanged(),
@@ -81,7 +132,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
         return this.selectedNode.getParentEntityName(parentEntityNode).pipe(
           distinctUntilChanged(),
           switchMap(entityName => {
-            return this.attributeEntityService.getAttributes(entityName);
+            return this.attributeEntityService.getAttributes(entityName, true);
           })
         );
       }),
@@ -121,7 +172,7 @@ export class FilterConditionFormComponent extends BaseFormComponent implements O
         const attribute = attributes.find(attr => attr.logicalName.toLowerCase() === filterValue);
         if (attribute) {
           const currentAttributeValue = attribute.logicalName;
-          
+
           // If attribute changed, clear operator and value attributes
           if (this.previousAttribute !== null && this.previousAttribute !== currentAttributeValue) {
             // Remove operator and value when attribute changes

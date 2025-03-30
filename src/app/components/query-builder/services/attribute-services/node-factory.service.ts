@@ -12,7 +12,7 @@ import { INodeData, QueryNodeData } from '../../models/constants/query-node-data
 import { DefaultAttributesFactoryService } from './attribute-factories/default-attributes-factory.service';
 import { QueryNode } from '../../models/query-node';
 import { ValidationService } from '../../services/validation.service';
-import { Observable,  switchMap, of, combineLatest, map, takeUntil } from 'rxjs';
+import { Observable, switchMap, of, combineLatest, map, takeUntil, distinctUntilChanged } from 'rxjs';
 import { INodeValidators } from './abstract/i-node-validators';
 import { EntityNodeRequiredNameValidatorService } from './validators/nodes/entity-node-required-name-validator.service';
 import { INodeValidator } from './abstract/i-node-validator';
@@ -20,7 +20,7 @@ import { NodeNameValidatorService } from './validators/nodes/one-time-validatior
 import { INodeOneTimeValidator } from './abstract/i-node-one-time-validator';
 import { AttributeNodeAggregateRequiredAliasValidatorService } from './validators/nodes/attribute-node-aggregate-required-alias-validator.service';
 import { AttributeNodeRequiredNameValidatorService } from './validators/nodes/attribute-node-required-name-validator.service';
-import { EntityNameServerValidatorService } from './validators/attributes/entity-name-server-validator.service';
+
 @Injectable({ providedIn: 'root' })
 
 export class NodeFactoryService {
@@ -43,7 +43,7 @@ export class NodeFactoryService {
   ) { }
 
   getAttributesFactory(nodeName: string): IAttributeFactory {
-    
+
     switch (nodeName) {
       case QueryNodeData.Condition.NodeName:
         return this.conditionFactory
@@ -86,67 +86,79 @@ export class NodeFactoryService {
 
   private createNodeDisplayValueObservable(node: QueryNode): Observable<string> {
     return node.attributes$.pipe(
-      switchMap(attributes => {
+      map(attributes => {
+        // When no attributes exist, return node name
         if (attributes.length === 0) {
-          return of(node.nodeName);
+          return node.nodeName;
         }
 
         const displayableAttributes = attributes.filter(attr =>
           attr.attributeDisplayValues.displayOnTreeView
         );
 
+        // When no displayable attributes exist, return node name
         if (displayableAttributes.length === 0) {
-          return of(node.nodeName);
+          return node.nodeName;
         }
 
+        // When we have displayable attributes, return their combined display values
         const displayValues$ = displayableAttributes.map(attr =>
           attr.attributeDisplayValues.treeViewDisplayValue$
         );
 
+        // Return an observable that will emit the combined display values
         return combineLatest(displayValues$).pipe(
-          map(values => `${node.nodeName} ${values.join(' ')}`),
-          takeUntil(node.destroyed$)
+          map(values => values.join(' ')),
+          distinctUntilChanged(),
+          switchMap(combinedValue => 
+            combinedValue ? of(combinedValue) : of(node.nodeName)
+          )
         );
       }),
+      distinctUntilChanged(),
+      switchMap(valueOrObservable => 
+        typeof valueOrObservable === 'string' 
+          ? of(valueOrObservable) 
+          : valueOrObservable
+      ),
+      map(value => value || node.nodeName),
       takeUntil(node.destroyed$)
-      //TODO: check if needed
-      //shareReplay(1)         
     );
   }
 
   private getNodeValidators(nodeName: string, oneTimeParserValidation: boolean): INodeValidators {
 
-    let oneTimeValidators: INodeOneTimeValidator[] = [];
-    let validators: INodeValidator[] = [];
+  let oneTimeValidators: INodeOneTimeValidator[] = [];
+  let validators: INodeValidator[] = [];
 
-    if (oneTimeParserValidation) {
-      oneTimeValidators = this.getOneTimeValidators(nodeName);
-    }
-
-    validators = this.getValidators(nodeName);
-
-    return {
-      oneTimeValidators: oneTimeValidators,
-      validators: validators
-    };
+  if (oneTimeParserValidation) {
+    oneTimeValidators = this.getOneTimeValidators(nodeName);
   }
+
+  validators = this.getValidators(nodeName);
+
+  return {
+    oneTimeValidators: oneTimeValidators,
+    validators: validators
+  };
+}
 
   private getOneTimeValidators(nodeName: string): INodeOneTimeValidator[] {
-    if(QueryNodeData.NodesNames.includes(nodeName)) {
-      return [this.nodeNameValidator];
-    }
-
-    return [];
+  if (QueryNodeData.NodesNames.includes(nodeName)) {
+    return [this.nodeNameValidator];
   }
+
+  return [];
+}
 
   private getValidators(nodeName: string): INodeValidator[] {
-    switch (nodeName) {
-      case QueryNodeData.Entity.NodeName:
-        return [this.entityNodeNameValidator];
-      case QueryNodeData.Attribute.NodeName:
-        return [this.attributeNodeRequiredNameValidator, this.attributeNodeAggregateRequiredAliasValidator];
-      default:
-        return [];
-    }
+  switch (nodeName) {
+    case QueryNodeData.Entity.NodeName:
+      return [this.entityNodeNameValidator];
+    case QueryNodeData.Attribute.NodeName:
+      return [this.attributeNodeRequiredNameValidator, this.attributeNodeAggregateRequiredAliasValidator];
+    default:
+      return [];
   }
+}
 }

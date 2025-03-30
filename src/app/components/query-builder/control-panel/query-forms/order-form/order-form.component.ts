@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormControl } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule    } from '@angular/forms';
 import { Observable, Subject, combineLatest, of } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, take, catchError, shareReplay } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
@@ -8,36 +8,39 @@ import { AttributeEntityService } from '../../../services/entity-services/attrib
 import { QueryNode } from '../../../models/query-node';
 import { AttributeNames } from '../../../models/constants/attribute-names';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatCheckboxModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    QuickActionsComponent,
+    MatIconModule,
+    MatButtonModule,
+    FormsModule,
+    MatProgressSpinnerModule,
+    NodeActionsComponent
+  ],
   selector: 'app-order-form',
   templateUrl: './order-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-
-    .logical-name {
-      font-weight: 500;
-    }
-
-    .display-name {
-      font-size: 0.85em;
-      color: rgba(0, 0, 0, 0.6);
-    }
-  `],
+  styleUrls: ['./order-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
@@ -52,7 +55,8 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
 
   @Input() selectedNode: QueryNode;
 
-  constructor(private attributeService: AttributeEntityService) { super(); }
+  constructor(private attributeService: AttributeEntityService,
+    private nodeTreeService: NodeTreeService) { super(); }
 
   ngOnInit() {
     this.initializeForm();
@@ -73,6 +77,10 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
     this.setupAttributeAutocomplete();
 
     this.setupInputsToModelsBindings();
+  }
+
+  removeNode() {
+    this.nodeTreeService.removeNode(this.selectedNode);
   }
 
   setupInputsToModelsBindings() {

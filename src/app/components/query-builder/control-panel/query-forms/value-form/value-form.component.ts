@@ -1,32 +1,27 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { QueryNode } from '../../../models/query-node';
 import { BaseFormComponent } from '../base-form.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatInputModule } from '@angular/material/input';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    NodeActionsComponent
+  ],
   selector: 'app-value-form',
   templateUrl: './value-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      padding: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .hint-text {
-      font-size: 12px;
-      color: rgba(0, 0, 0, 0.6);
-      margin-top: 4px;
-    }
-  `]
+  styles: []
 })
 export class ValueFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   protected destroy$ = new Subject<void>();

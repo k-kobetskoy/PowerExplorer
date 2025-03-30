@@ -1,4 +1,3 @@
-<div class="form-container">
   <div>
     <mat-form-field class="form-field">
       <mat-label>Operator</mat-label>
@@ -19,6 +18,11 @@
                type="text"
                [formControl]="valueFormControl"
                placeholder="Enter numeric value">
+        @if (valueFormControl.value) {
+          <button matSuffix mat-icon-button aria-label="Clear" (click)="valueFormControl.patchValue('')">
+            <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+          </button>
+        }
       </mat-form-field>
     </ng-container>
 
@@ -30,4 +34,3 @@
       [hideOperator]="true">
     </app-multi-value-form>
   </div>
-</div>

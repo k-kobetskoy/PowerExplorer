@@ -7,8 +7,17 @@ import { AuthService } from 'src/app/services/auth.service';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EnvironmentEntityService } from 'src/app/components/query-builder/services/entity-services/environment-entity.service';
+import { MatRippleModule } from '@angular/material/core';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatRippleModule,
+    MatIconModule
+  ],
   selector: 'app-connections',
   templateUrl: './connections.component.html',
   styleUrls: ['./connections.component.css']

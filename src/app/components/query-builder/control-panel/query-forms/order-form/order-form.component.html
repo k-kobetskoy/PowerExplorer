@@ -1,25 +1,46 @@
-<app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+<div class="control-panel-container">
+  <!-- Quick actions - will be sticky -->
+  <div class="sticky-actions">
+    <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+  </div>
 
-<div class="form-container">
-    <mat-form-field class="form-field">
-      <mat-label>Attribute</mat-label>
-      <input type="text"
-             matInput
-             [formControl]="attributeFormControl"
-             [matAutocomplete]="attributeAutoComplete">
 
-      <mat-autocomplete #attributeAutoComplete="matAutocomplete">
-        <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
-          <div class="option-content">
-            <span class="logical-name">{{option.logicalName}}</span>
-            <span class="display-name">{{option.displayName}}</span>
-          </div>
-        </mat-option>
-      </mat-autocomplete>
-      <app-loading-indicator matSuffix [diameter]="20" loadingKey="attribute"></app-loading-indicator>
-    </mat-form-field>
+  <div class="form-scrollable-content">
+    <div class="form-container">
+      <div class="form-header">
+        <span class="form-header-text">Node Properties</span>
+        <div class="form-header-actions">                                                
+          <app-node-actions [selectedNode]="selectedNode"></app-node-actions>       
+      </div>
 
-    <mat-checkbox [formControl]="descendingFormControl">
-      Descending Order
-    </mat-checkbox>
+    </div>
+      <div class="form-body">
+        <div class="form-flex">
+          <mat-form-field  class="input-full-width">
+            <mat-label>Attribute</mat-label>
+            <input type="text" matInput [formControl]="attributeFormControl" [matAutocomplete]="attributeAutoComplete">
+
+            <mat-autocomplete #attributeAutoComplete="matAutocomplete">
+              <mat-option *ngFor="let option of filteredAttributes$ | async" [value]="option.logicalName">
+                <div class="option-content">
+                  <span class="logical-name">{{option.logicalName}}</span>
+                  <span class="display-name">{{option.displayName}}</span>
+                </div>
+              </mat-option>
+            </mat-autocomplete>
+            <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
+            @if (attributeFormControl.value) {
+              <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeFormControl.patchValue('')">
+                <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+              </button>
+            }
+          </mat-form-field>
+
+          <mat-checkbox [formControl]="descendingFormControl">
+            Descending Order
+          </mat-checkbox>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

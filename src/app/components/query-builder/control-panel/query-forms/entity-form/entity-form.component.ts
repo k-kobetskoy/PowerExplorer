@@ -1,14 +1,41 @@
 import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
-import { Observable, Subject, combineLatest } from 'rxjs';
+import { Observable, Subject, combineLatest, BehaviorSubject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, startWith, takeUntil } from 'rxjs/operators';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { QueryNode } from '../../../models/query-node';
-
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { NodeTreeService } from '../../../services/node-tree.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 @Component({
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatAutocompleteModule,
+        MatOptionModule,
+        QuickActionsComponent,
+        MatIconModule,
+        MatButtonModule,
+        FormsModule,
+        MatProgressSpinnerModule,
+        NodeActionsComponent
+    ],
     selector: 'app-entity-form',
     templateUrl: './entity-form.component.html',
     styleUrls: ['./entity-form.component.css'],
@@ -16,16 +43,24 @@ import { QueryNode } from '../../../models/query-node';
 })
 
 export class EntityFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
+    dublicateNode() {
+        throw new Error('Method not implemented.');
+    }
     private destroy$ = new Subject<void>();
     @Input() selectedNode: QueryNode;
     entityForm: FormGroup;
     filteredEntities$: Observable<EntityModel[]>;
 
+    isLoading$: Observable<boolean>;
+
     private nameAttributeData = AttributeData.Entity.Name;
 
     private nameInputName = this.nameAttributeData.EditorName;
 
-    constructor(private entityService: EntityEntityService, private fb: FormBuilder) { super(); }
+    constructor(private entityService: EntityEntityService, private fb: FormBuilder, private nodeTreeProcessorService: NodeTreeService) {
+        super();
+        this.isLoading$ = this.entityService.getEntitiesIsLoading$;
+    }
 
     ngOnInit() {
         this.initializeForm();
@@ -36,6 +71,10 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
             this.destroy$.next();
             this.initializeForm();
         }
+    }
+
+    removeNode() {
+        this.nodeTreeProcessorService.removeNode(this.selectedNode);
     }
 
     private initializeForm() {
@@ -93,7 +132,7 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
     private setupEntityAutocomplete() {
         this.filteredEntities$ = combineLatest([
             this.entityForm.get(this.nameInputName).valueChanges.pipe(startWith(this.entityForm.get(this.nameInputName).value || '')),
-            this.entityService.getEntities()
+            this.entityService.getEntities(true)
         ]).pipe(
             debounceTime(50),
             distinctUntilChanged((prev, curr) => prev.every((value, index) => value === curr[index])),

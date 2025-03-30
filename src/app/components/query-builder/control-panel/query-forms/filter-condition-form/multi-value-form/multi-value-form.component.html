@@ -1,4 +1,3 @@
-<div class="form-container">
   <!-- Only show the operator dropdown when not embedded in another form -->
   <mat-form-field class="form-field" *ngIf="!hideOperator">
     <mat-label>Operator</mat-label>
@@ -21,9 +20,12 @@
            (keydown.enter)="onMultiValueEnter($event)">
     <mat-hint>
       <div class="hint-info">
-        <mat-icon>info</mat-icon>
         <span>Enter multiple values separated by commas. Press Enter or tab when done.</span>
       </div>
     </mat-hint>
+    @if (multiValueControl.value) {
+      <button matSuffix mat-icon-button aria-label="Clear" (click)="multiValueControl.patchValue('')">
+        <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+      </button>
+    }
   </mat-form-field>
-</div> 

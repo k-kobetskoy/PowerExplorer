@@ -1,12 +1,33 @@
 import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { BehaviorSubject } from 'rxjs';
+import {  takeUntil } from 'rxjs/operators';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from '../../../../services/multi-value-nodes.service';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { CommonModule } from '@angular/common';
+import { MatOptionModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { NodeActionsComponent } from '../../node-actions/node-actions.component';
 
 @Component({
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatOptionModule,
+        MatAutocompleteModule,
+        MatIconModule,
+        MatButtonModule,
+        FormsModule        
+    ],      
     selector: 'app-multi-value-form',
     templateUrl: './multi-value-form.component.html',
     styleUrls: ['./multi-value-form.component.css'],

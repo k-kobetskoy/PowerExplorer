@@ -1,11 +1,31 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, OnChanges, SimpleChanges, Input } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, Observable, shareReplay, startWith, filter } from 'rxjs';
 import { QueryNode } from '../../../models/query-node';
 import { AttributeData } from '../../../models/constants/attribute-data';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatOptionModule } from '@angular/material/core';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSelectModule } from '@angular/material/select';
+import { MatExpansionModule } from '@angular/material/expansion';
 
-@Component({
+@Component({    
+    standalone: true,
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatCheckboxModule,
+        MatSelectModule,
+        QuickActionsComponent,
+        MatOptionModule,
+        MatExpansionModule
+    ],
     selector: 'app-root-form',
     templateUrl: './root-form.component.html',
     styleUrls: ['./root-form.component.css'],

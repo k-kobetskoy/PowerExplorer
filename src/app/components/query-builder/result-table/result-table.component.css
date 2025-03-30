@@ -1,8 +1,20 @@
+.format-toggle-container{
+  padding: 0px 5px;
+}
+app-result-table .format-toggle-label{
+  font-size: 0.8rem;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+}
+
 .mat-mdc-header-row {
   --mat-table-header-headline-weight: 600;
-
   --mat-table-header-headline-size: 12px;
   color: #7e7e7e;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background-color: white;
 }
 
 .mat-mdc-table {
@@ -16,32 +28,37 @@
   --mat-table-row-item-label-text-size: 13px;
   --mat-table-row-item-label-text-weight: 500;
 
+  text-wrap-mode: nowrap !important;
+
   --mat-table-footer-supporting-text-font: "Inter", sans-serif;
   min-width: 10px;
 }
 
 .mat-mdc-table .mat-mdc-cell {
   color: #272727;
-  max-width: 350px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  height: 22px !important;
-  line-height: 18px !important;
+  max-width: 300px;
+  width: auto;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  height: 25px !important;
+  line-height: 16px !important;
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle !important;
   box-sizing: border-box !important;
+  font-size: 0.8rem !important;
 }
 
 .full-size-table {
   height: auto;
   width: auto;
-  min-width: auto;
+  min-width: 100%;
   margin: 0 auto;
 }
 
 .mat-mdc-table {
   white-space: nowrap;
+  margin-bottom: 10px;
 }
 
 .mat-mdc-table .mat-mdc-header-cell:first-child {
@@ -56,7 +73,8 @@
 
 
 .mat-mdc-table .mat-mdc-header-cell {
-  max-width: 350px;
+  max-width: 300px;
+  width: auto;
 }
 
 .mat-mdc-table .mat-mdc-header-cell:hover {
@@ -72,11 +90,12 @@
   white-space: normal;
   overflow: visible;
   max-height: none;
+  text-wrap-mode: wrap !important;
 }
 
 
 .mat-mdc-table .mat-mdc-cell.selected {
-  max-width: 350px;
+  max-width: 300px;
   white-space: normal;
 }
 
@@ -90,7 +109,7 @@
 
 /* row height */
 .mat-mdc-table {
-  --mat-table-row-item-container-height: 22px;
+  --mat-table-row-item-container-height: 20px !important;
 }
 
 /* header row height */
@@ -100,14 +119,14 @@
 
 .mdc-data-table__cell,
 .mdc-data-table__header-cell {
-  padding: 0 10px 0 10px;
+  padding: 0 8px 0 8px !important;
 }
 
 .mat-mdc-cell.number-cell {
   text-align: right !important;
   font-family: 'Hack', monospace !important;
   color: #2c70b9 !important;
-  font-size: 0.9rem !important;
+  font-size: 0.8rem !important;
 }
 
 .mat-mdc-cell.boolean-cell {
@@ -124,16 +143,40 @@
 .mat-mdc-cell.lookup-cell {
     text-align: left !important;
     color: #2c70b9 !important;
-    text-decoration: underline !important;
-    cursor: pointer !important;
+    font-family: 'Hack', monospace !important;
+    font-size: 0.79rem !important;
+}
+
+/* Formatted lookup style - more user-friendly appearance */
+.mat-mdc-cell.lookup-cell.lookup-cell-formatted {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #333333 !important;
+  text-align: left !important;
+  padding-left: 12px !important;
+  background-color: transparent !important;
+  letter-spacing: normal !important;
+}
+
+/* Raw lookup style - technical appearance */
+.mat-mdc-cell.lookup-cell.lookup-cell-raw {
+  color: #2c70b9 !important;
+  font-family: 'Hack', monospace !important;
+  font-size: 0.79rem !important;
+  letter-spacing: -0.02em !important;
+  background-color: transparent !important;
+  text-align: left !important;
 }
 
 .mat-mdc-cell.uniqueidentifier-cell {
   text-align: left !important;
-  color: #2c70b9  !important;
+  color: #2c70b9 !important;
   font-family: 'Hack', monospace !important;
   letter-spacing: -0.05em !important;
-  font-size: 0.9rem !important;
+  font-size: 0.8rem !important;
+  font-variant-numeric: tabular-nums !important;
+  background-color: rgba(245, 245, 245, 0.5) !important;
 }
 
 
@@ -152,7 +195,7 @@ tr.mat-mdc-row:hover {
 .mat-mdc-cell.code-cell {
   font-family: 'Hack', monospace !important;
   letter-spacing: -0.05em !important;
-  font-size: 0.9rem !important;
+  font-size: 0.8rem !important;
   background-color: rgba(245, 245, 245, 0.5) !important;
 }
 
@@ -169,46 +212,53 @@ tr.mat-mdc-row:hover {
   align-items: center;
   font-size: 12px;
   color: #555;
-  margin-left: 4px;
 }
 
 .toggle-label {
   margin-right: 8px;
-  font-weight: 500;
+  
 }
 
-.format-toggle {
-  margin-left: 8px;
+.format-toggle-label {
+  font-size: 0.8rem;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
 }
 
 .has-formatted-value {
   position: relative;
 }
 
-.has-formatted-value::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 8px 8px 0;
-  border-color: transparent #2c70b9 transparent transparent;
-  opacity: 0.3;
-}
-
 .null-value {
   font-style: italic !important;
-  color: #bdbdbd !important;
+  color: #a0a0a0 !important;
   font-weight: normal !important;
   /* Override type-specific styles */
-  text-align: left !important;
-  background-color: transparent !important;
+  text-align: center !important;
   text-decoration: none !important;
   font-family: "Inter", sans-serif !important;
   letter-spacing: normal !important;
   font-size: 13px !important;
+  background-color: #f9f9f9 !important;
+}
+
+/* Ensure null value formatting takes precedence over cell type formatting */
+.mat-mdc-cell.lookup-cell.null-value,
+.mat-mdc-cell.number-cell.null-value,
+.mat-mdc-cell.date-cell.null-value,
+.mat-mdc-cell.boolean-cell.null-value,
+.mat-mdc-cell.uniqueidentifier-cell.null-value,
+.mat-mdc-cell.picklist-cell.null-value,
+.mat-mdc-cell.code-cell.null-value {
+  font-style: italic !important;
+  color: #a0a0a0 !important;
+  font-weight: normal !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  font-family: "Inter", sans-serif !important;
+  letter-spacing: normal !important;
+  font-size: 13px !important;
+  background-color: #f9f9f9 !important;
 }
 
 .dynamics-link {
@@ -235,22 +285,220 @@ tr.mat-mdc-row:hover {
 .raw-link {
   color: #107c10; /* Green color to distinguish from formatted view */
   font-family: monospace; /* Use monospace font for technical/raw view */
-  font-size: 0.9em;
+  font-size: 0.8rem;
 }
 
 .table-container {
-  width: fit-content;
-  max-width: 100%;
-  margin: 0px 0 0 0px;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.table-scroll-container {
+  width: 100%;
   overflow-x: auto;
-  border-radius: 4px;
+  overflow-y: auto;
+  position: relative;
+  flex: 1;
+  height: calc(100vh - 245px); /* Adjust for header, controls, and paginator */
 }
 
 /* Fixed row height */
 .mat-mdc-row {
-  height: 26px !important;
+  height: 20px !important;
+  min-height: 20px !important;
 }
 
 .mat-mdc-header-row {
   height: 30px !important;
 }
+
+.no-data-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  width: 100%;
+  font-size: 16px;
+  color: rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+/* Cell styling */
+.mat-cell {
+  padding: 8px 16px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mat-header-cell {
+  padding: 8px 16px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+/* Selected states */
+.mat-row.selected {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.mat-cell.selected {
+  white-space: normal;
+  word-break: break-word;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Special data type styles */
+.number-cell {
+  text-align: right;
+}
+
+.boolean-cell {
+  text-align: center;
+}
+
+.date-cell {
+  white-space: nowrap;
+}
+
+/* .has-formatted-value {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: rgba(0, 0, 0, 0.38);
+} */
+
+.dynamics-link {
+  color: #0078d4;
+  text-decoration: none;
+}
+
+.dynamics-link:hover {
+  text-decoration: underline;
+}
+
+.raw-link {
+  color: #8a8886;
+}
+
+.option-label {
+  font-weight: normal;
+}
+
+.option-value {
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 0.85em;
+  margin-left: 8px;
+}
+
+/* Loading indicator styles */
+.centered-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+}
+
+/* Container needs to be positioned relative for absolute positioning to work */
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+ng-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  border-left: 4px solid #c62828;
+}
+
+.no-data-message {
+  padding: 20px;
+  text-align: center;
+  color: #757575;
+  font-style: italic;
+}
+
+/* Paginator styling */
+.mat-mdc-paginator {
+  background-color: #fafafa;
+  border-top: 1px solid #e0e0e0;
+  font-family: "Inter", sans-serif;
+  position: sticky;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  width: 100%;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.mat-mdc-paginator-container {
+  min-height: 45px;
+  justify-content: flex-end;
+  padding: 0 16px;
+}
+
+.mat-mdc-paginator-range-label {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.mat-mdc-paginator-page-size-label {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.mat-mdc-paginator .mat-mdc-select-value-text {
+  font-size: 0.8rem;
+}
+
+.mat-mdc-paginator-navigation-next, 
+.mat-mdc-paginator-navigation-previous,
+.mat-mdc-paginator-navigation-first,
+.mat-mdc-paginator-navigation-last {
+  color: #555;
+}
+
+/* Style for empty cells (to make them visually distinct) */
+.empty-cell {
+  background-color: #f9f9f9 !important;
+  /* No need for position styling since we removed the after pseudo-element */
+}
+
+/* Remove or comment out the striped pattern for empty cells */
+/*
+.empty-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: linear-gradient(45deg, #f5f5f5 25%, transparent 25%, transparent 50%, #f5f5f5 50%, #f5f5f5 75%, transparent 75%, transparent);
+  background-size: 8px 8px;
+  opacity: 0.6;
+}
+*/

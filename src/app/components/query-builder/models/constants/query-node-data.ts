@@ -52,7 +52,7 @@ export class QueryNodeData {
     };
     static readonly Filter: INodeData = {
         Order: 6,
-        Actions: ['Condition', 'Filter'],
+        Actions: ['Condition'],
         NodeName: 'Filter',
         TagName: 'filter',
         Attributes:

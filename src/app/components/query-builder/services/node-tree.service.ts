@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subscription } from 'rxjs';
 import { QueryNodeTree } from '../models/query-node-tree';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
@@ -9,6 +9,7 @@ import { ValueAttributeData } from '../models/constants/attribute-data';
 import { NodeFactoryService } from './attribute-services/node-factory.service';
 import { VALID_RESULT, ValidationResult, ValidationService } from './validation.service';
 import { AttributeNames } from '../models/constants/attribute-names';
+import { tap, shareReplay } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class NodeTreeService {
   private _nodeTree$: BehaviorSubject<QueryNodeTree> = new BehaviorSubject<QueryNodeTree>(null);
@@ -17,8 +18,10 @@ export class NodeTreeService {
 
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
-  private validationResultSubject = new BehaviorSubject<ValidationResult>(VALID_RESULT);
-  validationResult$ = this.validationResultSubject.asObservable();
+  validationResult$: Observable<ValidationResult>;
+    
+  // Track validation subscription for cleanup
+  private validationSubscription: Subscription = null;
 
   public get selectedNode$(): Observable<QueryNode> {
     return this._selectedNode$.asObservable();
@@ -33,16 +36,32 @@ export class NodeTreeService {
   constructor(
     private _eventBus: EventBusService,
     private nodeFactory: NodeFactoryService,
-    private validationService: ValidationService,
+    private validationService: ValidationService
   ) {
-
     this.initializeNodeTree();
 
     this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => this.initializeNodeTree());
 
-    this.validationService.setupNodeTreeValidation(this._nodeTree$).subscribe(result => {
-      this.validationResultSubject.next(result);
-    });
+    this.setupValidation();
+  }
+
+  public setupValidation() {
+    console.log('Setting up node tree validation');
+    
+    // Clean up any existing subscription
+    if (this.validationSubscription) {
+      this.validationSubscription.unsubscribe();
+      this.validationSubscription = null;
+    }
+    
+    // Create a new validation observable with shareReplay to ensure all subscribers get the same values
+    this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$)
+      .pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      
+    // Subscribe to validation to keep it active even if the UI doesn't subscribe yet
+    this.validationSubscription = this.validationResult$.subscribe();
   }
 
   getNodeTree(): BehaviorSubject<QueryNodeTree> {
@@ -51,6 +70,8 @@ export class NodeTreeService {
     }
 
     this.initializeNodeTree();
+  
+    this.setupValidation();
 
     return this._nodeTree$;
   }
@@ -91,6 +112,9 @@ export class NodeTreeService {
       this._nodeTree$.next(nodeTree);
       this._selectedNode$.next(newNode);
 
+      // First-time setup of the validation is still needed
+      //this.setupValidation();
+      
       return newNode;
     }
 
@@ -112,22 +136,21 @@ export class NodeTreeService {
     }
     this.selectedNode$ = newNode;
 
+    // Explicitly emit from nodeTree$ to ensure validation is triggered
+    this._nodeTree$.next(this._nodeTree$.value);
+
     return newNode;
   }
 
-  addNode(newNodeName: string): QueryNode {
-    console.log('Node Tree Service - Adding new node with name:', newNodeName);
-
+  addNode(newNodeName: string, parent: QueryNode = null): QueryNode {
     // Map "Link" action to "Link Entity" node name
     if (newNodeName === 'Link') {
       newNodeName = 'Link Entity';
-      console.log('Mapped "Link" action to "Link Entity" node name');
     }
 
-    let parentNode = this._selectedNode$.value;
+    let parentNode = parent || this._selectedNode$.value;
 
     let newNode = this.nodeFactory.createNode(newNodeName, false, this._nodeTree$.value.root);
-    console.log('Node created with nodeName:', newNode.nodeName);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;
@@ -138,11 +161,18 @@ export class NodeTreeService {
     newNode.level = parentNode.level + 1;
     newNode.parent = parentNode;
 
-    if (parentNode) {
+
+    if(parent){
+      this.expandNode(parentNode);
+    }else{
       this.expandNode(this._selectedNode$.value)
     }
 
     this.selectedNode$ = newNode;
+    
+    // Explicitly emit from nodeTree$ to ensure validation is triggered
+    this._nodeTree$.next(this._nodeTree$.value);
+    
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
 
     if (newNodeName === QueryNodeData.Filter.NodeName) {
@@ -178,6 +208,8 @@ export class NodeTreeService {
 
     this.expandNode(parentConditionNode);
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
+
+    this._nodeTree$.next(this._nodeTree$.value);
 
     return valueNode;
   }
@@ -231,6 +263,10 @@ export class NodeTreeService {
     }
 
     this._selectedNode$.next(previousNode);
+    
+    // Explicitly emit from nodeTree$ to ensure validation is updated after node removal
+    this._nodeTree$.next(this._nodeTree$.value);
+    
     this._eventBus.emit({ name: AppEvents.NODE_REMOVED });
   }
 
@@ -286,13 +322,28 @@ export class NodeTreeService {
   }
 
   clearNodeTree() {
+    console.log('Clearing node tree and resetting validation');
     const nodeTree = this._nodeTree$.value;
+    
+    // Cleanup current validation subscription
+    if (this.validationSubscription) {
+      this.validationSubscription.unsubscribe();
+      this.validationSubscription = null;
+    }
+    
     if (nodeTree && nodeTree.root) {
+      // First signal that tree is being destroyed to complete any ongoing validations
+      nodeTree.destroyed$.next();
+      nodeTree.destroyed$.complete();
+      
+      // Then clean up all nodes
       this.cleanupNodeAndChildren(nodeTree.root);
     }
 
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
+    
+    // Don't set up validation here - it will be set up after the new tree is built
   }
 
   getEntityAttributeMap(): EntityAttributeMap {
@@ -400,18 +451,19 @@ export class NodeTreeService {
 
     const nextNode = node.next;
 
+    // Properly dispose of the node to clean up all its subscriptions
     node.dispose();
 
+    // Recursively clean up any children nodes
     if (nextNode && nextNode.level > node.level) {
       this.cleanupNodeAndChildren(nextNode);
     }
-
-    this._nodeTree$.value.destroyed$.next();
-    this._nodeTree$.value.destroyed$.complete();
+    
+    // Don't complete the tree's destroyed$ subject here, as it would affect all validation
+    // subscriptions. We only want to complete it when the entire tree is being destroyed.
   }
 
   forceValidationToPass() {
-    this.validationResultSubject.next(VALID_RESULT);
     this._eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
   }
 }

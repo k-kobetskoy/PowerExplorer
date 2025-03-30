@@ -1,46 +1,43 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
-import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest, of, catchError, filter } from 'rxjs';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, ChangeDetectorRef } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Observable, Subject, debounceTime, distinctUntilChanged, map, startWith, switchMap, takeUntil, combineLatest, of, catchError, filter, finalize, BehaviorSubject, tap } from 'rxjs';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
 import { BaseFormComponent } from '../base-form.component';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { QueryNode } from '../../../models/query-node';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { CommonModule } from '@angular/common';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../quick-actions/quick-actions.component';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule } from '@angular/forms';
+import { NodeTreeService } from '../../../services/node-tree.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    QuickActionsComponent,
+    MatIconModule,
+    MatButtonModule,
+    FormsModule,
+    MatProgressSpinnerModule,
+    NodeActionsComponent,
+  ],
   selector: 'app-attribute-form',
   templateUrl: './attribute-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-
-    .logical-name {
-      font-weight: 500;
-    }
-
-    .display-name {
-      font-size: 0.85em;
-      color: rgba(0, 0, 0, 0.6);
-    }
-
-    mat-option {
-      height: auto;
-      line-height: 1.2;
-    }
-  `],
+  styleUrls: ['./attribute-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 
@@ -52,6 +49,8 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   attributeForm: FormGroup;
   filteredAttributes$: Observable<AttributeModel[]>;
 
+  // Add loading indicator state
+  isLoadingAttributes$ : BehaviorSubject<boolean>;
   private nameAttributeData = AttributeData.Attribute.Name;
   private aliasAttributeData = AttributeData.Attribute.Alias;
 
@@ -61,8 +60,10 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
   constructor(
     private attributeService: AttributeEntityService,
     private fb: FormBuilder,
+    private nodeTreeProcessorService: NodeTreeService,
   ) {
     super();
+    this.isLoadingAttributes$ = this.attributeService.getAttributesIsLoading$;
   }
 
   ngOnInit() {
@@ -159,13 +160,19 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
           return of([]);
         }
 
-        return this.attributeService.getAttributes(entityName).pipe(
+        // Set loading state to true before making the request
+        this.isLoadingAttributes$.next(true);
+
+        return this.attributeService.getAttributes(entityName, true).pipe(
           map(attributes => {
             return attributes;
           }),
           catchError(error => {
             console.error(`[AttributeFormComponent] Error fetching attributes for entity: ${entityName}`, error);
             return of([]);
+          }),
+          tap(() => {
+            this.isLoadingAttributes$.next(false);
           })
         );
       })

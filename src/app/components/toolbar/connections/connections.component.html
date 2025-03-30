@@ -1,14 +1,17 @@
 <div>
-  <a matRipple [matRippleColor]="rippleColor" class="button" (click)="openDialog()"
-    *ngIf="!(activeEnvironment$ |async); else elseBlock">
-    <p>Connect to environment</p>
+  <a (click)="openDialog()" class="envName prevent-select">
+    <div class="env-info">
+      <ng-container *ngIf="activeEnvironment$ | async as activeEnvironment; else noEnvironment">
+        <p class="env-name">{{activeEnvironment.friendlyName}}</p>
+        <p class="env-url small">{{activeEnvironment.urlName}}</p>
+      </ng-container>
+      <ng-template #noEnvironment>
+        <p class="env-name">Select Environment</p>
+        <p class="env-url small">Click to connect</p>
+      </ng-template>
+    </div>
+    <div class="chevron-container">      
+      <mat-icon class="chevron-icon">unfold_more</mat-icon>     
+    </div>
   </a>
-  <ng-template #elseBlock>
-    <a (click)="openDialog()" class="envName prevent-select">
-      <h3>{{(activeEnvironment$| async).friendlyName}}</h3>
-      <p class="small">{{(activeEnvironment$ |async).urlName}}</p>
-      <div>
-      </div>
-    </a>
-  </ng-template>
 </div>

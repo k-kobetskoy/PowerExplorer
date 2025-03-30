@@ -6,27 +6,35 @@ import { FilterStaticData } from 'src/app/components/query-builder/models/consta
 import { StateModel } from 'src/app/models/incoming/status/state-response-model';
 import { Observable, of, switchMap, takeUntil } from 'rxjs';
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
-
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatOptionModule } from '@angular/material/core';
+import { QuickActionsComponent } from '../../quick-actions/quick-actions.component';
+import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatOptionModule,
+    MultiValueFormComponent,
+    MatButtonModule,
+    FormsModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],  
   selector: 'app-status-form',
   templateUrl: './status-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-  `],
+  styleUrls: ['./status-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StatusFormComponent extends OperatorValueBaseFormComponent {
@@ -66,7 +74,7 @@ export class StatusFormComponent extends OperatorValueBaseFormComponent {
             }
             return entityAttribute.value$.pipe(
               switchMap(entityName => {
-                return this.statusService.getStateOrStatusCodeValues(entityName, this.attributeValue);
+                return this.statusService.getStateOrStatusCodeValues(entityName, this.attributeValue, true);
               })
             );
           })

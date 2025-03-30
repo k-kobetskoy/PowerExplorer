@@ -1,5 +1,6 @@
 export interface AttributeModel {
     logicalName: string,
     displayName: string,  
-    attributeType: string  
+    attributeType: string,
+    referencedEntity?: string  
 }

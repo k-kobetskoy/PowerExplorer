@@ -1,0 +1,257 @@
+.control-panel-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.sticky-actions {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.form-scrollable-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 10px;
+    background-color: var(--color-white);
+    border-radius: 10px;
+}
+
+.form-container{
+    padding: 10px 0;
+    border-radius: 10px;
+    background-color: var(--color-white);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.form-container form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background-color: var(--color-white);
+}
+
+.form-body {
+    flex: 1;
+    width: 100%;
+    background-color: var(--color-white);
+}
+
+.form-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+    padding: 5px 0px 15px 0px;
+    background-color: var(--color-white);
+}
+
+.form-header-actions{
+    display: flex;
+    gap: 8px;
+}
+
+.form-header-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    border-radius: 4px;
+    background-color: rgb(255, 255, 255);
+    &:hover {
+        background-color: #EBECF0;
+    }
+}
+
+.form-header-delete-icon-hover,
+.form-header-copy-icon-hover {
+    display: none;
+}
+.form-header-button:hover .form-header-copy-icon,
+.form-header-button:hover .form-header-delete-icon {
+    display: none;
+}
+.form-header-button:hover .form-header-copy-icon-hover,
+.form-header-button:hover .form-header-delete-icon-hover {
+    display: inline-block;
+    animation: pulse 0.2s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+
+.form-header-button img{
+    width: 18px;
+    height: 18px;
+}
+
+/* Flex Layout for Two-Column Forms */
+.form-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    width: 100%;
+    background-color: var(--color-white);
+}
+
+.input-full-width{
+    width: 100%;
+}
+
+/* Default: Each item takes one column (half width minus gap) */
+.form-flex > * {
+    flex: 0 0 calc(50% - 8px);
+    max-width: calc(50% - 8px);
+}
+
+/* Full width option: Item spans both columns */
+.form-flex > .input-full-width {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+/* Material form field overrides */
+.mat-mdc-form-field {
+    width: 100%;
+}
+
+/* Option Content Styles */
+.option-content {
+    display: flex;
+    flex-direction: column;    
+}
+
+.logical-name {
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+.display-name {
+    font-size: 0.8em;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+mat-option {
+    height: auto !important;
+    line-height: 1.2 !important;
+}
+
+/* Expansion Panel Styles */
+.mat-expansion-panel {
+    background-color: var(--color-white) !important;
+    margin: 8px 0 !important;
+    box-shadow: none !important;
+}
+
+.mat-expansion-panel:not(.mat-expanded) {
+    box-shadow: none !important;
+}
+
+.mat-expansion-panel.mat-expanded {
+    box-shadow: none !important;
+}
+
+.mat-expansion-panel-header {
+    padding: 0 16px !important;
+}
+
+.mat-expansion-panel-header-title {
+    color: var(--main-text-color);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.mat-expansion-panel-body {
+    padding: 0 16px 16px !important;
+}
+
+/* Nested form-flex inside expansion panel */
+.mat-expansion-panel .form-flex {
+    margin-top: 8px;
+}
+
+.hint-info {
+    display: flex;
+    align-items: center;
+ 
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+
+
+  .error-message {
+    color: #f44336;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .hint-text {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .wildcard-info, .hint-info {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .wildcard-info mat-icon, .hint-info mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+
+  .info-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    vertical-align: middle;
+    color: rgba(0, 0, 0, 0.54);
+    cursor: help;
+}
+
+.info-icon:hover {
+    color: rgba(0, 0, 0, 0.87);
+}
+
+
+.info-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    vertical-align: middle;
+    color: rgba(0, 0, 0, 0.54);
+    cursor: help;
+}
+
+
+.form-clear-icon{
+    color: rgb(136, 137, 150);
+}
+
+.loading-spinner {
+    margin-right: 10px;
+}

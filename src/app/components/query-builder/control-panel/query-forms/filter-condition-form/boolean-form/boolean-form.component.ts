@@ -7,27 +7,36 @@ import { BooleanEntityService } from '../../../../services/entity-services/boole
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from 'src/app/components/query-builder/services/multi-value-nodes.service';
-
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { MatOptionModule } from '@angular/material/core';
+import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.component';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatAutocompleteModule } from '@angular/material/autocomplete'; 
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 @Component({
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatOptionModule,
+    MultiValueFormComponent,
+    MatSelectModule,    
+    MatAutocompleteModule,
+    MatButtonModule,
+    FormsModule,
+    MatIconModule,
+    MatProgressSpinnerModule
+  ],  
   selector: 'app-boolean-form',
   templateUrl: './boolean-form.component.html',
-  styles: [`
-    .form-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .form-field {
-      width: 100%;
-    }
-
-    .option-content {
-      display: flex;
-      flex-direction: column;
-      padding: 4px 0;
-    }
-  `],
+  styleUrls: ['./boolean-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BooleanFormComponent extends OperatorValueBaseFormComponent {
@@ -63,7 +72,7 @@ export class BooleanFormComponent extends OperatorValueBaseFormComponent {
                 return entityAttribute.value$.pipe(
                   distinctUntilChanged(),
                   switchMap(entityName => {
-                    return this.booleanService.getBooleanValues(entityName, this.attributeValue);
+                    return this.booleanService.getBooleanValues(entityName, this.attributeValue, true);
                   })
                 );
               }
