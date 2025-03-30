@@ -581,7 +581,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     let sourceData;
 
     if (this.showFormattedValues) {
-      sourceData = this.resultData.formatedValues;
+      sourceData = this.resultData.formattedValues;
     } else {
       sourceData = this.resultData.rawValues;
     }
@@ -752,7 +752,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     const rowIndex = row['No.'] - 1;
     if (rowIndex < 0) return null;
 
-    const formattedValues = this.resultData['formatedValues'];
+    const formattedValues = this.resultData['formattedValues'];
     if (!formattedValues || rowIndex >= formattedValues.length) return null;
 
     return formattedValues[rowIndex][columnName];

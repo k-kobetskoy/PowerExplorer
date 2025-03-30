@@ -6,7 +6,24 @@ import { Observable } from 'rxjs';
 /**
  * Interface for handling different result processing strategies
  */
-export interface ResultProcessingStrategy {
+export interface IResultProcessingStrategy {
+  /**
+   * Process raw data from the API and return a processed result
+   * @param rawData The original raw data from the API
+   * @param entityAttributeMap Map of entity logical names to their attribute data
+   * @param primaryEntity Primary entity information for URL generation 
+   * @param findEntityIdFn Function to find entity ID in a record
+   * @param addEntityUrlFn Function to add entity URL to items
+   * @returns Observable of the processed result
+   */
+  processRawData(
+    rawData: XmlExecutionResult,
+    entityAttributeMap: EntityAttributeMap,
+    primaryEntity: { name: string, idField: string } | null,
+    findEntityIdFn: (item: any, primaryEntity: { name: string, idField: string }) => string | null,
+    addEntityUrlFn: (rawItem: any, formattedItem: any, primaryEntity: { name: string, idField: string }, entityIdValue: string) => void
+  ): Observable<XmlExecutionResult>;
+  
   /**
    * Process the result data and return an updated result object with potentially modified columns
    * @param result The original result data from the server
@@ -19,20 +36,6 @@ export interface ResultProcessingStrategy {
     entityAttributeMap: EntityAttributeMap,
     attributeMaps?: { [entityLogicalName: string]: Map<string, AttributeModel> }
   ): XmlExecutionResult;
-  
-  /**
-   * Process result with complete data loading and processing in a single step.
-   * This method will handle both loading the necessary attributes and processing 
-   * the result in one operation, avoiding duplicate processing.
-   * 
-   * @param result The original result data from the server
-   * @param entityAttributeMap Map of entity logical names to their attribute data
-   * @returns Observable of the processed result
-   */
-  processResultsWithData(
-    result: XmlExecutionResult,
-    entityAttributeMap: EntityAttributeMap
-  ): Observable<XmlExecutionResult>;
   
   /**
    * Load all attributes for the given entities

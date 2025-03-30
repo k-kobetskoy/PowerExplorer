@@ -163,7 +163,7 @@ export class XmlCacheService {
         hasHeader: !!typedResult.header,
         headerKeys: Object.keys(typedResult.header || {}).length,
         rawValuesCount: typedResult.rawValues?.length || 0,
-        formattedValuesCount: typedResult.formatedValues?.length || 0
+        formattedValuesCount: typedResult.formattedValues?.length || 0
       });
     } catch (error) {
       console.error('XmlCacheService: Error inspecting result to cache:', error);
@@ -222,7 +222,7 @@ export class XmlCacheService {
           hasHeader: !!result.header,
           headerKeys: Object.keys(result.header || {}).length,
           rawValuesCount: result.rawValues?.length || 0,
-          formattedValuesCount: result.formatedValues?.length || 0
+          formattedValuesCount: result.formattedValues?.length || 0
         });
       } catch (error) {
         console.error('XmlCacheService: Error inspecting cached result:', error);
