@@ -20,7 +20,7 @@ import { NodeNameValidatorService } from './validators/nodes/one-time-validatior
 import { INodeOneTimeValidator } from './abstract/i-node-one-time-validator';
 import { AttributeNodeAggregateRequiredAliasValidatorService } from './validators/nodes/attribute-node-aggregate-required-alias-validator.service';
 import { AttributeNodeRequiredNameValidatorService } from './validators/nodes/attribute-node-required-name-validator.service';
-import { EntityNameServerValidatorService } from './validators/attributes/entity-name-server-validator.service';
+
 @Injectable({ providedIn: 'root' })
 
 export class NodeFactoryService {

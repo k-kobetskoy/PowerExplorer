@@ -12,3 +12,11 @@
   @include mat.progress-spinner-overrides((active-indicator-color: var(--main-text-color),
     ));
 }
+
+:root {
+  @include mat.menu-overrides((
+    item-label-text-font: Inter,
+    item-label-text-size: 1rem,
+    item-label-text-color: var(--main-text-color),
+    ));
+}

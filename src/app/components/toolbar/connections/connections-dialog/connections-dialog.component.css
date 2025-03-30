@@ -41,8 +41,7 @@ app-connections-dialog .mat-mdc-dialog-title.mdc-dialog__title {
     font-style: normal;
     font-weight: 600;
     font-size: 1.2rem;
-    margin-bottom: 20px;
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 app-connections-dialog .mat-mdc-list-item-line.mdc-list-item__secondary-text {
