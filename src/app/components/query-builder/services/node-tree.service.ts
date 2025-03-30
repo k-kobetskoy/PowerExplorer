@@ -142,19 +142,15 @@ export class NodeTreeService {
     return newNode;
   }
 
-  addNode(newNodeName: string): QueryNode {
-    console.log('Node Tree Service - Adding new node with name:', newNodeName);
-
+  addNode(newNodeName: string, parent: QueryNode = null): QueryNode {
     // Map "Link" action to "Link Entity" node name
     if (newNodeName === 'Link') {
       newNodeName = 'Link Entity';
-      console.log('Mapped "Link" action to "Link Entity" node name');
     }
 
-    let parentNode = this._selectedNode$.value;
+    let parentNode = parent || this._selectedNode$.value;
 
     let newNode = this.nodeFactory.createNode(newNodeName, false, this._nodeTree$.value.root);
-    console.log('Node created with nodeName:', newNode.nodeName);
 
     let nodeAbove = this.getNodeAbove(newNode.order, parentNode);
     let bottomNode = nodeAbove.next;
@@ -165,7 +161,10 @@ export class NodeTreeService {
     newNode.level = parentNode.level + 1;
     newNode.parent = parentNode;
 
-    if (parentNode) {
+
+    if(parent){
+      this.expandNode(parentNode);
+    }else{
       this.expandNode(this._selectedNode$.value)
     }
 
@@ -209,6 +208,8 @@ export class NodeTreeService {
 
     this.expandNode(parentConditionNode);
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
+
+    this._nodeTree$.next(this._nodeTree$.value);
 
     return valueNode;
   }

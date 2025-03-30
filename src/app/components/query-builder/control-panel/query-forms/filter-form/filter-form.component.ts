@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import {FormsModule} from '@angular/forms';
 import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
   standalone: true,
@@ -27,7 +28,8 @@ import { NodeTreeService } from 'src/app/components/query-builder/services/node-
     MatOptionModule,
     MatSelectModule,
     MatCheckboxModule,
-    FormsModule
+    FormsModule,
+    NodeActionsComponent
   ],
   selector: 'app-filter-form',
   templateUrl: './filter-form.component.html',

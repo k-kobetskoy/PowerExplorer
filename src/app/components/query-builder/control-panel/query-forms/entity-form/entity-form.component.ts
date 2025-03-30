@@ -19,6 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { NodeTreeService } from '../../../services/node-tree.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 @Component({
     standalone: true,
     imports: [
@@ -32,8 +33,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
         MatIconModule,
         MatButtonModule,
         FormsModule,
-        MatTooltipModule,
-        MatProgressSpinnerModule
+        MatProgressSpinnerModule,
+        NodeActionsComponent
     ],
     selector: 'app-entity-form',
     templateUrl: './entity-form.component.html',

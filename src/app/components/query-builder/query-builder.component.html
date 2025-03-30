@@ -5,7 +5,7 @@
     <as-split-area [size]="392" [minSize]="392" [maxSize]="600">
 
       <as-split direction="vertical" [gutterSize]="10" [useTransition]="true" class="left-panel-split" unit="pixel">
-        <as-split-area [minSize]="400">
+        <as-split-area [minSize]="400">      
           <app-query-tree-button-block (executeXmlRequest)="handleExecuteXmlRequest()"></app-query-tree-button-block>
           <app-tree-panel></app-tree-panel>
         </as-split-area>

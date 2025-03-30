@@ -26,6 +26,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatButtonModule } from '@angular/material/button';
 import { NodeTreeService } from 'src/app/components/query-builder/services/node-tree.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 // Interface for relation object to improve type safety
 interface RelationObject extends RelationshipModel { }
 
@@ -45,7 +46,8 @@ interface RelationObject extends RelationshipModel { }
     QuickActionsComponent,
     MatButtonModule,
     FormsModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    NodeActionsComponent
   ],
   selector: 'app-link-entity-form',
   templateUrl: './link-entity-form.component.html',

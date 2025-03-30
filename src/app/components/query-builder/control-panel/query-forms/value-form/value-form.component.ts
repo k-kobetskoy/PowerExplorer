@@ -8,6 +8,7 @@ import { BaseFormComponent } from '../base-form.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
   standalone: true,
@@ -15,7 +16,8 @@ import { MatInputModule } from '@angular/material/input';
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    NodeActionsComponent
   ],
   selector: 'app-value-form',
   templateUrl: './value-form.component.html',

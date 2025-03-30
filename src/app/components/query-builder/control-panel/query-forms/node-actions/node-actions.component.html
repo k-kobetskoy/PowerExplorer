@@ -1,0 +1,10 @@
+<div class="node-actions-container">
+    <div *ngIf="selectedNode.tagName != 'entity'" class="form-header-button" (click)="duplicateNode()" matTooltip="Duplicate node" [matTooltipShowDelay]="300">
+        <img class="form-header-copy-icon" src="assets/icons/copy.svg" alt="copy">
+        <img class="form-header-copy-icon-hover" src="assets/icons/copy-hover.svg" alt="copy">
+    </div>
+    <div class="form-header-button" (click)="removeNode()" matTooltip="Delete node" [matTooltipShowDelay]="300">
+        <img class="form-header-delete-icon" src="assets/icons/trash-2.svg" alt="delete">
+        <img class="form-header-delete-icon-hover" src="assets/icons/trash-2-hover.svg" alt="delete">
+    </div>
+</div>

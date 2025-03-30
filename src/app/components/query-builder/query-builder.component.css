@@ -125,12 +125,13 @@ app-tree-panel, app-control-panel {
 
 .code-editor-toolbar {
   display: flex;
-  height: var(--tab-bar-height);
-  align-items: center;
+  /* height: var(--tab-bar-height); */
+  align-items: end;
   justify-content: space-between;
   padding: 0px 10px 0px 15px;
   box-sizing: border-box;
   z-index: 2;
+  height: 40px!important;
 }
 
 .toggle-wrapper {

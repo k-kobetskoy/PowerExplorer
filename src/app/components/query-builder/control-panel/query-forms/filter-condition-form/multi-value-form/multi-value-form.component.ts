@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
+import {  takeUntil } from 'rxjs/operators';
 import { OperatorValueBaseFormComponent } from '../../operator-value-base-form.component';
 import { MultiValueNodesService } from '../../../../services/multi-value-nodes.service';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
@@ -13,6 +13,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
+import { NodeActionsComponent } from '../../node-actions/node-actions.component';
+
 @Component({
     standalone: true,
     imports: [
@@ -24,7 +26,7 @@ import { FormsModule } from '@angular/forms';
         MatAutocompleteModule,
         MatIconModule,
         MatButtonModule,
-        FormsModule
+        FormsModule        
     ],      
     selector: 'app-multi-value-form',
     templateUrl: './multi-value-form.component.html',

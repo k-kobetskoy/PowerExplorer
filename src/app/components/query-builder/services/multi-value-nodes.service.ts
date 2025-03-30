@@ -13,29 +13,27 @@ export class MultiValueNodesService {
         if (!valueString || valueString.trim() === '') {
             return;
         }
-        
+
         // Split input by comma, clean up values, and filter empty ones
         const values = valueString.split(',')
             .map(val => val.trim())
             .filter(val => val.length > 0);
-        
+
         // Get unique values to avoid duplicates
-        const uniqueValues = [...new Set(values)];      
-        
+        const uniqueValues = [...new Set(values)];
+
         // Create value nodes one by one with a slight delay
-        setTimeout(() => {
-            uniqueValues.forEach((val, index) => {
-                this.nodeTreeService.addValueNode(parentNode, val);
-            });
-        }, 0);
+        uniqueValues.forEach((val, index) => {
+            this.nodeTreeService.addValueNode(parentNode, val);
+        });
     }
 
     getValueNodes(conditionNode: QueryNode): QueryNode[] {
         if (!conditionNode) return [];
-               
+
         const valueNodes: QueryNode[] = [];
         let currentNode = conditionNode.next;
-        
+
         // Traverse next nodes to find all value nodes that are direct children
         while (currentNode && currentNode.level > conditionNode.level) {
             if (currentNode.nodeName === 'Value' && currentNode.parent === conditionNode) {
@@ -43,13 +41,13 @@ export class MultiValueNodesService {
             }
             currentNode = currentNode.next;
         }
-        
+
         return valueNodes;
     }
 
     clearValueNodes(conditionNode: QueryNode): void {
         if (!conditionNode) return;
-        
+
         // Get value nodes in reverse order (to safely remove from end to beginning)
         const valueNodes = this.getValueNodes(conditionNode).reverse();
 

@@ -9,14 +9,14 @@
 
 .button-container-left {
   display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: flex-start;
   height: var(--tab-bar-height, 32px);
 }
 
 .button-container-right {
   display: flex;
-  align-items: center;
+  align-items: end;
   justify-content: flex-end;
   height: var(--tab-bar-height, 32px);
 }
@@ -47,4 +47,10 @@
     cursor: not-allowed;
     pointer-events: none; /* Prevents hover effects when disabled */
   }
+}
+
+.query-constructor-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--main-text-color);
 }

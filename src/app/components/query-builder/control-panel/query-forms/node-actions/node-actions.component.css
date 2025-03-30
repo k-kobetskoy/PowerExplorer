@@ -1,0 +1,46 @@
+.node-actions-container {
+    display: flex;
+    gap: 8px;
+}
+
+.form-header-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    border-radius: 4px;
+    background-color: rgb(255, 255, 255);
+}
+
+.form-header-button:hover {
+    background-color: #EBECF0;
+}
+
+.form-header-delete-icon-hover,
+.form-header-copy-icon-hover {
+    display: none;
+}
+
+.form-header-button:hover .form-header-copy-icon,
+.form-header-button:hover .form-header-delete-icon {
+    display: none;
+}
+
+.form-header-button:hover .form-header-copy-icon-hover,
+.form-header-button:hover .form-header-delete-icon-hover {
+    display: inline-block;
+    animation: pulse 0.2s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.form-header-button img {
+    width: 18px;
+    height: 18px;
+}

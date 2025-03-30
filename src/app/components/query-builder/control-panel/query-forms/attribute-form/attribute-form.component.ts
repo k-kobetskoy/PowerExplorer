@@ -17,6 +17,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { NodeTreeService } from '../../../services/node-tree.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { NodeActionsComponent } from '../node-actions/node-actions.component';
 
 @Component({
   standalone: true,
@@ -32,6 +33,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatButtonModule,
     FormsModule,
     MatProgressSpinnerModule,
+    NodeActionsComponent,
   ],
   selector: 'app-attribute-form',
   templateUrl: './attribute-form.component.html',
@@ -73,10 +75,6 @@ export class AttributeFormComponent extends BaseFormComponent implements OnInit,
       this.destroy$.next();
       this.initializeForm();
     }
-  }
-
-  removeNode() {
-    this.nodeTreeProcessorService.removeNode(this.selectedNode);
   }
 
   private initializeForm() {

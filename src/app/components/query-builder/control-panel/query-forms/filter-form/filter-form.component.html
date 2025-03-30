@@ -9,15 +9,9 @@
             <div class="form-header">
                 <span class="form-header-text">Node Properties</span>
                 <div class="form-header-actions">                                                
-                    <!-- <div class="form-header-button" (click)="dublicateNode()">
-                        <img class="form-header-copy-icon" src="assets/icons/copy.svg" alt="copy">
-                        <img class="form-header-copy-icon-hover" src="assets/icons/copy-hover.svg" alt="copy">
-                    </div> -->
-                    <div class="form-header-button" (click)="removeNode()">
-                        <img class="form-header-delete-icon" src="assets/icons/trash-2.svg" alt="delete">
-                        <img class="form-header-delete-icon-hover" src="assets/icons/trash-2-hover.svg" alt="delete">
-                    </div>           
+                    <app-node-actions [selectedNode]="selectedNode"></app-node-actions>       
                 </div>
+
             </div>
             <div class="form-body">
                 <div class="form-flex">
