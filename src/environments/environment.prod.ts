@@ -1,5 +1,5 @@
 export const environment = {
-    production: false,
+    production: true,
     msalConfig: {
         auth: {
             clientId: '${CLIENT_ID}',
@@ -10,4 +10,4 @@ export const environment = {
         scopes: ['${API_SCOPES}'],
         uri: '${API_URI}'
     }
-  };
+}; 

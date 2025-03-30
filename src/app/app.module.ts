@@ -1,7 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
-import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MainToolbarComponent } from './components/toolbar/main-toolbar/main-toolbar.component';
@@ -34,6 +34,8 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BehaviorSubject } from 'rxjs';
 import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { EnvService } from './services/env.service';
+import { AuthConfigService } from './services/auth-config.service';
 
 
 @NgModule({
@@ -47,9 +49,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     ErrorDialogComponent,
 
   ],
-  bootstrap: [AppComponent, MsalRedirectComponent], imports: [BrowserModule, MainToolbarComponent,
+  bootstrap: [AppComponent, MsalRedirectComponent], 
+  imports: [
+    BrowserModule, 
+    MainToolbarComponent,
     BrowserAnimationsModule,
     AppRoutingModule,
+    HttpClientModule,
     MatDialogModule,
     MatButtonModule,
     MatListModule,
@@ -70,11 +76,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     ReactiveFormsModule,
     MatTableModule,
     MsalConfigDynamicModule.forRoot('assets/configuration.json')
-  ], providers: [
+  ], 
+  providers: [
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
     { provide: ACTIVE_ENVIRONMENT_URL, useValue: new BehaviorSubject<string>('') },
     { provide: USER_IS_LOGGED_IN, useValue: new BehaviorSubject<boolean>(false) },
-    provideHttpClient(withInterceptorsFromDi()),    
+    provideHttpClient(withInterceptorsFromDi()),
+    EnvService,
+    AuthConfigService,    
     ValidationService
   ]
 })
