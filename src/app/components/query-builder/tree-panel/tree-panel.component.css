@@ -10,6 +10,7 @@ app-tree-panel .tree-container {
   /* background-color: rgb(245, 245, 248); */
   border-radius: 10px;
   padding: 10px 0px;
+  overflow-x: hidden;
 }
 
 app-tree-panel .node-container {
@@ -22,6 +23,8 @@ app-tree-panel .tree {
   height: 100%;
   flex-direction: column;
   padding: 4px 4px 4px 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 app-tree-panel .button-block {
@@ -54,6 +57,9 @@ app-tree-panel .node-element-select-area {
   position: relative;
   height: 24px;
   padding: 0 4px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 app-tree-panel .node-element-select-area:active {
@@ -67,11 +73,15 @@ app-tree-panel .active {
 }
 
 app-tree-panel p {
-  display: flex;
+  display: block;
   flex: 1;
   padding-top: 2px;
   padding-bottom: 2px;
   padding-left: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 50px);
 }
 
 app-tree-panel .tree-element-icon {

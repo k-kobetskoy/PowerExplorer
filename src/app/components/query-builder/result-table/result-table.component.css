@@ -293,9 +293,10 @@ tr.mat-mdc-row:hover {
   position: relative;
   z-index: 10;
   background-color: white;
-  display: contents;
+  display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
 .table-scroll-container {
@@ -303,7 +304,8 @@ tr.mat-mdc-row:hover {
   overflow-x: auto;
   overflow-y: auto;
   position: relative;
-  max-height: calc(100vh - 200px); /* Adjust based on your layout */
+  flex: 1;
+  height: calc(100vh - 245px); /* Adjust for header, controls, and paginator */
 }
 
 /* Fixed row height */
@@ -406,18 +408,21 @@ tr.mat-mdc-row:hover {
 }
 
 /* Container needs to be positioned relative for absolute positioning to work */
-ng-container {
-  position: relative;
-  display: block;
+:host {
+  display: flex;
+  flex-direction: column;
   height: 100%;
   width: 100%;
+  overflow: hidden;
 }
 
-/* Ensure the container has enough height when empty */
-:host {
-  display: block;
-  height: 100%;
+ng-container {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .error-message {
