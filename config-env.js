@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Get paths
-const configJsPath = path.join(__dirname, 'dist/power-explorer/browser/assets/config.js');
-const configJsonPath = path.join(__dirname, 'dist/power-explorer/browser/assets/configuration.json');
+const configJsPath = path.join(__dirname, 'dist/power-explorer/assets/config.js');
+const configJsonPath = path.join(__dirname, 'dist/power-explorer/assets/configuration.json');
 
 // Ensure directory exists
 const dir = path.dirname(configJsPath);
