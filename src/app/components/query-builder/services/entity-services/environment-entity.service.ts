@@ -1,6 +1,6 @@
 import { LocalStorageService } from '../../../../services/data-sorage/local-storage.service';
 import { Inject, Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
 import { GlobalDiscoInstancesResponseModel } from 'src/app/models/incoming/global-disco/global-disco-instances-response-model';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { HttpClient } from '@angular/common/http';
@@ -30,7 +30,7 @@ export class EnvironmentEntityService {
       return environments$.asObservable();
     }
 
-    const url = API_ENDPOINTS.environments.getResourceUrl();    
+    const url = API_ENDPOINTS.environments.getResourceUrl();
 
     return this._httpClient.get<GlobalDiscoInstancesResponseModel>(url)
       .pipe(
@@ -48,25 +48,28 @@ export class EnvironmentEntityService {
   }
 
   getActiveEnvironment(): Observable<EnvironmentModel> {
-    if(!this._authService.userIsLoggedIn) {
-      return of(null)
-    }
+    return this._authService.userIsLoggedIn$.pipe(
+      switchMap(isLoggedIn => {
+        if (!isLoggedIn) {
+          return of(null)
+        }
 
-    let activeEnvironment$ = this._cacheService.getItem<EnvironmentModel>(CacheKeys.ActiveEnvironment);
+        let activeEnvironment$ = this._cacheService.getItem<EnvironmentModel>(CacheKeys.ActiveEnvironment);
 
-    if (!activeEnvironment$.value) {
-      let activeEnvironment = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)?.length > 0
-        ? <EnvironmentModel>this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)[0]
-        : null;
+        if (!activeEnvironment$.value) {
+          let activeEnvironment = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)?.length > 0
+            ? <EnvironmentModel>this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)[0]
+            : null;
 
-      if (activeEnvironment) {
-        activeEnvironment$.next(activeEnvironment);
-        this._activeEnvironmentUrl.next(activeEnvironment.apiUrl);
-        this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
-      }
-    }
+          if (activeEnvironment) {
+            activeEnvironment$.next(activeEnvironment);
+            this._activeEnvironmentUrl.next(activeEnvironment.apiUrl);
+            this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
+          }
+        }
 
-    return activeEnvironment$.asObservable();
+        return activeEnvironment$.asObservable();
+      }))
   }
 
   private _setEnvironment(environment: EnvironmentModel) {
@@ -101,5 +104,14 @@ export class EnvironmentEntityService {
       : environments.splice(0, 1, environment);
 
     this._localStorageService.setItem<EnvironmentModel[]>(environments, CacheKeys.RecentActiveEnvironments);
+  }
+
+  logout(): void {
+    // Clear active environment from cache
+    this._cacheService.removeItem(CacheKeys.ActiveEnvironment);
+    // Clear active environment URL
+    this._activeEnvironmentUrl.next('');
+    // Clear available environments from cache
+    this._cacheService.removeItem(CacheKeys.AvailableEnvironments);
   }
 }

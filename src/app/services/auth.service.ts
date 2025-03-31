@@ -16,6 +16,7 @@ export class AuthService {
   public get userIsLoggedIn() {
     return this._userIsLoggedIn.value;
   }
+  
 
   public get userIsLoggedIn$() {
     return this._userIsLoggedIn.asObservable();
