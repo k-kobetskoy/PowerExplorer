@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/_assets/*",
+    "/assets/*",
+    "/*.css",
+    "/*.js",
+    "/*.json",
+    "/*.ico",
+    "/*.png",
+    "/*.svg"
+  ]
+} 

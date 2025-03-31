@@ -512,25 +512,29 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
     // For lookup fields, display differently based on view mode
     if (columnName && this.getFieldType(columnName) === 'lookup') {
-      // Check if we should use formatted values
-      if (this.showFormattedValues) {
-        // If the value is already formatted (not a GUID), use it directly
-        if (typeof value === 'string' && 
-            !value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-          return value;
-        }
+      // If the value is not a GUID, use it directly
+      if (typeof value === 'string' && 
+          !value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        return value;
       }
       
       // For raw view or if the value is a GUID
       if (typeof value === 'string' && 
           value.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
-        // In raw view, show the full GUID
+        // In raw view, always show the full GUID
         if (!this.showFormattedValues) {
           return value;
-        } 
-        // In formatted view but value is a GUID, show a friendly indicator + truncated ID
-        const shortId = value.substring(0, 8) + '...';
-        return `ID: ${shortId}`;
+        }
+        
+        // In formatted view, check if we have a formatted value in our result data
+        const formattedValue = this.tryGetFormattedValue(value, columnName);
+        if (formattedValue) {
+          return formattedValue;
+        }
+        
+        // If no formatted value is found, just show the GUID rather than empty string
+        // This ensures values are visible even if formatting failed
+        return value;
       }
       
       // Default case
@@ -548,6 +552,93 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     }
 
     return value.toString();
+  }
+
+  // Helper method to find formatted value for a lookup field
+  private tryGetFormattedValue(guidValue: string, columnName: string): string | null {
+    if (!this.resultData || !this.resultData.formattedValues) return null;
+    
+    // First try to get the value directly from the formatted values array
+    // by finding the row index that contains this exact GUID
+    for (let i = 0; i < this.resultData.rawValues.length; i++) {
+      const row = this.resultData.rawValues[i];
+      if (!row) continue;
+      
+      // Check if this row has our GUID value
+      if (row[columnName] === guidValue) {
+        // Get the formatted value for this column in this row
+        if (i < this.resultData.formattedValues.length) {
+          const formattedRow = this.resultData.formattedValues[i];
+          if (formattedRow && formattedRow[columnName] !== guidValue) {
+            // Only return if it's not another GUID and not the placeholder ID: format
+            const formattedValue = formattedRow[columnName];
+            if (formattedValue && typeof formattedValue === 'string') {
+              // Skip ID: prefix values
+              if (formattedValue.startsWith('ID:')) {
+                continue;
+              }
+              
+              // Skip if it's just another GUID
+              if (formattedValue.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+                continue;
+              }
+              
+              return formattedValue;
+            }
+          }
+        }
+      }
+    }
+    
+    // If we couldn't find it directly, try to find the row that contains this GUID in any column
+    const rowIndex = this.getRowIndexFromValue(guidValue);
+    if (rowIndex !== -1) {
+      const formattedValue = this.getFormattedValueByIndex(rowIndex, columnName);
+      if (formattedValue && formattedValue !== guidValue && typeof formattedValue === 'string') {
+        // Skip ID: prefix values
+        if (formattedValue.startsWith('ID:')) {
+          return null;
+        }
+        
+        // Skip if it's just another GUID
+        if (formattedValue.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          return null;
+        }
+        
+        return formattedValue;
+      }
+    }
+    
+    return null;
+  }
+
+  // Helper to get row index from a GUID value
+  private getRowIndexFromValue(guidValue: string): number {
+    if (!this.resultData || !this.resultData.rawValues) return -1;
+    
+    // First try to find the row that contains this exact GUID
+    for (let i = 0; i < this.resultData.rawValues.length; i++) {
+      const row = this.resultData.rawValues[i];
+      if (!row) continue;
+      
+      for (const key of Object.keys(row)) {
+        if (row[key] === guidValue) {
+          return i;
+        }
+      }
+    }
+    
+    return -1;
+  }
+  
+  // Helper to get formatted value by index
+  private getFormattedValueByIndex(rowIndex: number, columnName: string): any {
+    if (!this.resultData || !this.resultData.formattedValues || 
+        rowIndex < 0 || rowIndex >= this.resultData.formattedValues.length) {
+      return null;
+    }
+    
+    return this.resultData.formattedValues[rowIndex][columnName];
   }
 
   toggleValueFormat() {
