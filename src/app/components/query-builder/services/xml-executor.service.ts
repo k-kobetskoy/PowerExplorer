@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, switchMap, catchError, tap, BehaviorSubject, take, throwError, shareReplay } from 'rxjs';
+import { Observable, of, switchMap, catchError, tap, BehaviorSubject, take, throwError, shareReplay, map } from 'rxjs';
 import { BaseRequestService } from './entity-services/abstract/base-request.service';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { XmlExecuteResultModel } from 'src/app/models/incoming/xml-execute-result/xml-execute-result-model';
@@ -126,6 +126,7 @@ export class XmlExecutorService extends BaseRequestService {
     this.lastError = null;
 
     return this.executeXmlRequest(xml, entityNode, options).pipe(
+      map(result => this.cleanupLookupFormattedValues(result)),
       tap(result => {
         this.activeEnvironmentUrl$.pipe(take(1)).subscribe(activeEnvironmentUrl => {
           this.xmlCacheService.cacheFetchXmlResult<XmlExecutionResult>(result, xml, entityNode, options, activeEnvironmentUrl);
@@ -481,5 +482,59 @@ export class XmlExecutorService extends BaseRequestService {
     }
 
     return 'String';
+  }
+
+  // Add new helper method to clean up lookup formatted values  
+  private cleanupLookupFormattedValues(result: XmlExecutionResult): XmlExecutionResult {
+    if (!result || !result.formattedValues || result.formattedValues.length === 0) {
+      return result;
+    }
+
+    // Make a copy to avoid modifying the original
+    const cleanedResult: XmlExecutionResult = {
+      ...result,
+      formattedValues: [...result.formattedValues]
+    };
+
+    // Process each formatted value in each row
+    cleanedResult.formattedValues.forEach((row, rowIndex) => {
+      Object.keys(row).forEach(key => {
+        const value = row[key];
+        
+        // Check for ID: pattern in string values
+        if (typeof value === 'string' && value.startsWith('ID:') && value.includes('-')) {
+          // This is likely a lookup field ID that wasn't properly formatted
+          // Try to find a better formatted value from the raw data
+          if (result.rawValues && rowIndex < result.rawValues.length) {
+            const rawValue = result.rawValues[rowIndex][key];
+            
+            // If we have a proper formatted value different from the raw value, use it
+            if (rawValue !== value && typeof rawValue === 'string' && 
+                !rawValue.startsWith('ID:') && !rawValue.includes('-')) {
+              row[key] = rawValue;
+              return;
+            }
+            
+            // If raw value is a GUID, use it instead of the ID: prefix
+            if (typeof rawValue === 'string' && 
+                rawValue.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+              row[key] = rawValue;
+              return;
+            }
+          }
+          
+          // Otherwise extract the GUID from the ID: prefix
+          const guidMatch = value.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+          if (guidMatch && guidMatch[1]) {
+            row[key] = guidMatch[1];
+          } else {
+            // If we can't extract a GUID, clear the value
+            row[key] = '';
+          }
+        }
+      });
+    });
+
+    return cleanedResult;
   }
 }
