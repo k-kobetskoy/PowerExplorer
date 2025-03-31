@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, switchMap, catchError, tap, BehaviorSubject, take, throwError, shareReplay, takeUntil, Subject } from 'rxjs';
+import { Observable, of, switchMap, catchError, tap, BehaviorSubject, take, throwError, shareReplay, map } from 'rxjs';
 import { BaseRequestService } from './entity-services/abstract/base-request.service';
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { XmlExecuteResultModel } from 'src/app/models/incoming/xml-execute-result/xml-execute-result-model';
@@ -12,7 +12,6 @@ import { EnvironmentEntityService } from './entity-services/environment-entity.s
 import { XmlCacheService } from './xml-cache.service';
 import { AllAttributesStrategy } from './result-table/all-attributes-strategy';
 import { DefinedAttributesStrategy } from './result-table/defined-attributes-strategy';
-import { OnDestroy } from '@angular/core';
 
 interface FetchXmlQueryOptions {
   maxPageSize?: number;
@@ -46,11 +45,10 @@ export interface XmlExecutionResult {
 }
 
 @Injectable({ providedIn: 'root' })
-export class XmlExecutorService extends BaseRequestService implements OnDestroy {
+export class XmlExecutorService extends BaseRequestService {
   private readonly DEFAULT_PAGE_SIZE = 100;
   private isExecuting: boolean = false; // Track execution state
   private lastError: string | null = null; // Store last error message
-  private readonly destroy$ = new Subject<void>();
 
   // Add default result constant
   private readonly DEFAULT_RESULT: XmlExecutionResult = Object.freeze({
@@ -61,9 +59,7 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
 
   // Add BehaviorSubject to track loading state
   private isLoadingState = new BehaviorSubject<boolean>(false);
-  public isLoadingState$ = this.isLoadingState.asObservable().pipe(
-    takeUntil(this.destroy$)
-  );
+  public isLoadingState$ = this.isLoadingState.asObservable();
 
   constructor(
     private attributeEntityService: AttributeEntityService,
@@ -81,10 +77,26 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
 
 
   getMostRecentCachedResult(): BehaviorSubject<XmlExecutionResult | null> {
+    console.log('=== XMLExecutorService: getMostRecentCachedResult called ===');
+
     const cachedResult = this.xmlCacheService.getMostRecentFetchXmlResult<XmlExecutionResult>();
+
+    if (!cachedResult) {
+      console.log('XMLExecutorService: No cached result found from XmlCacheService (null response)');
+    } else if (cachedResult.value === null) {
+      console.log('XMLExecutorService: Cached result exists but has null value');
+    } else {
+      console.log('XMLExecutorService: Cached result exists with data:', {
+        hasHeader: !!cachedResult.value.header,
+        headerKeys: Object.keys(cachedResult.value.header || {}).length,
+        rawValuesCount: cachedResult.value.rawValues?.length || 0,
+        formattedValuesCount: cachedResult.value.formattedValues?.length || 0
+      });
+    }
 
     // If there's no cached result (null or undefined), initialize with empty structure
     if (!cachedResult || cachedResult.value === null) {
+      console.log('XMLExecutorService: No cached result found, initializing with empty structure');
       const emptyResult = new BehaviorSubject<XmlExecutionResult | null>({
         header: {},
         rawValues: [],
@@ -114,7 +126,12 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
     this.lastError = null;
 
     return this.executeXmlRequest(xml, entityNode, options).pipe(
+      map(result => this.cleanupLookupFormattedValues(result)),
       tap(result => {
+        this.activeEnvironmentUrl$.pipe(take(1)).subscribe(activeEnvironmentUrl => {
+          this.xmlCacheService.cacheFetchXmlResult<XmlExecutionResult>(result, xml, entityNode, options, activeEnvironmentUrl);
+        });
+
         this.isExecuting = false;
         this.isLoadingState.next(false);
       }),
@@ -132,7 +149,8 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
 
         // Return copy of default result
         return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
-      }), takeUntil(this.destroy$)
+      }),
+      shareReplay(1)
     );
   }
 
@@ -149,7 +167,6 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
     const mergedOptions = { ...xmlOptions, ...options };
 
     return this.executeRequest(xml, entityNode, mergedOptions).pipe(
-      takeUntil(this.destroy$),
       catchError(error => { return throwError(() => error); })
     );
   }
@@ -187,44 +204,57 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
 
   private executeRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions): Observable<XmlExecutionResult> {
     return this.activeEnvironmentUrl$.pipe(
-      takeUntil(this.destroy$),
       switchMap(envUrl => {
         if (!envUrl) { return throwError(() => new Error('No active environment URL found. Please connect to an environment before executing the query')); }
 
         const entitySetName = entityNode?.entitySetName$?.value;
         if (!entitySetName) { return throwError(() => new Error('Entity name is missing or invalid. Please select a valid entity for your query')); }
 
-        const sanitizedXml = this.sanitizeForTransmission(xml);
-        const encodedXml = encodeURIComponent(sanitizedXml);
-        const url = API_ENDPOINTS.execute.getResourceUrl(envUrl, entitySetName, encodedXml);
-        const headers = this.buildRequestOptions(options);
+        const cachedResults$ = this.xmlCacheService.getCachedFetchXmlResult<XmlExecutionResult>(xml, entityNode, options, envUrl);
 
-        return this.httpClient.get<XmlExecuteResultModel>(url, headers).pipe(
-          takeUntil(this.destroy$),
-          switchMap(result => {
-            if (!result?.value?.length) {
-              return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
-            }
+        return cachedResults$.pipe(
+          switchMap(cachedData => {
+            if (cachedData) { return of<XmlExecutionResult>(cachedData); }
 
-            try {
-              const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap() as EntityAttributeMap;
+            const sanitizedXml = this.sanitizeForTransmission(xml);
+            const encodedXml = encodeURIComponent(sanitizedXml);
+            const url = API_ENDPOINTS.execute.getResourceUrl(envUrl, entitySetName, encodedXml);
+            const headers = this.buildRequestOptions(options);
 
-              return this.processDataWithStrategy(result.value, entityAttributeMap).pipe(
-                takeUntil(this.destroy$),
-                tap(processedResult => {
-                  this.xmlCacheService.cacheFetchXmlResult<XmlExecutionResult>(
-                    processedResult, xml, entityNode, options, envUrl
+            return this.httpClient.get<XmlExecuteResultModel>(url, headers).pipe(
+              tap(result => {
+                console.log('XML result:', result);
+              }),
+              shareReplay(1),
+              switchMap(result => {
+                if (!result?.value?.length) {
+                  return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
+                }
+
+                try {
+                  const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap() as EntityAttributeMap;
+
+                  // Use the new processDataWithStrategy method which handles strategy selection and processing
+                  return this.processDataWithStrategy(result.value, entityAttributeMap).pipe(
+                    tap(processedResult => {
+                      // Cache the result
+                      this.xmlCacheService.cacheFetchXmlResult<XmlExecutionResult>(
+                        processedResult, xml, entityNode, options, envUrl
+                      );
+                    })
                   );
-                })
-              );
-            } catch (error) {
-              console.error('Error processing data with strategy:', error);
-              return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
-            }
-          }),
-          catchError((error: HttpErrorResponse) => {
-            console.error('Error executing XML request:', error.message);
-            return throwError(() => error);
+                } catch (error) {
+                  console.error('Error processing data with strategy:', error);
+
+                  // Return default result in case of error
+                  return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
+                }
+              }),
+              catchError((error: HttpErrorResponse) => {
+                console.error('Error executing XML request:', error.message);
+                return throwError(() => error);
+              })
+            );
           })
         );
       })
@@ -329,7 +359,8 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
     entityIdValue: string
   ): void {
     // Create the URL only when we have a valid entity ID
-    if(!entityIdValue || !primaryEntity.name) {
+    if (!entityIdValue || !primaryEntity.name) {
+      console.log('Missing data for Dynamics URL, cannot create link');
       return;
     }
 
@@ -354,11 +385,11 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
   }
 
   // Process data using the appropriate strategy based on query structure
-  private processDataWithStrategy<T extends { [key: string]: any }>(data: T[], entityAttributeMap: EntityAttributeMap): Observable < XmlExecutionResult > {
-    if(!data?.length || !entityAttributeMap) {
+  private processDataWithStrategy<T extends { [key: string]: any }>(data: T[], entityAttributeMap: EntityAttributeMap): Observable<XmlExecutionResult> {
+    if (!data?.length || !entityAttributeMap) {
       return of({ header: {}, rawValues: [], formattedValues: [], __original_data: [] });
     }
-
+    
     // Find the primary entity (needed for entity URL functionality)
     let primaryEntity: { name: string, idField: string } | null = null;
     Object.entries(entityAttributeMap).forEach(([entityName, entityData]) => {
@@ -367,9 +398,10 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
           name: entityName,
           idField: (entityData as any).primaryIdAttribute || `${entityName}id`
         };
+        console.log(`processDataWithStrategy: Found primary entity: ${primaryEntity.name} with ID field: ${primaryEntity.idField}`);
       }
     });
-
+    
     // Determine which strategy to use based on attribute presence
     // Check if there are any attributes defined in the request
     let hasDefinedAttributes = false;
@@ -378,7 +410,7 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
         hasDefinedAttributes = true;
       }
     });
-
+    
     // Prepare raw data for processing by strategy
     const rawData: XmlExecutionResult = {
       header: {},
@@ -386,34 +418,36 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
       formattedValues: [...data],
       __original_data: [...data]
     };
-
+    
     // For requests without defined attributes 
     if (!hasDefinedAttributes) {
-
+      console.log('processDataWithStrategy: No attributes defined, using AllAttributesStrategy');
+      
       // Directly create and use the AllAttributesStrategy with integrated processing
       const strategy = new AllAttributesStrategy(this.attributeEntityService);
-
+      
       // Process the data with the strategy, passing primary entity info for URL generation
       return strategy.processRawData(
-        rawData,
-        entityAttributeMap,
-        primaryEntity,
-        this.findEntityId.bind(this),
+        rawData, 
+        entityAttributeMap, 
+        primaryEntity, 
+        this.findEntityId.bind(this), 
         this.addEntityUrlToItems.bind(this)
       );
-    }
+    } 
     // For requests with defined attributes
     else {
-
+      console.log('processDataWithStrategy: Attributes defined, using DefinedAttributesStrategy');
+      
       // Directly create and use the DefinedAttributesStrategy
       const strategy = new DefinedAttributesStrategy(this.attributeEntityService);
-
+      
       // Process the data with the strategy, passing primary entity info for URL generation
       return strategy.processRawData(
-        rawData,
-        entityAttributeMap,
-        primaryEntity,
-        this.findEntityId.bind(this),
+        rawData, 
+        entityAttributeMap, 
+        primaryEntity, 
+        this.findEntityId.bind(this), 
         this.addEntityUrlToItems.bind(this)
       );
     }
@@ -450,8 +484,57 @@ export class XmlExecutorService extends BaseRequestService implements OnDestroy 
     return 'String';
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+  // Add new helper method to clean up lookup formatted values  
+  private cleanupLookupFormattedValues(result: XmlExecutionResult): XmlExecutionResult {
+    if (!result || !result.formattedValues || result.formattedValues.length === 0) {
+      return result;
+    }
+
+    // Make a copy to avoid modifying the original
+    const cleanedResult: XmlExecutionResult = {
+      ...result,
+      formattedValues: [...result.formattedValues]
+    };
+
+    // Process each formatted value in each row
+    cleanedResult.formattedValues.forEach((row, rowIndex) => {
+      Object.keys(row).forEach(key => {
+        const value = row[key];
+        
+        // Check for ID: pattern in string values
+        if (typeof value === 'string' && value.startsWith('ID:') && value.includes('-')) {
+          // This is likely a lookup field ID that wasn't properly formatted
+          // Try to find a better formatted value from the raw data
+          if (result.rawValues && rowIndex < result.rawValues.length) {
+            const rawValue = result.rawValues[rowIndex][key];
+            
+            // If we have a proper formatted value different from the raw value, use it
+            if (rawValue !== value && typeof rawValue === 'string' && 
+                !rawValue.startsWith('ID:') && !rawValue.includes('-')) {
+              row[key] = rawValue;
+              return;
+            }
+            
+            // If raw value is a GUID, use it instead of the ID: prefix
+            if (typeof rawValue === 'string' && 
+                rawValue.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+              row[key] = rawValue;
+              return;
+            }
+          }
+          
+          // Otherwise extract the GUID from the ID: prefix
+          const guidMatch = value.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+          if (guidMatch && guidMatch[1]) {
+            row[key] = guidMatch[1];
+          } else {
+            // If we can't extract a GUID, clear the value
+            row[key] = '';
+          }
+        }
+      });
+    });
+
+    return cleanedResult;
   }
 }

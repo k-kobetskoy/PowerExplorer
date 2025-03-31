@@ -234,6 +234,29 @@ function formatDisplayName(attribute: string): string {
 }
 
 /**
+ * Helper function to check if a value is likely a formatted lookup ID reference
+ * and extract the actual display name if possible
+ */
+function cleanupFormattedLookupValue(value: any): any {
+  // If not a string or is null/undefined, just return it
+  if (typeof value !== 'string' || value === null || value === undefined) {
+    return value;
+  }
+  
+  // Check for "ID: GUID" pattern and extract the GUID
+  if (value.startsWith('ID:') && value.includes('-')) {
+    // Extract the GUID from the ID: format
+    const guidMatch = value.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+    if (guidMatch && guidMatch[1]) {
+      // Return the actual GUID instead of empty string
+      return guidMatch[1];
+    }
+  }
+  
+  return value;
+}
+
+/**
  * Strategy for processing results when no attributes are explicitly defined in the query.
  * This strategy attempts to fetch and include all available attributes for the entity and its related entities.
  */
@@ -416,72 +439,77 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
     const processedResult: XmlExecutionResult = {
       header: {},  // Start with an empty header
       rawValues: [],
-      formattedValues: []
+      formattedValues: [],
+      __original_data: result.__original_data
     };
 
     console.log('[AllAttributesStrategy] Initial header keys:', Object.keys(result.header));
     console.log('[AllAttributesStrategy] Initial raw values keys for first row:',
       result.rawValues.length > 0 ? Object.keys(result.rawValues[0]) : 'No raw values');
 
-    // If we don't have attribute maps, try loading them now (asynchronously)
+    // Get entity names from entitiesToProcess if available, otherwise use the primary entity from entityAttributeMap
+    const entityNames = entitiesToProcess || 
+      (Object.keys(entityAttributeMap).length > 0 ? [Object.keys(entityAttributeMap)[0]] : []);
+    
+    // If we don't have attribute maps, try to load them on-demand
     if (!attributeMaps || Object.keys(attributeMaps).length === 0) {
-      console.log('[AllAttributesStrategy] No attribute maps available, will load attributes asynchronously');
-
-      // Get entity names from entitiesToProcess if available, otherwise use the primary entity from entityAttributeMap
-      const entityNames = entitiesToProcess || 
-        (Object.keys(entityAttributeMap).length > 0 ? [Object.keys(entityAttributeMap)[0]] : []);
-
-      // Start loading attributes in the background - will complete in a future execution
-      this.loadAllAttributes(entityNames).then(loadedAttributes => {
-        console.log(`[AllAttributesStrategy] Loaded ${Object.keys(loadedAttributes).length} entity attribute maps asynchronously`);
-      }).catch(error => {
-        console.error('[AllAttributesStrategy] Error loading attributes asynchronously:', error);
-      });
-
-      // For now, return the original result since we can't process without metadata
-      console.log('[AllAttributesStrategy] Cannot process without metadata, returning original result');
+      // For the first entity only (primary entity)
+      const primaryEntity = entityNames[0];
+      
+      if (primaryEntity && this.attributeEntityService) {
+        console.log(`[AllAttributesStrategy] Loading attributes for primary entity: ${primaryEntity}`);
+        
+        this.attributeEntityService.getAttributes(primaryEntity).subscribe(attributes => {
+          console.log(`[AllAttributesStrategy] Loaded ${attributes.length} attributes for ${primaryEntity}`);
+          
+          // We can't use these attributes now as we're in a callback, but they'll be available for next execution
+          const attributeMap = new Map<string, AttributeModel>();
+          attributes.forEach(attr => {
+            if (this.hasLookupCharacteristics(attr.logicalName, attr)) {
+              attr.attributeType = 'Lookup';
+            }
+            attributeMap.set(attr.logicalName, attr);
+          });
+          
+          // Store for future use (though we can't use it right now)
+          const newAttributeMaps = { [primaryEntity]: attributeMap };
+          console.log('[AllAttributesStrategy] Attributes loaded for future use');
+        });
+      }
+      
+      // For now, proceed with the original result
       return result;
     }
-
-    // Get all available attributes from metadata - these are the ONLY attributes we'll include
-    const metadataAttributes: Map<string, AttributeModel> = new Map<string, AttributeModel>();
-
-    // Process metadata to get the complete list of attributes
-    console.log('[AllAttributesStrategy] Processing attribute metadata');
-
-    // Only process attributes from the primary entity or specified entities to process
-    const entityNamesToProcess = entitiesToProcess || 
-      (Object.keys(attributeMaps).length > 0 ? [Object.keys(attributeMaps)[0]] : []);
-
-    for (const entityName of entityNamesToProcess) {
-      const entityAttributes = attributeMaps[entityName];
-      if (entityAttributes) {
-        console.log(`[AllAttributesStrategy] Processing attributes for entity: ${entityName}, found ${entityAttributes.size} attributes`);
-
-        // Add all attributes from metadata to our map
-        for (const [attrName, attrModel] of entityAttributes.entries()) {
-          metadataAttributes.set(attrName, attrModel);
-        }
-      }
-    }
-
-    console.log(`[AllAttributesStrategy] Collected ${metadataAttributes.size} total attributes from metadata`);
 
     // We need to check if there was an original raw data before normalization
     // This might help us find values for fields that seem to be missing
     const originalData: any = result['__original_data'] || [];
     const hasOriginalData = Array.isArray(originalData) && originalData.length > 0;
 
-    if (hasOriginalData) {
-      console.log('[AllAttributesStrategy] Found original data, will check for missing values there');
+    // Get all available attributes from metadata - these are the attributes we'll include
+    const metadataAttributes: Map<string, AttributeModel> = new Map<string, AttributeModel>();
 
-      // Check for lookup fields in the first original record, if available
-      if (originalData.length > 0) {
-        const firstOriginalRow = originalData[0];
-        // Log all the keys in the original data to help with debugging
-        console.log('[AllAttributesStrategy] Original data keys:', Object.keys(firstOriginalRow));
+    // Process metadata to get the complete list of attributes
+    console.log('[AllAttributesStrategy] Processing attribute metadata');
+
+    // Process attributes from the primary entity or specified entities to process
+    for (const entityName of entityNames) {
+      const entityAttributes = attributeMaps[entityName];
+      if (entityAttributes) {
+        console.log(`[AllAttributesStrategy] Processing attributes for entity: ${entityName}, found ${entityAttributes.size} attributes`);
+
+        // Add all attributes from metadata to our map
+        for (const [attrName, attrModel] of entityAttributes.entries()) {
+          // Ensure lookup fields are properly identified
+          if (this.hasLookupCharacteristics(attrName, attrModel)) {
+            attrModel.attributeType = 'Lookup';
+          }
+          metadataAttributes.set(attrName, attrModel);
+        }
       }
     }
+
+    console.log(`[AllAttributesStrategy] Collected ${metadataAttributes.size} total attributes from metadata`);
 
     // Create a mapping from metadata field name to raw data field name
     // e.g., 'ownerid' -> '_ownerid_value'
@@ -494,7 +522,7 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
       type: 'string'
     };
 
-    // Create header from metadata attributes ONLY
+    // Create header from metadata attributes
     for (const [attrName, attrModel] of metadataAttributes.entries()) {
       processedResult.header[attrName] = {
         displayName: attrModel.displayName || this.formatDisplayName(attrName),
@@ -503,7 +531,7 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
       };
 
       // For lookup fields, map from the metadata name to the raw data name
-      if (attrModel.attributeType === 'Lookup' || attrModel.attributeType === 'Owner') {
+      if (attrModel.attributeType === 'Lookup' || attrModel.attributeType === 'Owner' || attrModel.attributeType === 'Customer') {
         const rawFieldName = `_${attrName}_value`;
         fieldNameMapping.set(attrName, rawFieldName);
         console.log(`[AllAttributesStrategy] Mapped lookup field ${attrName} to ${rawFieldName}`);
@@ -511,6 +539,72 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
     }
 
     console.log(`[AllAttributesStrategy] Created header with ${Object.keys(processedResult.header).length} attributes`);
+
+    // Store formatted values for lookup fields to use consistently in both raw and formatted values
+    const lookupFormattedValues: Map<string, string> = new Map<string, string>();
+
+    // First pass: capture all formatted values from the original data
+    if (hasOriginalData) {
+      originalData.forEach((originalDataRow, rowIndex) => {
+        if (!originalDataRow) return;
+        
+        // Look for formatted value annotations in the original data
+        Object.keys(originalDataRow).forEach(key => {
+          // Check for any formatted value annotations
+          if (key.includes('@OData.Community.Display.V1.FormattedValue')) {
+            // Extract the base field name from the annotation
+            const baseKey = key.split('@')[0];
+            const formattedValue = originalDataRow[key];
+            
+            // For lookup fields, the base name might be in the format _fieldname_value
+            if (baseKey.startsWith('_') && baseKey.endsWith('_value')) {
+              // Extract the actual field name from the lookup format
+              const actualFieldName = baseKey.substring(1, baseKey.length - 6);
+              
+              // Store both with the actual field name and the lookup field name
+              lookupFormattedValues.set(`${rowIndex}_${actualFieldName}`, formattedValue);
+              lookupFormattedValues.set(`${rowIndex}_${baseKey}`, formattedValue);
+              
+              console.log(`[AllAttributesStrategy] First pass: Captured lookup formatted value for row ${rowIndex}, field ${actualFieldName}: ${formattedValue}`);
+            } else {
+              // Store with the base key
+              lookupFormattedValues.set(`${rowIndex}_${baseKey}`, formattedValue);
+              
+              console.log(`[AllAttributesStrategy] First pass: Captured formatted value for row ${rowIndex}, field ${baseKey}: ${formattedValue}`);
+            }
+          }
+          
+          // Also check for lookup field logical name annotations
+          if (key.includes('@Microsoft.Dynamics.CRM.lookuplogicalname')) {
+            // This indicates that the base field is a lookup field
+            const baseKey = key.split('@')[0];
+            // Mark this as a lookup field by storing its type
+            if (metadataAttributes.has(baseKey)) {
+              const attrModel = metadataAttributes.get(baseKey);
+              if (attrModel) {
+                attrModel.attributeType = 'Lookup';
+                metadataAttributes.set(baseKey, attrModel);
+                console.log(`[AllAttributesStrategy] Identified lookup field from annotation: ${baseKey}`);
+              }
+            }
+            
+            // For lookup fields with underscore format
+            if (baseKey.startsWith('_') && baseKey.endsWith('_value')) {
+              const actualFieldName = baseKey.substring(1, baseKey.length - 6);
+              if (metadataAttributes.has(actualFieldName)) {
+                const attrModel = metadataAttributes.get(actualFieldName);
+                if (attrModel) {
+                  attrModel.attributeType = 'Lookup';
+                  attrModel.referencedEntity = originalDataRow[key]; // Store the referenced entity
+                  metadataAttributes.set(actualFieldName, attrModel);
+                  console.log(`[AllAttributesStrategy] Identified lookup field from annotation: ${actualFieldName} -> ${originalDataRow[key]}`);
+                }
+              }
+            }
+          }
+        });
+      });
+    }
 
     // Process raw values - only include attributes that are in the metadata
     for (let i = 0; i < result.rawValues.length; i++) {
@@ -525,17 +619,32 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
 
       // Only include attributes that are in the metadata
       for (const attrName of metadataAttributes.keys()) {
+        const attrModel = metadataAttributes.get(attrName);
+        const isLookupField = attrModel?.attributeType === 'Lookup' || 
+                              attrModel?.attributeType === 'Owner' || 
+                              attrModel?.attributeType === 'Customer';
+
         // First check if the attribute exists in the normalized data
         if (attrName in originalRow) {
           newRow[attrName] = originalRow[attrName];
         }
         // Check if we need to use a mapped field name for lookups
-        else if (fieldNameMapping.has(attrName) && originalDataRow) {
+        else if (isLookupField && fieldNameMapping.has(attrName) && originalDataRow) {
           const rawFieldName = fieldNameMapping.get(attrName);
 
           // Check if the mapped field exists in the original data
           if (rawFieldName && rawFieldName in originalDataRow) {
             newRow[attrName] = originalDataRow[rawFieldName];
+            
+            // For lookup fields, also capture formatted value for later use
+            const formattedKey = `${rawFieldName}@OData.Community.Display.V1.FormattedValue`;
+            if (formattedKey in originalDataRow) {
+              const formattedValue = originalDataRow[formattedKey];
+              lookupFormattedValues.set(`${i}_${attrName}`, formattedValue);
+              lookupFormattedValues.set(`${i}_${rawFieldName}`, formattedValue); // Store with raw field name too
+              console.log(`[AllAttributesStrategy] Captured formatted lookup value for ${attrName}: ${formattedValue}`);
+            }
+            
             console.log(`[AllAttributesStrategy] Found value for ${attrName} using mapped field ${rawFieldName}: ${newRow[attrName]}`);
           } else {
             newRow[attrName] = null;
@@ -544,6 +653,13 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
         // Check if it exists in the original data (for fields like boolean that might be false)
         else if (originalDataRow && attrName in originalDataRow) {
           newRow[attrName] = originalDataRow[attrName];
+          
+          // Check for formatted value annotation for this field
+          const formattedValue = this.extractFormattedLookupValue(originalDataRow, attrName);
+          if (formattedValue) {
+            lookupFormattedValues.set(`${i}_${attrName}`, formattedValue);
+            console.log(`[AllAttributesStrategy] Captured formatted value for ${attrName}: ${formattedValue}`);
+          }
         }
         // Check for alternative formats in the original data (like cr1fc_boolean@OData.*)
         else if (originalDataRow) {
@@ -561,6 +677,13 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
             // Log that we found a value in an OData annotated field
             if (newRow[attrName] !== null) {
               console.log(`[AllAttributesStrategy] Found value for ${attrName} in OData field ${odataKey}`);
+            }
+            
+            // Look specifically for formatted value annotation
+            const formattedValue = this.extractFormattedLookupValue(originalDataRow, attrName);
+            if (formattedValue) {
+              lookupFormattedValues.set(`${i}_${attrName}`, formattedValue);
+              console.log(`[AllAttributesStrategy] Captured formatted value from OData for ${attrName}: ${formattedValue}`);
             }
           } else {
             // Otherwise set to null
@@ -594,50 +717,119 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
 
         // Only include attributes that are in the metadata
         for (const attrName of metadataAttributes.keys()) {
+          const attrModel = metadataAttributes.get(attrName);
+          const isLookupField = attrModel?.attributeType === 'Lookup' || 
+                                attrModel?.attributeType === 'Owner' || 
+                                attrModel?.attributeType === 'Customer';
+
+          // Check if we have a stored formatted value for lookups
+          if (lookupFormattedValues.has(`${i}_${attrName}`)) {
+            newRow[attrName] = lookupFormattedValues.get(`${i}_${attrName}`);
+            console.log(`[AllAttributesStrategy] Using stored formatted value for ${attrName}: ${newRow[attrName]}`);
+          }
           // First check in normalized data
-          if (attrName in originalRow) {
+          else if (attrName in originalRow) {
             newRow[attrName] = originalRow[attrName];
           }
           // Check if we need to use a mapped field name for lookups
-          else if (fieldNameMapping.has(attrName) && originalDataRow) {
+          else if (isLookupField && fieldNameMapping.has(attrName) && originalDataRow) {
             const rawFieldName = fieldNameMapping.get(attrName);
 
             // For formatted values, check for the formatted value annotation
             if (rawFieldName) {
-              const formattedKey = `${rawFieldName}@OData.Community.Display.V1.FormattedValue`;
-
-              if (originalDataRow[formattedKey]) {
-                newRow[attrName] = originalDataRow[formattedKey];
-                console.log(`[AllAttributesStrategy] Found formatted value for ${attrName} using mapped field ${formattedKey}: ${newRow[attrName]}`);
+              // Use the enhanced extractFormattedLookupValue method
+              const formattedValue = this.extractFormattedLookupValue(originalDataRow, rawFieldName);
+              
+              if (formattedValue) {
+                newRow[attrName] = formattedValue;
+                console.log(`[AllAttributesStrategy] Found formatted value for ${attrName} using lookup extraction: ${formattedValue}`);
+              } else if (lookupFormattedValues.has(`${i}_${rawFieldName}`)) {
+                // Check if we have a stored value under the raw field name
+                newRow[attrName] = lookupFormattedValues.get(`${i}_${rawFieldName}`);
+                console.log(`[AllAttributesStrategy] Using stored raw field formatted value for ${attrName}: ${newRow[attrName]}`);
               } else {
-                newRow[attrName] = null;
+                // If no formatted value but we have a raw value, use that from raw values
+                newRow[attrName] = processedResult.rawValues[i][attrName];
               }
             } else {
-              newRow[attrName] = null;
+              // Use raw value as fallback
+              newRow[attrName] = processedResult.rawValues[i][attrName];
             }
           }
           // Check in original data
           else if (originalDataRow) {
-            const formattedKey = `${attrName}@OData.Community.Display.V1.FormattedValue`;
-
-            if (formattedKey in originalDataRow) {
-              newRow[attrName] = originalDataRow[formattedKey];
-
-              if (newRow[attrName] !== null) {
-                console.log(`[AllAttributesStrategy] Found formatted value for ${attrName}: ${newRow[attrName]}`);
-              }
-            } else {
+            // Use enhanced extraction method
+            const formattedValue = this.extractFormattedLookupValue(originalDataRow, attrName);
+            
+            if (formattedValue) {
+              newRow[attrName] = formattedValue;
+              console.log(`[AllAttributesStrategy] Found formatted value using extraction: ${formattedValue}`);
+            } else if (originalDataRow[attrName] === true) {
               // For boolean values, add formatted text
-              if (originalDataRow[attrName] === true) {
-                newRow[attrName] = 'Yes';
-              } else if (originalDataRow[attrName] === false) {
-                newRow[attrName] = 'No';
-              } else {
-                newRow[attrName] = null;
-              }
+              newRow[attrName] = 'Yes';
+            } else if (originalDataRow[attrName] === false) {
+              newRow[attrName] = 'No';
+            } else {
+              // Fall back to the raw value if no formatted value is found
+              newRow[attrName] = processedResult.rawValues[i][attrName];
             }
           } else {
-            newRow[attrName] = null;
+            // Fall back to the raw value if no formatted value is found
+            newRow[attrName] = processedResult.rawValues[i][attrName];
+          }
+          
+          // IMPORTANT: Make sure lookup fields that are GUIDs get their formatted values
+          if (isLookupField && newRow[attrName] && typeof newRow[attrName] === 'string' && 
+              newRow[attrName].match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+            // Try to find a proper formatted value in our lookup map that might be stored
+            // under a different key format
+            const guid = newRow[attrName];
+            let foundFormattedValue = false;
+            
+            // Look for this GUID in the raw values and check if we have a formatted value for it
+            if (processedResult.rawValues[i]) {
+              for (const [key, value] of lookupFormattedValues.entries()) {
+                // Extract the rowIndex and fieldName from the key "rowIndex_fieldName"
+                const keyParts = key.split('_');
+                const rowIndexStr = keyParts[0];
+                
+                // If this is for our current row
+                if (rowIndexStr === i.toString()) {
+                  // Check if the value in raw data for this field matches our GUID
+                  const fieldName = key.substring(rowIndexStr.length + 1);
+                  if (processedResult.rawValues[i][fieldName] === guid) {
+                    newRow[attrName] = value;
+                    foundFormattedValue = true;
+                    console.log(`[AllAttributesStrategy] Found formatted value for GUID ${guid} using field ${fieldName}: ${value}`);
+                    break;
+                  }
+                }
+              }
+            }
+            
+            // Last attempt - use extractFormattedLookupValue directly on the original data
+            if (!foundFormattedValue && originalDataRow) {
+              // For lookup fields with underscore format
+              const underscoreFieldName = `_${attrName}_value`;
+              const formattedValue = this.extractFormattedLookupValue(originalDataRow, underscoreFieldName);
+              
+              if (formattedValue) {
+                newRow[attrName] = formattedValue;
+                foundFormattedValue = true;
+                console.log(`[AllAttributesStrategy] Found formatted value for GUID using underscore format: ${formattedValue}`);
+              }
+            }
+            
+            if (!foundFormattedValue) {
+              // If we couldn't find a better value, leave the GUID as is
+              console.log(`[AllAttributesStrategy] No formatted value found for GUID ${guid}, using GUID`);
+            }
+          }
+          
+          // For lookup fields with 'ID:' prefix in formatted values, clean them up
+          if (isLookupField && newRow[attrName] && typeof newRow[attrName] === 'string' && 
+              newRow[attrName].startsWith('ID:')) {
+            newRow[attrName] = cleanupFormattedLookupValue(newRow[attrName]);
           }
         }
 
@@ -668,5 +860,72 @@ export class AllAttributesStrategy implements IResultProcessingStrategy {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  }
+
+  // Additional helper method to check specifically for lookup fields
+  private isLookupField(fieldName: string, value: any): boolean {
+    // Check field name patterns common for lookups
+    if (fieldName.toLowerCase().endsWith('id') || 
+        fieldName.toLowerCase().includes('ref') ||
+        fieldName.toLowerCase().endsWith('owner') ||
+        fieldName.toLowerCase().endsWith('by')) {
+      return true;
+    }
+    
+    // Check value format - if it's a GUID, it's likely a lookup
+    if (typeof value === 'string' && 
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  /**
+   * Determines if an attribute has characteristics of a lookup field
+   * based on its name and metadata
+   */
+  private hasLookupCharacteristics(attributeName: string, metadata?: AttributeModel): boolean {
+    // If metadata specifies the type as Lookup, Owner, or Customer, it's a lookup
+    if (metadata && ['Lookup', 'Owner', 'Customer'].includes(metadata.attributeType)) {
+      return true;
+    }
+    
+    // Check common naming patterns for lookups
+    if (attributeName.toLowerCase().endsWith('id') || 
+        attributeName.toLowerCase().includes('ref') ||
+        attributeName.toLowerCase().endsWith('owner') ||
+        attributeName.toLowerCase().endsWith('by')) {
+      return true;
+    }
+    
+    // Check for underscore format in lookup fields
+    if (attributeName.startsWith('_') && attributeName.endsWith('_value')) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  private extractFormattedLookupValue(originalDataRow: any, fieldName: string): string | null {
+    if (!originalDataRow) return null;
+    
+    // First try the standard OData formatted value annotation
+    const formattedKey = `${fieldName}@OData.Community.Display.V1.FormattedValue`;
+    if (formattedKey in originalDataRow) {
+      return originalDataRow[formattedKey];
+    }
+    
+    // Try underscore format for lookup fields
+    if (!fieldName.startsWith('_') && !fieldName.endsWith('_value')) {
+      const lookupKey = `_${fieldName}_value`;
+      const lookupFormattedKey = `${lookupKey}@OData.Community.Display.V1.FormattedValue`;
+      
+      if (lookupFormattedKey in originalDataRow) {
+        return originalDataRow[lookupFormattedKey];
+      }
+    }
+    
+    return null;
   }
 } 
