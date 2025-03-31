@@ -4,11 +4,18 @@ const path = require('path');
 // Get paths
 const configJsPath = path.join(__dirname, 'dist/power-explorer/assets/config.js');
 const configJsonPath = path.join(__dirname, 'dist/power-explorer/assets/configuration.json');
+const sourceIdentityDir = path.join(__dirname, 'src', '.well-known');
+const targetIdentityDir = path.join(__dirname, 'dist', 'power-explorer', '.well-known');
+const identityFileName = 'microsoft-identity-association.json';
 
-// Ensure directory exists
-const dir = path.dirname(configJsPath);
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
+// Ensure directories exist
+const configDir = path.dirname(configJsPath);
+if (!fs.existsSync(configDir)) {
+  fs.mkdirSync(configDir, { recursive: true });
+}
+
+if (!fs.existsSync(targetIdentityDir)) {
+  fs.mkdirSync(targetIdentityDir, { recursive: true });
 }
 
 // Default values
@@ -58,9 +65,34 @@ const configJsonContent = JSON.stringify({
   }
 }, null, 2);
 
-// Write files
+// Write config files
 fs.writeFileSync(configJsPath, configJsContent);
 console.log(`Environment config.js written to ${configJsPath}`);
 
 fs.writeFileSync(configJsonPath, configJsonContent);
-console.log(`Environment configuration.json written to ${configJsonPath}`); 
+console.log(`Environment configuration.json written to ${configJsonPath}`);
+
+// Copy the Microsoft identity association file
+try {
+  fs.copyFileSync(
+    path.join(sourceIdentityDir, identityFileName),
+    path.join(targetIdentityDir, identityFileName)
+  );
+  console.log(`Identity file copied successfully to ${path.join(targetIdentityDir, identityFileName)}`);
+} catch (error) {
+  console.error(`Error copying identity file: ${error.message}`);
+  // If the source file doesn't exist, create a default one
+  if (error.code === 'ENOENT') {
+    console.log('Source identity file not found. Creating a default identity file.');
+    const defaultIdentityContent = JSON.stringify({
+      "associatedApplications": [
+        {
+          "applicationId": CLIENT_ID
+        }
+      ]
+    }, null, 2);
+    
+    fs.writeFileSync(path.join(targetIdentityDir, identityFileName), defaultIdentityContent);
+    console.log(`Default identity file created at ${path.join(targetIdentityDir, identityFileName)}`);
+  }
+} 
