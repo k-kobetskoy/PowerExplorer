@@ -9,7 +9,6 @@ import { AttributeEntityService, EntityAttributeMap } from './entity-services/at
 import { QueryNode } from '../models/query-node';
 import { ErrorDialogService } from 'src/app/services/error-dialog.service';
 import { EnvironmentEntityService } from './entity-services/environment-entity.service';
-import { XmlCacheService } from './xml-cache.service';
 import { AllAttributesStrategy } from './result-table/all-attributes-strategy';
 import { DefinedAttributesStrategy } from './result-table/defined-attributes-strategy';
 
@@ -65,47 +64,9 @@ export class XmlExecutorService extends BaseRequestService {
     private attributeEntityService: AttributeEntityService,
     private nodeTreeService: NodeTreeService,
     private errorDialogService: ErrorDialogService,
-    private environmentEntityService: EnvironmentEntityService,
-    private xmlCacheService: XmlCacheService
+    private environmentEntityService: EnvironmentEntityService
   ) {
     super();
-  }
-
-  clearFetchXmlCache(): void {
-    this.xmlCacheService.clearFetchXmlCache();
-  }
-
-
-  getMostRecentCachedResult(): BehaviorSubject<XmlExecutionResult | null> {
-    console.log('=== XMLExecutorService: getMostRecentCachedResult called ===');
-
-    const cachedResult = this.xmlCacheService.getMostRecentFetchXmlResult<XmlExecutionResult>();
-
-    if (!cachedResult) {
-      console.log('XMLExecutorService: No cached result found from XmlCacheService (null response)');
-    } else if (cachedResult.value === null) {
-      console.log('XMLExecutorService: Cached result exists but has null value');
-    } else {
-      console.log('XMLExecutorService: Cached result exists with data:', {
-        hasHeader: !!cachedResult.value.header,
-        headerKeys: Object.keys(cachedResult.value.header || {}).length,
-        rawValuesCount: cachedResult.value.rawValues?.length || 0,
-        formattedValuesCount: cachedResult.value.formattedValues?.length || 0
-      });
-    }
-
-    // If there's no cached result (null or undefined), initialize with empty structure
-    if (!cachedResult || cachedResult.value === null) {
-      console.log('XMLExecutorService: No cached result found, initializing with empty structure');
-      const emptyResult = new BehaviorSubject<XmlExecutionResult | null>({
-        header: {},
-        rawValues: [],
-        formattedValues: []
-      });
-      return emptyResult;
-    }
-
-    return cachedResult;
   }
 
   isLoading(): boolean {
@@ -120,18 +81,29 @@ export class XmlExecutorService extends BaseRequestService {
     this.lastError = null;
   }
 
-  executeAndCacheResult(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions = {}): Observable<XmlExecutionResult> {
+  executeXmlRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions = {}): Observable<XmlExecutionResult> {
     this.isExecuting = true;
     this.isLoadingState.next(true);
     this.lastError = null;
 
-    return this.executeXmlRequest(xml, entityNode, options).pipe(
-      map(result => this.cleanupLookupFormattedValues(result)),
-      tap(result => {
-        this.activeEnvironmentUrl$.pipe(take(1)).subscribe(activeEnvironmentUrl => {
-          this.xmlCacheService.cacheFetchXmlResult<XmlExecutionResult>(result, xml, entityNode, options, activeEnvironmentUrl);
-        });
+    if (!xml || !entityNode) {
+      this.isExecuting = false;
+      this.isLoadingState.next(false);
+      return throwError(() => new Error('XML and entity information are required. Please ensure you have a valid query with entity information before executing'));
+    }
 
+    if (!entityNode.entitySetName$ || !entityNode.entitySetName$.value) {
+      this.isExecuting = false;
+      this.isLoadingState.next(false);
+      return throwError(() => new Error('Entity name is missing or invalid. Please select a valid entity for your query'));
+    }
+
+    const xmlOptions = this.extractQueryOptions();
+    const mergedOptions = { ...xmlOptions, ...options };
+
+    return this.executeRequest(xml, entityNode, mergedOptions).pipe(
+      map(result => this.cleanupLookupFormattedValues(result)),
+      tap(() => {
         this.isExecuting = false;
         this.isLoadingState.next(false);
       }),
@@ -151,23 +123,6 @@ export class XmlExecutorService extends BaseRequestService {
         return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
       }),
       shareReplay(1)
-    );
-  }
-
-  executeXmlRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions = {}): Observable<XmlExecutionResult> {
-    if (!xml || !entityNode) {
-      return throwError(() => new Error('XML and entity information are required. Please ensure you have a valid query with entity information before executing'));
-    }
-
-    if (!entityNode.entitySetName$ || !entityNode.entitySetName$.value) {
-      return throwError(() => new Error('Entity name is missing or invalid. Please select a valid entity for your query'));
-    }
-
-    const xmlOptions = this.extractQueryOptions();
-    const mergedOptions = { ...xmlOptions, ...options };
-
-    return this.executeRequest(xml, entityNode, mergedOptions).pipe(
-      catchError(error => { return throwError(() => error); })
     );
   }
 
@@ -205,56 +160,45 @@ export class XmlExecutorService extends BaseRequestService {
   private executeRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions): Observable<XmlExecutionResult> {
     return this.activeEnvironmentUrl$.pipe(
       switchMap(envUrl => {
-        if (!envUrl) { return throwError(() => new Error('No active environment URL found. Please connect to an environment before executing the query')); }
+        if (!envUrl) { 
+          return throwError(() => new Error('No active environment URL found. Please connect to an environment before executing the query')); 
+        }
 
         const entitySetName = entityNode?.entitySetName$?.value;
-        if (!entitySetName) { return throwError(() => new Error('Entity name is missing or invalid. Please select a valid entity for your query')); }
+        if (!entitySetName) { 
+          return throwError(() => new Error('Entity name is missing or invalid. Please select a valid entity for your query')); 
+        }
 
-        const cachedResults$ = this.xmlCacheService.getCachedFetchXmlResult<XmlExecutionResult>(xml, entityNode, options, envUrl);
+        const sanitizedXml = this.sanitizeForTransmission(xml);
+        const encodedXml = encodeURIComponent(sanitizedXml);
+        const url = API_ENDPOINTS.execute.getResourceUrl(envUrl, entitySetName, encodedXml);
+        const headers = this.buildRequestOptions(options);
 
-        return cachedResults$.pipe(
-          switchMap(cachedData => {
-            if (cachedData) { return of<XmlExecutionResult>(cachedData); }
+        return this.httpClient.get<XmlExecuteResultModel>(url, headers).pipe(
+          tap(result => {
+            console.log('XML result:', result);
+          }),
+          shareReplay(1),
+          switchMap(result => {
+            if (!result?.value?.length) {
+              return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
+            }
 
-            const sanitizedXml = this.sanitizeForTransmission(xml);
-            const encodedXml = encodeURIComponent(sanitizedXml);
-            const url = API_ENDPOINTS.execute.getResourceUrl(envUrl, entitySetName, encodedXml);
-            const headers = this.buildRequestOptions(options);
+            try {
+              const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap() as EntityAttributeMap;
 
-            return this.httpClient.get<XmlExecuteResultModel>(url, headers).pipe(
-              tap(result => {
-                console.log('XML result:', result);
-              }),
-              shareReplay(1),
-              switchMap(result => {
-                if (!result?.value?.length) {
-                  return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
-                }
+              // Use the processDataWithStrategy method which handles strategy selection and processing
+              return this.processDataWithStrategy(result.value, entityAttributeMap);
+            } catch (error) {
+              console.error('Error processing data with strategy:', error);
 
-                try {
-                  const entityAttributeMap = this.nodeTreeService.getEntityAttributeMap() as EntityAttributeMap;
-
-                  // Use the new processDataWithStrategy method which handles strategy selection and processing
-                  return this.processDataWithStrategy(result.value, entityAttributeMap).pipe(
-                    tap(processedResult => {
-                      // Cache the result
-                      this.xmlCacheService.cacheFetchXmlResult<XmlExecutionResult>(
-                        processedResult, xml, entityNode, options, envUrl
-                      );
-                    })
-                  );
-                } catch (error) {
-                  console.error('Error processing data with strategy:', error);
-
-                  // Return default result in case of error
-                  return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
-                }
-              }),
-              catchError((error: HttpErrorResponse) => {
-                console.error('Error executing XML request:', error.message);
-                return throwError(() => error);
-              })
-            );
+              // Return default result in case of error
+              return of<XmlExecutionResult>({ ...this.DEFAULT_RESULT });
+            }
+          }),
+          catchError((error: HttpErrorResponse) => {
+            console.error('Error executing XML request:', error.message);
+            return throwError(() => error);
           })
         );
       })
@@ -484,7 +428,7 @@ export class XmlExecutorService extends BaseRequestService {
     return 'String';
   }
 
-  // Add new helper method to clean up lookup formatted values  
+  // Helper method to clean up lookup formatted values  
   private cleanupLookupFormattedValues(result: XmlExecutionResult): XmlExecutionResult {
     if (!result || !result.formattedValues || result.formattedValues.length === 0) {
       return result;

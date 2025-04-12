@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output, OnDestroy, ViewEncapsulation, ChangeDetectionStrategy, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef } from '@angular/core';
-import { catchError, of, Subscription, takeUntil, tap, Subject } from 'rxjs';
+import { catchError, of, Subscription, takeUntil, tap, Subject, BehaviorSubject } from 'rxjs';
 import { XmlExecutionResult, XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
@@ -50,6 +50,10 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
   // Store the complete result data
   resultData: XmlExecutionResult | null = null;
+  
+  // Local BehaviorSubject to store the most recent result
+  private mostRecentResult = new BehaviorSubject<XmlExecutionResult | null>(null);
+  
   isLoading = false;
   hasError = false;
   errorMessage = '';
@@ -82,8 +86,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     // Check the initial loading state
     this.isLoading = this.xmlExecutor.isLoading();
     
-    // Subscribe to result updates from XmlExecutorService
-    this.resultSubscription = this.xmlExecutor.getMostRecentCachedResult()
+    // Subscribe to our local result observable instead of cache service
+    this.resultSubscription = this.mostRecentResult
       .pipe(takeUntil(this.destroy$))
       .subscribe(result => {
         // Update loading state with each result update
@@ -140,12 +144,14 @@ export class ResultTableComponent implements OnInit, OnDestroy {
             this.dataSource = [{ 'Error': this.errorMessage }];
             this.cdr.markForCheck();
           } else {
-            // No errors - check for fresh results from cache
-            console.log('Execution completed, checking for fresh results');
-            const freshResult = this.xmlExecutor.getMostRecentCachedResult().value;
-            if (freshResult && freshResult.rawValues?.length > 0) {
-              console.log('Fresh results found after execution');
-              this.resultData = freshResult;
+            // No error - if we have recent results, they should be in our local BehaviorSubject already
+            console.log('Execution completed');
+            
+            // The most recent result should already be in our local BehaviorSubject
+            const currentResult = this.mostRecentResult.value;
+            if (currentResult && currentResult.rawValues?.length > 0) {
+              console.log('Results available after execution');
+              this.resultData = currentResult;
               this.processResultData();
             }
           }
@@ -207,11 +213,9 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.cdr.markForCheck();
     
-    // First check for cached results
-    const cachedResult = this.xmlExecutor.getMostRecentCachedResult().value;
-    if (cachedResult && cachedResult.rawValues && cachedResult.rawValues.length > 0) {
-      console.log('Using cached result data without a new query');
-      this.resultData = cachedResult;
+    // Check if we have a stored result already
+    if (this.resultData && this.resultData.rawValues && this.resultData.rawValues.length > 0) {
+      console.log('Using existing result data without a new query');
       this.isLoading = false;
       this.processResultData();
       this.cdr.markForCheck();
@@ -249,13 +253,15 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       }
       
       if (xml && entityNode) {
-        // Execute the query and subscribe to the result using executeAndCacheResult
-        // This will update the observable in XmlExecutorService, which we're already subscribed to
-        this.xmlExecutor.executeAndCacheResult(xml, entityNode)
+        // Execute the query and subscribe to the result
+        this.xmlExecutor.executeXmlRequest(xml, entityNode)
           .pipe(takeUntil(this.destroy$))
           .subscribe(
             result => {
               console.log('Result table direct execution completed successfully');
+              
+              // Store the result in our local BehaviorSubject for components to use
+              this.mostRecentResult.next(result);
               
               // For immediate feedback, process the result directly
               if (result && result.rawValues && result.rawValues.length > 0) {

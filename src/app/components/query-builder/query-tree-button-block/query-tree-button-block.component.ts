@@ -103,7 +103,7 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
     console.log('Executing XML query:', xml.substring(0, 100) + '...');
     
     // Execute the XML query and update the cache
-    this.xmlExecutorService.executeAndCacheResult(xml, entityNode)
+    this.xmlExecutorService.executeXmlRequest(xml, entityNode)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         result => {
