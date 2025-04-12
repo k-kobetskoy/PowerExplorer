@@ -1,9 +1,8 @@
-// This file will be loaded before the Angular app
 window.config = {
-  CLIENT_ID: 'PLACEHOLDER_WILL_BE_REPLACED',
-  AUTHORITY_URL: 'PLACEHOLDER_WILL_BE_REPLACED',
-  API_SCOPES: 'PLACEHOLDER_WILL_BE_REPLACED',
-  API_URI: 'PLACEHOLDER_WILL_BE_REPLACED',
-  REDIRECT_URI: 'PLACEHOLDER_WILL_BE_REPLACED',
-  POST_LOGOUT_REDIRECT_URI: 'PLACEHOLDER_WILL_BE_REPLACED'
-}; 
+  CLIENT_ID: 'ecf5ee34-a289-457c-908a-079a2a431d86',
+  AUTHORITY_URL: 'https://login.microsoftonline.com/common/oauth2/authorize?resource=https://globaldisco.crm.dynamics.com',
+  API_SCOPES: 'https://globaldisco.crm.dynamics.com/user_impersonation',
+  API_URI: 'https://globaldisco.crm.dynamics.com/api/discovery/v2.0/Instances',
+  REDIRECT_URI: 'http://localhost:4200/',
+  POST_LOGOUT_REDIRECT_URI: 'http://localhost:4200/'
+};

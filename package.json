@@ -10,7 +10,8 @@
     "build": "ng build",
     "build:prod": "ng build --configuration=production && node config-env.js",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "dev": "ng build --configuration=development && node config-env.js && ng serve --configuration=development"
   },
   "private": true,
   "dependencies": {

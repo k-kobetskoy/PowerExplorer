@@ -1,27 +1,37 @@
 {
-    "msal": {
-      "auth": {
-        "clientId": "",
-        "redirectUri": "",
-        "postLogoutRedirectUri": "",
-        "navigateToLoginRequestUrl": true
-      },
-      "cache": {
-        "cacheLocation": "localStorage",
-        "storeAuthStateInCookie": true
-      }
+  "msal": {
+    "auth": {
+      "clientId": "ecf5ee34-a289-457c-908a-079a2a431d86",
+      "redirectUri": "http://localhost:4200/",
+      "postLogoutRedirectUri": "http://localhost:4200/",
+      "navigateToLoginRequestUrl": true
     },
-    "guard": {
-      "interactionType": "popup",
-      "authRequest": {
-        "scopes": []
-      }
-    },
-    "interceptor": {
-      "interactionType": "popup",
-      "protectedResourceMap": [
-        ["", [""]],        
-        ["https://graph.microsoft.com/v1.0/me", ["https://graph.microsoft.com/User.Read"]]
-      ]
+    "cache": {
+      "cacheLocation": "localStorage",
+      "storeAuthStateInCookie": true
     }
+  },
+  "guard": {
+    "interactionType": "popup",
+    "authRequest": {
+      "scopes": []
+    }
+  },
+  "interceptor": {
+    "interactionType": "popup",
+    "protectedResourceMap": [
+      [
+        "https://globaldisco.crm.dynamics.com/api/discovery/v2.0/",
+        [
+          "https://globaldisco.crm.dynamics.com/user_impersonation"
+        ]
+      ],
+      [
+        "https://graph.microsoft.com/v1.0/me",
+        [
+          "https://graph.microsoft.com/User.Read"
+        ]
+      ]
+    ]
+  }
 }
