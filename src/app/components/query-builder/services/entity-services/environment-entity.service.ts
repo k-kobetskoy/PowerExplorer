@@ -8,7 +8,7 @@ import { CacheStorageService } from '../../../../services/data-sorage/cache-stor
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { CacheKeys } from 'src/app/config/cache-keys';
 import { AuthService } from '../../../../services/auth.service';
-import { ACTIVE_ENVIRONMENT_URL } from 'src/app/models/tokens';
+import { ACTIVE_ENVIRONMENT_URL, ACTIVE_ENVIRONMENT_BROWSER_URL } from 'src/app/models/tokens';
 import { Constants } from 'src/app/config/constants';
 
 
@@ -16,12 +16,13 @@ import { Constants } from 'src/app/config/constants';
 export class EnvironmentEntityService {
 
   constructor(
-
     private _httpClient: HttpClient,
     private _cacheService: CacheStorageService,
     private _authService: AuthService,
     private _localStorageService: LocalStorageService,
-    @Inject(ACTIVE_ENVIRONMENT_URL) private _activeEnvironmentUrl: BehaviorSubject<string>) {
+    @Inject(ACTIVE_ENVIRONMENT_URL) private _activeEnvironmentUrl: BehaviorSubject<string>,
+    @Inject(ACTIVE_ENVIRONMENT_BROWSER_URL) private _activeEnvironmentBrowserUrl: BehaviorSubject<string>
+  ) {
   }
   getEnvironments(): Observable<EnvironmentModel[]> {
     let environments$ = this._cacheService.getItem<EnvironmentModel[]>(CacheKeys.AvailableEnvironments);
@@ -63,12 +64,14 @@ export class EnvironmentEntityService {
 
           if (activeEnvironment) {
             activeEnvironment$.next(activeEnvironment);
-            this._activeEnvironmentUrl.next(activeEnvironment.apiUrl);
             this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
           }
         }
 
         return activeEnvironment$.asObservable();
+      }), tap(environment => {
+        this._activeEnvironmentUrl.next(environment.apiUrl);
+        this._activeEnvironmentBrowserUrl.next(environment.url);
       }))
   }
 

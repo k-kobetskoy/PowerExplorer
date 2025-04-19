@@ -32,7 +32,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BehaviorSubject } from 'rxjs';
-import { ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
+import { ACTIVE_ENVIRONMENT_BROWSER_URL, ACTIVE_ENVIRONMENT_URL, USER_IS_LOGGED_IN } from './models/tokens';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { EnvService } from './services/env.service';
 import { AuthConfigService } from './services/auth-config.service';
@@ -79,6 +79,7 @@ import { AuthConfigService } from './services/auth-config.service';
   ], 
   providers: [
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'outline' } },
+    { provide: ACTIVE_ENVIRONMENT_BROWSER_URL, useValue: new BehaviorSubject<string>('') },
     { provide: ACTIVE_ENVIRONMENT_URL, useValue: new BehaviorSubject<string>('') },
     { provide: USER_IS_LOGGED_IN, useValue: new BehaviorSubject<boolean>(false) },
     provideHttpClient(withInterceptorsFromDi()),

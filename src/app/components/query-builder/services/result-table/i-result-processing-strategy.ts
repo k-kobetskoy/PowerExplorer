@@ -2,7 +2,7 @@ import { XmlExecutionResult } from '../xml-executor.service';
 import { EntityAttributeMap } from '../entity-services/attribute-entity.service';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { Observable } from 'rxjs';
-
+import { MatTableRawData } from '../xml-executor.service';
 /**
  * Interface for handling different result processing strategies
  */
@@ -11,18 +11,16 @@ export interface IResultProcessingStrategy {
    * Process raw data from the API and return a processed result
    * @param rawData The original raw data from the API
    * @param entityAttributeMap Map of entity logical names to their attribute data
-   * @param primaryEntity Primary entity information for URL generation 
-   * @param findEntityIdFn Function to find entity ID in a record
-   * @param addEntityUrlFn Function to add entity URL to items
+   * @param primaryEntityName Primary entity name for URL generation 
+   * @param environmentBrowserUrl URL prefix for generated links
    * @returns Observable of the processed result
    */
   processRawData(
-    rawData: XmlExecutionResult,
+    rawData: any[], 
     entityAttributeMap: EntityAttributeMap,
-    primaryEntity: { name: string, idField: string } | null,
-    findEntityIdFn: (item: any, primaryEntity: { name: string, idField: string }) => string | null,
-    addEntityUrlFn: (rawItem: any, formattedItem: any, primaryEntity: { name: string, idField: string }, entityIdValue: string) => void
-  ): Observable<XmlExecutionResult>;
+    primaryEntityName: string, 
+    environmentBrowserUrl: string
+  ): Observable<MatTableRawData>;
   
   /**
    * Process the result data and return an updated result object with potentially modified columns
@@ -39,10 +37,10 @@ export interface IResultProcessingStrategy {
   
   /**
    * Load all attributes for the given entities
-   * @param entityLogicalNames Array of entity logical names to load attributes for
+   * @param entityLogicalName The entity logical name to load attributes for
    * @returns Promise that resolves when all attributes are loaded
    */
-  loadAllAttributes?(entityLogicalNames: string[]): Promise<{ [entityLogicalName: string]: Map<string, AttributeModel> }>;
+  loadAllAttributes?(entityLogicalName: string): Promise<{ [attributeLogicalName: string]: AttributeModel }> ;
 }
 
 /**

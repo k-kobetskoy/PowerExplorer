@@ -12,7 +12,7 @@ interface AttributeData {
   alias: string | null;
 }
 
-interface EntityAttributeData {
+export interface EntityAttributeData {
   entityAlias: string | null;
   attributeData: AttributeData[];
   isPrimaryEntity?: boolean; // Add optional property for primary entity
@@ -106,6 +106,9 @@ export class AttributeEntityService extends BaseRequestService {
               }
             }
           }),
+          tap(attributes => {
+            console.log('AttributeEntityService: getAttributes()', attributes);
+          }),
           shareReplay(1)
         );
       }));
@@ -120,16 +123,6 @@ export class AttributeEntityService extends BaseRequestService {
     // Check if entityAttributeMap is empty
     if (!entityAttributeMap || Object.keys(entityAttributeMap).length === 0) {
       return of({});
-    }
-
-    // Check if all attributeData arrays are empty - if so, get all attributes
-    const allAttributeDataEmpty = Object.values(entityAttributeMap).every(
-      entityData => !entityData.attributeData || entityData.attributeData.length === 0
-    );
-
-    if (allAttributeDataEmpty) {
-      console.log('AttributeEntityService: All attributeData arrays are empty, getting all attributes');
-      return this.getAllAttributesForEntities(Object.keys(entityAttributeMap));
     }
 
     // Check the number of entities and call the appropriate method
@@ -290,11 +283,6 @@ export class AttributeEntityService extends BaseRequestService {
     );
   }
 
-  /**
-   * Get specific attributes for multiple entities
-   * @param entityAttributeMap Map of entities and their required attributes
-   * @returns Observable with a map of entity logical names to their attribute maps
-   */
   private getSpecificAttributesForMultipleEntities(entityAttributeMap: EntityAttributeMap): Observable<AttributeMapResult> {
     // Create a result map right away
     const resultMap: AttributeMapResult = {};
@@ -307,10 +295,7 @@ export class AttributeEntityService extends BaseRequestService {
         }
 
         const entityLogicalNames = Object.keys(entityAttributeMap);
-        if (entityLogicalNames.length === 0) {
-          return of(resultMap);
-        }
-
+        
         // Create an array of observables, one for each entity
         const entityObservables: Observable<void>[] = entityLogicalNames.map(entityLogicalName => {
           return new Observable<void>(subscriber => {
@@ -324,41 +309,12 @@ export class AttributeEntityService extends BaseRequestService {
               return;
             }
 
-            // If attributeData is empty, get all attributes
+            // If attributeData is empty, return empty map
             if (entityData.attributeData.length === 0) {
-              console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, getting all attributes`);
-
-              // Get all attributes for this entity
-              this.getAttributes(entityLogicalName).subscribe({
-                next: (attributes) => {
-                  try {
-                    const attributeMap = new Map<string, AttributeModel>();
-
-                    // Store all attributes
-                    attributes.forEach(attr => {
-                      attributeMap.set(attr.logicalName, attr);
-                    });
-
-                    // Store in result map
-                    resultMap[entityLogicalName] = attributeMap;
-
-                    subscriber.next();
-                    subscriber.complete();
-                  } catch (error) {
-                    console.error(`Error processing attributes for ${entityLogicalName}:`, error);
-                    resultMap[entityLogicalName] = new Map<string, AttributeModel>();
-                    subscriber.next();
-                    subscriber.complete();
-                  }
-                },
-                error: (error) => {
-                  console.error(`Error fetching attributes for ${entityLogicalName}:`, error);
-                  resultMap[entityLogicalName] = new Map<string, AttributeModel>();
-                  subscriber.next();
-                  subscriber.complete();
-                }
-              });
-
+              console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, returning empty map`);
+              resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+              subscriber.next();
+              subscriber.complete();
               return;
             }
 
@@ -368,37 +324,11 @@ export class AttributeEntityService extends BaseRequestService {
               .map(attr => attr.attributeLogicalName as string);
 
             if (attributeLogicalNames.length === 0) {
-              // Get all attributes if no specific attributes are defined
-              this.getAttributes(entityLogicalName).subscribe({
-                next: (attributes) => {
-                  try {
-                    const attributeMap = new Map<string, AttributeModel>();
-
-                    // Add all attributes
-                    attributes.forEach(attr => {
-                      attributeMap.set(attr.logicalName, attr);
-                    });
-
-                    // Store in result map
-                    resultMap[entityLogicalName] = attributeMap;
-
-                    subscriber.next();
-                    subscriber.complete();
-                  } catch (error) {
-                    console.error(`Error processing attributes for ${entityLogicalName}:`, error);
-                    resultMap[entityLogicalName] = new Map<string, AttributeModel>();
-                    subscriber.next();
-                    subscriber.complete();
-                  }
-                },
-                error: (error) => {
-                  console.error(`Error fetching attributes for ${entityLogicalName}:`, error);
-                  resultMap[entityLogicalName] = new Map<string, AttributeModel>();
-                  subscriber.next();
-                  subscriber.complete();
-                }
-              });
-
+              // No valid attributes defined, return empty map
+              console.log(`AttributeEntityService: No valid attributes found for entity ${entityLogicalName}, returning empty map`);
+              resultMap[entityLogicalName] = new Map<string, AttributeModel>();
+              subscriber.next();
+              subscriber.complete();
               return;
             }
 

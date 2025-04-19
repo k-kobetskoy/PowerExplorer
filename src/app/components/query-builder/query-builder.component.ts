@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { AngularSplitModule } from 'angular-split';
 import { FormsModule } from '@angular/forms';
 import { CodeEditorComponent } from './code-editor/code-editor.component';
-import { QueryTreeButtonBlockComponent } from './query-tree-button-block/query-tree-button-block.component';
+import { QueryTreeButtonBlockComponent, XmlRequestEvent } from './query-tree-button-block/query-tree-button-block.component';
 import { TreePanelComponent } from './tree-panel/tree-panel.component';
 import { ControlPanelComponent } from './control-panel/control-panel.component';
 import { ResultTableComponent } from './result-table/result-table.component';
@@ -66,8 +66,8 @@ export class QueryBuilder implements OnInit {
     this.switchToTab(this.selectedTabIndex === 0 ? 1 : 0);
   }
 
-  handleExecuteXmlRequest() {
-    console.log('QueryBuilder: handleExecuteXmlRequest called');
+  handleExecuteXmlRequest(event: XmlRequestEvent) {
+    console.log('QueryBuilder: handleExecuteXmlRequest called with XML data');
     
     // Switch to the results tab
     if (this.selectedTabIndex !== 1) {
@@ -79,8 +79,8 @@ export class QueryBuilder implements OnInit {
     // Need to use setTimeout to ensure ViewChild is initialized
     setTimeout(() => {
       if (this.resultTable) {
-        console.log('Triggering getResult on resultTable');
-        this.resultTable.getResult();
+        console.log('Triggering getResult on resultTable with provided XML data');
+        this.resultTable.executeWithData(event.xml, event.entityNode);
       } else {
         console.error('ResultTable component not found');
       }
