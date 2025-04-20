@@ -2,7 +2,7 @@ export const environment = {
     production: false,
     msalConfig: {
         auth: {
-            clientId: '69111799-c2ca-490f-929f-4e5ee63b9792',
+            clientId: 'ecf5ee34-a289-457c-908a-079a2a431d86',
             authority: 'https://login.microsoftonline.com/common/oauth2/authorize?resource=https://globaldisco.crm.dynamics.com'
         }
     },

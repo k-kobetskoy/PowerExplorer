@@ -502,3 +502,15 @@ ng-container {
   opacity: 0.6;
 }
 */
+
+.row-number-link {
+  color: #2c70b9;
+  text-decoration: none;
+  font-family: 'Hack', monospace;
+  font-size: 0.8rem;
+}
+
+.row-number-link:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}

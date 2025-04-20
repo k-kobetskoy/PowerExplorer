@@ -19,7 +19,7 @@ export class NodeTreeService {
   private _selectedNode$: BehaviorSubject<QueryNode> = new BehaviorSubject<QueryNode>(null);
 
   validationResult$: Observable<ValidationResult>;
-    
+
   // Track validation subscription for cleanup
   private validationSubscription: Subscription = null;
 
@@ -47,19 +47,19 @@ export class NodeTreeService {
 
   public setupValidation() {
     console.log('Setting up node tree validation');
-    
+
     // Clean up any existing subscription
     if (this.validationSubscription) {
       this.validationSubscription.unsubscribe();
       this.validationSubscription = null;
     }
-    
+
     // Create a new validation observable with shareReplay to ensure all subscribers get the same values
     this.validationResult$ = this.validationService.setupNodeTreeValidation(this._nodeTree$)
       .pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       );
-      
+
     // Subscribe to validation to keep it active even if the UI doesn't subscribe yet
     this.validationSubscription = this.validationResult$.subscribe();
   }
@@ -70,7 +70,7 @@ export class NodeTreeService {
     }
 
     this.initializeNodeTree();
-  
+
     this.setupValidation();
 
     return this._nodeTree$;
@@ -114,7 +114,7 @@ export class NodeTreeService {
 
       // First-time setup of the validation is still needed
       //this.setupValidation();
-      
+
       return newNode;
     }
 
@@ -162,17 +162,17 @@ export class NodeTreeService {
     newNode.parent = parentNode;
 
 
-    if(parent){
+    if (parent) {
       this.expandNode(parentNode);
-    }else{
+    } else {
       this.expandNode(this._selectedNode$.value)
     }
 
     this.selectedNode$ = newNode;
-    
+
     // Explicitly emit from nodeTree$ to ensure validation is triggered
     this._nodeTree$.next(this._nodeTree$.value);
-    
+
     this._eventBus.emit({ name: AppEvents.NODE_ADDED });
 
     if (newNodeName === QueryNodeData.Filter.NodeName) {
@@ -263,10 +263,10 @@ export class NodeTreeService {
     }
 
     this._selectedNode$.next(previousNode);
-    
+
     // Explicitly emit from nodeTree$ to ensure validation is updated after node removal
     this._nodeTree$.next(this._nodeTree$.value);
-    
+
     this._eventBus.emit({ name: AppEvents.NODE_REMOVED });
   }
 
@@ -324,26 +324,44 @@ export class NodeTreeService {
   clearNodeTree() {
     console.log('Clearing node tree and resetting validation');
     const nodeTree = this._nodeTree$.value;
-    
+
     // Cleanup current validation subscription
     if (this.validationSubscription) {
       this.validationSubscription.unsubscribe();
       this.validationSubscription = null;
     }
-    
+
     if (nodeTree && nodeTree.root) {
       // First signal that tree is being destroyed to complete any ongoing validations
       nodeTree.destroyed$.next();
       nodeTree.destroyed$.complete();
-      
+
       // Then clean up all nodes
       this.cleanupNodeAndChildren(nodeTree.root);
     }
 
     this._nodeTree$.next(null);
     this._selectedNode$.next(null);
-    
+
     // Don't set up validation here - it will be set up after the new tree is built
+  }
+
+  getPrimaryEntityName(): string {
+    const rootNode = this._nodeTree$.value.root;
+
+    const entityNode = rootNode.next;
+
+    if (!entityNode) {
+      return null;
+    }
+
+    const entityNameAttribute = entityNode.attributes$.value.find(attr => attr.editorName === AttributeNames.entityName);
+
+    if (!entityNameAttribute) {
+      return null;
+    }
+
+    return entityNameAttribute.value$.value;
   }
 
   getEntityAttributeMap(): EntityAttributeMap {
@@ -354,8 +372,8 @@ export class NodeTreeService {
       return map;
     }
 
-    this.traverseNodeTree(map, rootNode.next, { 
-      entityAlias: null, 
+    this.traverseNodeTree(map, rootNode.next, {
+      entityAlias: null,
       attributeData: [],
       isPrimaryEntity: true,
       primaryIdAttribute: null
@@ -402,13 +420,13 @@ export class NodeTreeService {
         const primaryIdAttribute = `${entityLogicalName}id`;
 
         if (!map[entityLogicalName]) {
-          map[entityLogicalName] = { 
-            entityAlias: null, 
+          map[entityLogicalName] = {
+            entityAlias: null,
             attributeData: [],
             // If this is the first entity in traversal, mark it as primary
-            isPrimaryEntity: queryNode.tagName === QueryNodeData.Entity.TagName && 
-                             !entityName && // No previous entity
-                             !queryNode.parent?.attributes$.value.some(a => a.editorName === AttributeNames.entityAlias), // Not an aliased entity
+            isPrimaryEntity: queryNode.tagName === QueryNodeData.Entity.TagName &&
+              !entityName && // No previous entity
+              !queryNode.parent?.attributes$.value.some(a => a.editorName === AttributeNames.entityAlias), // Not an aliased entity
             primaryIdAttribute: primaryIdAttribute
           };
         }
@@ -458,7 +476,7 @@ export class NodeTreeService {
     if (nextNode && nextNode.level > node.level) {
       this.cleanupNodeAndChildren(nextNode);
     }
-    
+
     // Don't complete the tree's destroyed$ subject here, as it would affect all validation
     // subscriptions. We only want to complete it when the entire tree is being destroyed.
   }

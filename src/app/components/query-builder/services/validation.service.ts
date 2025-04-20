@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, combineLatest, map, switchMap, shareReplay, catchError, takeUntil, tap, BehaviorSubject, first, delay, filter, merge, find, mergeMap, from } from 'rxjs';
+import { Observable, of, combineLatest, map, switchMap, shareReplay, catchError, takeUntil, BehaviorSubject } from 'rxjs';
 import { QueryNode } from '../models/query-node';
 import { NodeAttribute } from '../models/node-attribute';
 import { RequiredNodeValidatorService } from './attribute-services/validators/tree/required-node-validator.service';
@@ -130,7 +130,6 @@ export class ValidationService {
         const nodeValidatorResults$ = node.validatiors.validators.map(validator => {
             console.log(`Setting up node validator: ${validator.constructor.name} for ${node.nodeName}`);
             return validator.validate(node).pipe(
-                tap(result => console.log(`${validator.constructor.name} validation result for ${node.nodeName}:`, result)),
                 catchError(error => {
                     console.error(`Error in validator ${validator.constructor.name}:`, error);
                     return of({
@@ -160,8 +159,7 @@ export class ValidationService {
             map(([nodeValidation, attributeValidation]) => ({
                 isValid: nodeValidation.isValid && attributeValidation.isValid,
                 errors: [...nodeValidation.errors, ...attributeValidation.errors]
-            })),
-            tap(result => console.log(`Combined validation result for ${node.nodeName}:`, result)),
+            })),            
             catchError(error => {
                 console.error(`Node validation error for ${node.defaultNodeDisplayValue}:`, error);
                 return of(VALID_RESULT);

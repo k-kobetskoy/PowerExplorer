@@ -26,44 +26,47 @@
           <td mat-cell *matCellDef="let element" (click)="selectCell(element, $event)"
             [class.selected]="selectedOverflowCell === element && selectedColumn === column"
             [class.has-formatted-value]="hasFormattedValue(element, column)"
-            [class.empty-cell]="element[column] === null || element[column] === undefined"
-            [ngClass]="{ 
-              'null-value': (element[column] === null || element[column] === undefined) && column !== '__entity_url',
-              'number-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'number-cell',
-              'boolean-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'boolean-cell',
-              'date-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'date-cell',
-              'lookup-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'lookup-cell',
-              'lookup-cell-formatted': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'lookup-cell' && showFormattedValues,
-              'lookup-cell-raw': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'lookup-cell' && !showFormattedValues,
-              'uniqueidentifier-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'uniqueidentifier-cell',
-              'picklist-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'picklist-cell',
-              'text-cell': column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'text-cell',
-              'link-cell': column === '__entity_url' || (column !== 'No.' && element[column] !== null && element[column] !== undefined && getCellClass(column) === 'link-cell')
-            }" #cell>
+            [class.empty-cell]="!element[column] || (column !== 'No.' && element[column]?.attributeRawValue === '')"
+            [ngClass]="getCellClass(column)">
 
-            <!-- Special rendering for dynamic links in either view -->
+            <!-- Special rendering for entity URL links -->
             <ng-container *ngIf="column === '__entity_url'; else normalCell">
               <a *ngIf="element[column]?.url" [href]="element[column].url" target="_blank" rel="noopener"
                 class="dynamics-link" title="Open record in Dynamics">
                 🔗
               </a>
-              <span *ngIf="!element[column]?.url" class="null-value">null</span>
+              <span *ngIf="!element[column]?.url" class="null-value">-</span>
             </ng-container>
 
             <!-- Regular cell rendering -->
             <ng-template #normalCell>
-              <ng-container
-                *ngIf="getFieldType(column) === 'dynamicslink' && element[column] && element[column].url; else defaultCell">
-                <a [href]="element[column].url" target="_blank" rel="noopener"
-                  [ngClass]="{'dynamics-link': true, 'raw-link': element[column].isRawView}">
-                  {{element[column].text || '🔗'}}
-                </a>
+              <!-- No. column is handled differently -->
+              <ng-container *ngIf="column === 'No.'; else attributeCell">
+                <span [innerHTML]="formatCellValue(element, column)"></span>
               </ng-container>
-
-              <!-- Default cell rendering -->
-              <ng-template #defaultCell>
-                <span *ngIf="element[column] === null || element[column] === undefined" class="null-value">null</span>
-                <span *ngIf="element[column] !== null && element[column] !== undefined">{{formatCellValue(element[column], column)}}</span>
+              
+              <!-- Attribute cell with special handling -->
+              <ng-template #attributeCell>
+                <ng-container *ngIf="element[column]; else emptyCellTpl">
+                  <!-- Handle lookup fields with links -->
+                  <ng-container *ngIf="element[column].link; else regularValueTpl">
+                    <a [href]="element[column].link" target="_blank" rel="noopener" class="dynamics-link">
+                      {{showFormattedValues && element[column].attributeFormattedValue ? 
+                        element[column].attributeFormattedValue : element[column].attributeRawValue}}
+                    </a>
+                  </ng-container>
+                  
+                  <!-- Regular data display -->
+                  <ng-template #regularValueTpl>
+                    <span>{{showFormattedValues && element[column].attributeFormattedValue ? 
+                      element[column].attributeFormattedValue : element[column].attributeRawValue}}</span>
+                  </ng-template>
+                </ng-container>
+                
+                <!-- Empty cell placeholder -->
+                <ng-template #emptyCellTpl>
+                  <span class="null-value">-</span>
+                </ng-template>
               </ng-template>
             </ng-template>
           </td>

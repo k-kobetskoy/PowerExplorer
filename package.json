@@ -1,12 +1,17 @@
 {
-  "name": "power-suite-app",
+  "name": "power-explorer",
   "version": "0.0.0",
+  "engines": {
+    "node": ">=20.11.1"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration=production && node config-env.js",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "dev": "ng build --configuration=development && node config-env.js && ng serve --configuration=development"
   },
   "private": true,
   "dependencies": {
@@ -42,6 +47,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "readdirp": "^4.1.2",
     "typescript": "~5.4.5"
   }
 }

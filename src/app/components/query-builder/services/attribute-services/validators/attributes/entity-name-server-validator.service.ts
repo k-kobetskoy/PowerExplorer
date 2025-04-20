@@ -42,8 +42,7 @@ export class EntityNameServerValidatorService implements IAttributeValidator {
       shareReplay({
         refCount: true,
         bufferSize: 1,
-      }),
-      tap(result=> console.log(`Entity name server validation result`, result))
+      })
     );
   }
 }

@@ -1,6 +1,6 @@
 import { LocalStorageService } from '../../../../services/data-sorage/local-storage.service';
 import { Inject, Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
 import { GlobalDiscoInstancesResponseModel } from 'src/app/models/incoming/global-disco/global-disco-instances-response-model';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { HttpClient } from '@angular/common/http';
@@ -8,7 +8,7 @@ import { CacheStorageService } from '../../../../services/data-sorage/cache-stor
 import { API_ENDPOINTS } from 'src/app/config/api-endpoints';
 import { CacheKeys } from 'src/app/config/cache-keys';
 import { AuthService } from '../../../../services/auth.service';
-import { ACTIVE_ENVIRONMENT_URL } from 'src/app/models/tokens';
+import { ACTIVE_ENVIRONMENT_URL, ACTIVE_ENVIRONMENT_BROWSER_URL } from 'src/app/models/tokens';
 import { Constants } from 'src/app/config/constants';
 
 
@@ -16,12 +16,13 @@ import { Constants } from 'src/app/config/constants';
 export class EnvironmentEntityService {
 
   constructor(
-
     private _httpClient: HttpClient,
     private _cacheService: CacheStorageService,
     private _authService: AuthService,
     private _localStorageService: LocalStorageService,
-    @Inject(ACTIVE_ENVIRONMENT_URL) private _activeEnvironmentUrl: BehaviorSubject<string>) {
+    @Inject(ACTIVE_ENVIRONMENT_URL) private _activeEnvironmentUrl: BehaviorSubject<string>,
+    @Inject(ACTIVE_ENVIRONMENT_BROWSER_URL) private _activeEnvironmentBrowserUrl: BehaviorSubject<string>
+  ) {
   }
   getEnvironments(): Observable<EnvironmentModel[]> {
     let environments$ = this._cacheService.getItem<EnvironmentModel[]>(CacheKeys.AvailableEnvironments);
@@ -30,7 +31,7 @@ export class EnvironmentEntityService {
       return environments$.asObservable();
     }
 
-    const url = API_ENDPOINTS.environments.getResourceUrl();    
+    const url = API_ENDPOINTS.environments.getResourceUrl();
 
     return this._httpClient.get<GlobalDiscoInstancesResponseModel>(url)
       .pipe(
@@ -48,25 +49,30 @@ export class EnvironmentEntityService {
   }
 
   getActiveEnvironment(): Observable<EnvironmentModel> {
-    if(!this._authService.userIsLoggedIn) {
-      return of(null)
-    }
+    return this._authService.userIsLoggedIn$.pipe(
+      switchMap(isLoggedIn => {
+        if (!isLoggedIn) {
+          return of(null)
+        }
 
-    let activeEnvironment$ = this._cacheService.getItem<EnvironmentModel>(CacheKeys.ActiveEnvironment);
+        let activeEnvironment$ = this._cacheService.getItem<EnvironmentModel>(CacheKeys.ActiveEnvironment);
 
-    if (!activeEnvironment$.value) {
-      let activeEnvironment = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)?.length > 0
-        ? <EnvironmentModel>this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)[0]
-        : null;
+        if (!activeEnvironment$.value) {
+          let activeEnvironment = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)?.length > 0
+            ? <EnvironmentModel>this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)[0]
+            : null;
 
-      if (activeEnvironment) {
-        activeEnvironment$.next(activeEnvironment);
-        this._activeEnvironmentUrl.next(activeEnvironment.apiUrl);
-        this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
-      }
-    }
+          if (activeEnvironment) {
+            activeEnvironment$.next(activeEnvironment);
+            this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
+          }
+        }
 
-    return activeEnvironment$.asObservable();
+        return activeEnvironment$.asObservable();
+      }), tap(environment => {
+        this._activeEnvironmentUrl.next(environment.apiUrl);
+        this._activeEnvironmentBrowserUrl.next(environment.url);
+      }))
   }
 
   private _setEnvironment(environment: EnvironmentModel) {
@@ -101,5 +107,14 @@ export class EnvironmentEntityService {
       : environments.splice(0, 1, environment);
 
     this._localStorageService.setItem<EnvironmentModel[]>(environments, CacheKeys.RecentActiveEnvironments);
+  }
+
+  logout(): void {
+    // Clear active environment from cache
+    this._cacheService.removeItem(CacheKeys.ActiveEnvironment);
+    // Clear active environment URL
+    this._activeEnvironmentUrl.next('');
+    // Clear available environments from cache
+    this._cacheService.removeItem(CacheKeys.AvailableEnvironments);
   }
 }
