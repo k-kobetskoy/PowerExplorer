@@ -29,6 +29,8 @@ export interface AttributeMapResult {
 
 @Injectable({ providedIn: 'root' })
 export class AttributeEntityService extends BaseRequestService {
+  // Map to store in-flight requests to prevent duplicates
+  private inFlightRequests: { [key: string]: Observable<AttributeModel[]> } = {};
 
   constructor() {
     super();
@@ -67,9 +69,10 @@ export class AttributeEntityService extends BaseRequestService {
 
         const normalizedEntityName = entityLogicalName.trim().toLowerCase();
         const cacheKey = `${this.prepareEnvUrl(envUrl)}_${CacheKeys.EntityAttributes}_${normalizedEntityName}`;
-        const attributes$ = this.cacheService.getItem<AttributeModel[]>(cacheKey);
-
-        if (attributes$.value) {
+        
+        // Check if we already have cached data
+        const cachedAttributes = this.cacheService.getItem<AttributeModel[]>(cacheKey);
+        if (cachedAttributes.value) {
           if (isLoading) {
             if (isToAttribute) {
               this.getToAttributesIsLoading$.next(false);
@@ -79,12 +82,33 @@ export class AttributeEntityService extends BaseRequestService {
               this.getAttributesIsLoading$.next(false);
             }
           }
-          return attributes$.asObservable();
+          return cachedAttributes.asObservable();
         }
-
+        
+        // Check if we have an in-flight request
+        if (this.inFlightRequests[cacheKey]) {
+          if (isLoading) {
+            // Subscribe to the loading state of the in-flight request
+            this.inFlightRequests[cacheKey].subscribe({
+              complete: () => {
+                if (isToAttribute) {
+                  this.getToAttributesIsLoading$.next(false);
+                } else if (isFromAttribute) {
+                  this.getFromAttributesIsLoading$.next(false);
+                } else {
+                  this.getAttributesIsLoading$.next(false);
+                }
+              }
+            });
+          }
+          return this.inFlightRequests[cacheKey];
+        }
+        
+        console.log("cache miss", cacheKey);
         const url = API_ENDPOINTS.attributes.getResourceUrl(envUrl, entityLogicalName);
-
-        return this.httpClient.get<AttributeResponseModel>(url).pipe(
+        
+        // Create the API request observable
+        const request$ = this.httpClient.get<AttributeResponseModel>(url).pipe(
           map(({ value }) => value.map(({
             LogicalName: logicalName,
             DisplayName: { UserLocalizedLabel } = {},
@@ -94,7 +118,12 @@ export class AttributeEntityService extends BaseRequestService {
             displayName: UserLocalizedLabel ? UserLocalizedLabel.Label : '',
             attributeType
           }))),
-          tap(data => { this.cacheService.setItem(data, cacheKey); console.log('AttributeEntityService: getAttributes()', data) }),
+          tap(data => { 
+            this.cacheService.setItem(data, cacheKey); 
+            console.log('AttributeEntityService: getAttributes()', data);
+            // Remove from in-flight requests
+            delete this.inFlightRequests[cacheKey];
+          }),
           tap(() => {
             if (isLoading) {
               if (isToAttribute) {
@@ -109,8 +138,21 @@ export class AttributeEntityService extends BaseRequestService {
           tap(attributes => {
             console.log('AttributeEntityService: getAttributes()', attributes);
           }),
-          shareReplay(1)
+          // Use shareReplay to cache the result for the duration of the request
+          // and share it with all subscribers
+          shareReplay(1),
+          catchError(error => {
+            console.error(`Error fetching attributes for entity ${entityLogicalName}:`, error);
+            // Remove from in-flight requests on error
+            delete this.inFlightRequests[cacheKey];
+            return of([]);
+          })
         );
+        
+        // Store the request observable to avoid duplicate requests
+        this.inFlightRequests[cacheKey] = request$;
+        
+        return request$;
       }));
   }
 
