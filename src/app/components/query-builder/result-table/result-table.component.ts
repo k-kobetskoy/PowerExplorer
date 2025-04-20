@@ -12,6 +12,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { CacheStorageService } from '../../../services/data-sorage/cache-storage.service';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
     selector: 'app-result-table',
@@ -76,7 +77,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     private environmentService: EnvironmentEntityService,
     private nodeTreeService: NodeTreeService,
     private cacheStorageService: CacheStorageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private sanitizer: DomSanitizer
   ) {
     this.destroy$ = new Subject<void>();
   }
@@ -501,9 +503,20 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     }
   }
 
-  formatCellValue(row: any, columnName: string): string {
-    if (!this.resultData || !row || columnName === 'No.') {
+  formatCellValue(row: any, columnName: string): string | SafeHtml {
+    if (!this.resultData || !row) {
       return row ? row[columnName]?.toString() || '' : '';
+    }
+
+    // For row numbers with entity links
+    if (columnName === 'No.') {
+      const rowData = row['__rowData'];
+      if (rowData && rowData.dataverseRowLink) {
+        return this.sanitizer.bypassSecurityTrustHtml(
+          `<a href="${rowData.dataverseRowLink}" target="_blank" class="row-number-link">${row[columnName]}</a>`
+        );
+      }
+      return row[columnName]?.toString() || '';
     }
 
     // For attributes in the new format

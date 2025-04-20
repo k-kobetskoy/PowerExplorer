@@ -42,7 +42,7 @@
             <ng-template #normalCell>
               <!-- No. column is handled differently -->
               <ng-container *ngIf="column === 'No.'; else attributeCell">
-                <span>{{element[column]}}</span>
+                <span [innerHTML]="formatCellValue(element, column)"></span>
               </ng-container>
               
               <!-- Attribute cell with special handling -->
