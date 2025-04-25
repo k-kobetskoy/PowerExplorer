@@ -3,6 +3,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/dialog';
 import { AboutDialogComponent } from './about-dialog/about-dialog.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   standalone: true,
@@ -13,7 +14,10 @@ import { AboutDialogComponent } from './about-dialog/about-dialog.component';
 })
 export class SettingsComponent implements OnInit {
 
-constructor(private dialog: MatDialog) { }
+constructor(
+  private dialog: MatDialog,
+  private authService: AuthService
+) { }
 
 ngOnInit() {
 }
@@ -32,5 +36,10 @@ onAboutClick() {
   dialogConfig.disableClose = false;
   
   this.dialog.open(AboutDialogComponent, dialogConfig);
+}
+
+onLogoutClick() {
+  console.log('Logout clicked');
+  this.authService.logoutPopup();
 }
 } 
