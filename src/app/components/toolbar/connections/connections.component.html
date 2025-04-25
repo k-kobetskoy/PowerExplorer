@@ -1,5 +1,5 @@
 <div>
-  <a (click)="openDialog()" class="envName prevent-select">
+  <a (click)="openDesktopEnvironmentDialog()" class="envName prevent-select">
     <div class="env-info">
       <ng-container *ngIf="activeEnvironment$ | async as activeEnvironment; else noEnvironment">
         <p class="env-name">{{activeEnvironment.friendlyName}}</p>

@@ -1,0 +1,22 @@
+<div class="connections-desktop-container">
+  <div class="form-header">
+    <span class="form-header-text">Enter environment URL</span>
+  </div>
+  <div class="form-body">
+    <div class="form-flex">
+      <mat-form-field class="input-full-width">
+        <mat-label>Environment URL</mat-label>
+        <input type="text" matInput [formControl]="environmentUrlFormControl" placeholder="orgXXXXXXXX.crm4.dynamics.com">
+      </mat-form-field>
+
+      <mat-form-field class="input-full-width">
+        <mat-label>Environment Friendly Name</mat-label>
+        <input type="text" matInput [formControl]="environmentFriendlyNameFormControl" placeholder="My Environment">
+      </mat-form-field>
+
+
+    </div>
+  </div>
+  <button mat-flat-button color="primary" (click)="connectToEnvironment()" [disabled]="!environmentUrlFormControl.valid || environmentUrlFormControl.value.trim().length === 0 || !environmentFriendlyNameFormControl.valid">Connect</button>
+
+</div>

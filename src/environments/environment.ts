@@ -8,7 +8,7 @@ export const environment = {
         }
     },
     apiConfig: {
-        scopes: ['https://globaldisco.crm.dynamics.com/user_impersonation'],
-        uri: 'https://globaldisco.crm.dynamics.com/api/discovery/v2.0/Instances'
+        // scopes: ['https://globaldisco.crm.dynamics.com/user_impersonation'],
+        // uri: 'https://globaldisco.crm.dynamics.com/api/discovery/v2.0/Instances'
     }
   };
