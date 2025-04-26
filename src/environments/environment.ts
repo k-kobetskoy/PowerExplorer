@@ -4,11 +4,10 @@ export const environment = {
         auth: {
             // clientId: '69111799-c2ca-490f-929f-4e5ee63b9792',// powerexplorer.net
             clientId: '51f81489-12ee-4a9e-aaae-a2591f45987d', // Public Microsoft ID
-           // authority: 'https://login.microsoftonline.com/common/oauth2/authorize?resource=https://globaldisco.crm.dynamics.com'
+            
         }
     },
     apiConfig: {
-        // scopes: ['https://globaldisco.crm.dynamics.com/user_impersonation'],
-        // uri: 'https://globaldisco.crm.dynamics.com/api/discovery/v2.0/Instances'
+        
     }
   };

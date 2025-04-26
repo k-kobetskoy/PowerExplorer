@@ -40,41 +40,59 @@ interface MsalConfig {
   };
 }
 
+// Define the expected shape of our environment configuration
+interface EnvironmentConfig {
+  production: boolean;
+  msalConfig: {
+    auth: {
+      clientId: string;
+      authority?: string;
+    }
+  };
+  apiConfig: {
+    scopes?: string[];
+    uri?: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class EnvService {
   private readonly window: WindowConfig;
   private configuration$: Observable<MsalConfig> | null = null;
+  private env: EnvironmentConfig;
 
   constructor(private http: HttpClient) {
     this.window = window as unknown as WindowConfig;
+    this.env = environment as EnvironmentConfig;
   }
 
   get production(): boolean {
-    return environment.production;
+    return this.env.production;
   }
 
   get msalConfig(): any {
-    if (environment.production && this.window.config) {
+    if (this.env.production && this.window.config) {
       return {
         auth: {
-          clientId: this.window.config.CLIENT_ID || environment.msalConfig.auth.clientId,
-          authority: this.window.config.AUTHORITY_URL || environment.msalConfig.auth.authority
+          clientId: this.window.config.CLIENT_ID || (this.env.msalConfig?.auth?.clientId || ''),
+          authority: this.window.config.AUTHORITY_URL || (this.env.msalConfig?.auth?.authority || '')
         }
       };
     }
-    return environment.msalConfig;
+    return this.env.msalConfig || { auth: { clientId: '', authority: '' } };
   }
 
   get apiConfig(): any {
-    if (environment.production && this.window.config) {
+    if (this.env.production && this.window.config) {
+      const scopes = this.env.apiConfig?.scopes || [];
       return {
-        scopes: [this.window.config.API_SCOPES || environment.apiConfig.scopes[0]],
-        uri: this.window.config.API_URI || environment.apiConfig.uri
+        scopes: [this.window.config.API_SCOPES || (scopes[0] || '')],
+        uri: this.window.config.API_URI || (this.env.apiConfig?.uri || '')
       };
     }
-    return environment.apiConfig;
+    return this.env.apiConfig || { scopes: [''], uri: '' };
   }
 
   /**
