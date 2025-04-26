@@ -10,6 +10,7 @@ import { EnvironmentEntityService } from 'src/app/components/query-builder/servi
 import { MatRippleModule } from '@angular/material/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { ConnectionsDesktopComponent } from './connections-desktop/connections-desktop.component';
 
 @Component({
   standalone: true,
@@ -24,12 +25,9 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class ConnectionsComponent implements OnInit, OnDestroy {
 
-  subs: Subscription[] = []
-
   @Output() onEnvironmentConnection = new EventEmitter<EnvironmentModel>()
   activeEnvironment$: Observable<EnvironmentModel>
-
-  rippleColor: string = '#4b4b4b';
+  private subscriptions: Subscription = new Subscription();
 
   constructor(private dialog: MatDialog,
     private _authService: AuthService,
@@ -37,15 +35,35 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
     private _eventBus: EventBusService) { }
 
   ngOnInit() {
+    this.refreshActiveEnvironment();
+    
+    const envChangeSub = this._eventBus.on(AppEvents.ENVIRONMENT_CHANGED, () => {
+      console.log('ConnectionsComponent: Environment changed event received');
+      this.refreshActiveEnvironment();
+    });
+    
+    this.subscriptions.add(envChangeSub);
+  }
+
+  private refreshActiveEnvironment() {
+    console.log('ConnectionsComponent: Refreshing active environment');
     this.activeEnvironment$ = this._environmentEntityService.getActiveEnvironment();
+  }
+
+  openDesktopEnvironmentDialog(){
+    this.dialog.open(ConnectionsDesktopComponent, {
+      height: '340px',
+      width: '400px',
+    })
   }
 
   openDialog() {
     if (!this._authService.userIsLoggedIn) {
       this._authService.loginPopup()
-      this._eventBus.on(AppEvents.LOGIN_SUCCESS, () => {
+      const loginSub = this._eventBus.on(AppEvents.LOGIN_SUCCESS, () => {
         this.createDialog()
       })
+      this.subscriptions.add(loginSub);
     } else {
       this.createDialog()
     }
@@ -59,8 +77,8 @@ export class ConnectionsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subs.forEach(subscription => {
-      subscription.unsubscribe
-    })
+    if (this.subscriptions) {
+      this.subscriptions.unsubscribe();
+    }
   }
 }

@@ -4,7 +4,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/dialog';
 import { AboutDialogComponent } from './about-dialog/about-dialog.component';
 import { AuthService } from '../../../services/auth.service';
-import { EnvironmentEntityService } from '../../query-builder/services/entity-services/environment-entity.service';
 
 @Component({
   standalone: true,
@@ -15,28 +14,32 @@ import { EnvironmentEntityService } from '../../query-builder/services/entity-se
 })
 export class SettingsComponent implements OnInit {
 
-  constructor(
-    private dialog: MatDialog,
-    private authService: AuthService,
-    private environmentService: EnvironmentEntityService
-  ) { }
+constructor(
+  private dialog: MatDialog,
+  private authService: AuthService
+) { }
 
-  ngOnInit() {
-  }
+ngOnInit() {
+}
 
-  onAboutClick() {
-    console.log('About clicked');
-    
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.width = '980px';
-    dialogConfig.height = '610px';
-    dialogConfig.disableClose = false;
-    
-    this.dialog.open(AboutDialogComponent, dialogConfig);
-  }
+// openSettings() {
+//   // Menu now handled by mat-menu directive
+//   console.log('Settings clicked');
+// }
 
-  onLogoutClick(): void {
-    this.environmentService.logout();
-    this.authService.logoutPopup();
-  }
+onAboutClick() {
+  console.log('About clicked');
+  
+  const dialogConfig = new MatDialogConfig();
+  dialogConfig.width = '980px';
+  dialogConfig.height = '610px';
+  dialogConfig.disableClose = false;
+  
+  this.dialog.open(AboutDialogComponent, dialogConfig);
+}
+
+onLogoutClick() {
+  console.log('Logout clicked');
+  this.authService.logout();
+}
 } 

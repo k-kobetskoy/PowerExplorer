@@ -1,6 +1,6 @@
 import { LocalStorageService } from '../../../../services/data-sorage/local-storage.service';
 import { Inject, Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, map, of, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, Observable, filter, map, of, switchMap, take, tap } from 'rxjs';
 import { GlobalDiscoInstancesResponseModel } from 'src/app/models/incoming/global-disco/global-disco-instances-response-model';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { HttpClient } from '@angular/common/http';
@@ -50,13 +50,13 @@ export class EnvironmentEntityService {
 
   getActiveEnvironment(): Observable<EnvironmentModel> {
     return this._authService.userIsLoggedIn$.pipe(
-      switchMap(isLoggedIn => {
-        if (!isLoggedIn) {
+      switchMap(userIsLoggedIn => {
+        if (!userIsLoggedIn) {
           return of(null)
         }
-
         let activeEnvironment$ = this._cacheService.getItem<EnvironmentModel>(CacheKeys.ActiveEnvironment);
 
+        // If no active environment in cache, try to get from local storage
         if (!activeEnvironment$.value) {
           let activeEnvironment = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)?.length > 0
             ? <EnvironmentModel>this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments)[0]
@@ -64,29 +64,41 @@ export class EnvironmentEntityService {
 
           if (activeEnvironment) {
             activeEnvironment$.next(activeEnvironment);
+            this._activeEnvironmentUrl.next(activeEnvironment.apiUrl);
+
             this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
           }
         }
 
         return activeEnvironment$.asObservable();
-      }), tap(environment => {
-        this._activeEnvironmentUrl.next(environment.apiUrl);
-        this._activeEnvironmentBrowserUrl.next(environment.url);
-      }))
+      }),
+    )
   }
 
+
   private _setEnvironment(environment: EnvironmentModel) {
-    this._authService.addProtectedResourceToInterceptorConfig(environment.apiUrl);
+    console.log('_setEnvironment: Setting environment', environment, 'User logged in:', this._authService.userIsLoggedIn);
+
+    // Only configure interceptor if user is logged in
+    if (this._authService.userIsLoggedIn && environment.apiUrl) {
+      this._authService.addProtectedResourceToInterceptorConfig(environment.apiUrl);
+    }
+
+    // Always update the cache and activeEnvironmentUrl
     this._cacheService.setItem(environment, CacheKeys.ActiveEnvironment);
-    this._activeEnvironmentUrl.next(environment.apiUrl);
+
+    if (environment && environment.apiUrl) {
+      console.log('Updating active environment URL to:', environment.apiUrl);
+      this._activeEnvironmentUrl.next(environment.apiUrl);
+    }
 
     let environments = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments);
 
     if (environments) {
       this._handleExistingRecentActiveEnvironments(environments, environment);
+    } else {
+      this._localStorageService.setItem<EnvironmentModel[]>([environment], CacheKeys.RecentActiveEnvironments);
     }
-
-    this._localStorageService.setItem<EnvironmentModel[]>([environment], CacheKeys.RecentActiveEnvironments);
   }
 
   private _handleExistingRecentActiveEnvironments(environments: EnvironmentModel[], environment: EnvironmentModel) {

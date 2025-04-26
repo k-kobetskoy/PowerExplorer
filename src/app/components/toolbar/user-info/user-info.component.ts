@@ -24,7 +24,7 @@ export class UserInfoComponent implements OnInit {
 
 
   logOut() {
-    this.authService.logoutPopup()
+    this.authService.logout()
   }
 
 

@@ -1,9 +1,7 @@
 {
   "name": "power-explorer",
   "version": "0.0.0",
-  "engines": {
-    "node": ">=20.11.1"
-  },
+  "main": "electron/main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -11,7 +9,12 @@
     "build:prod": "ng build --configuration=production && node config-env.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "dev": "ng build --configuration=development && node config-env.js && ng serve --configuration=development"
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm run start\" \"wait-on http://localhost:4200 && set ELECTRON_START_URL=http://localhost:4200 && electron .\"",
+    "electron-build": "ng build --configuration production && electron .",
+    "package": "electron-builder build --win --publish never",
+    "package-mac": "electron-builder build --mac --publish never",
+    "package-linux": "electron-builder build --linux --publish never"
   },
   "private": true,
   "dependencies": {
@@ -25,8 +28,6 @@
     "@angular/platform-browser": "^18.2.13",
     "@angular/platform-browser-dynamic": "^18.2.13",
     "@angular/router": "^18.2.13",
-    "@azure/msal-angular": "^3.0.13",
-    "@azure/msal-browser": "^3.10.0",
     "@codemirror/lang-xml": "^6.1.0",
     "@codemirror/lint": "github:codemirror/lint",
     "@codemirror/theme-one-dark": "^6.1.2",
@@ -41,13 +42,45 @@
     "@angular/cli": "^18.2.16",
     "@angular/compiler-cli": "^18.2.13",
     "@types/jasmine": "~4.3.0",
+    "concurrently": "^8.2.2",
+    "electron": "^30.0.5",
+    "electron-builder": "^24.13.3",
     "jasmine-core": "~4.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "readdirp": "^4.1.2",
-    "typescript": "~5.4.5"
+    "typescript": "~5.4.5",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.powerexplorer.app",
+    "productName": "Power Explorer",
+    "directories": {
+      "output": "release/"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/assets/icons/icon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "src/assets/icons/icon.icns"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "src/assets/icons/icon.png"
+    }
   }
 }

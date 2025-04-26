@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, OnInit } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { EnvironmentModel } from '../models/environment-model';
 import { UrlRouteParams } from '../config/url-route-params';
@@ -7,25 +7,24 @@ import { Subscription } from 'rxjs';
 import { EnvironmentEntityService } from '../components/query-builder/services/entity-services/environment-entity.service';
 
 @Injectable({ providedIn: 'root' })
-export class NavigationService implements OnInit, OnDestroy {
+export class NavigationService implements OnDestroy {
 
-  subscription: Subscription
+  private subscription: Subscription = new Subscription();
 
   constructor(
     private _router: Router,
     private _route: ActivatedRoute,
     private _authService: AuthService,
-    private _environmentEntityService: EnvironmentEntityService) { }
-
-  ngOnInit(): void {
-    this.addActiveEnvironmentToInterceptorConfig()
-    console.warn('Navigation service initialized')
+    private _environmentEntityService: EnvironmentEntityService) {
+    
+    this.addActiveEnvironmentToInterceptorConfig();
+    console.warn('Navigation service initialized');
   }
 
   navigateToEnv(selectedEnv: EnvironmentModel) {
-    this._environmentEntityService.setActiveEnvironment(selectedEnv)
+    this._environmentEntityService.setActiveEnvironment(selectedEnv);
 
-    let envParam = selectedEnv.url.slice(8)
+    let envParam = selectedEnv.url.slice(8);
 
     let urlTree = this._router.parseUrl(this._router.url);
     urlTree.queryParams[UrlRouteParams.environment] = envParam;
@@ -34,84 +33,83 @@ export class NavigationService implements OnInit, OnDestroy {
   }
 
   handleUrlParamOnComponentInit(componentPath: string) {
+    const currentEnvironmentUrl = this.getCurrentEnvironmentUrl();
+    const userIsLoggedIn = this._authService.userIsLoggedIn;
 
-    const currentEnvironmentUrl = this.getCurrentEnvironmentUrl()
-    const userIsLoggedIn = this._authService.userIsLoggedIn
-
-    this._environmentEntityService.getActiveEnvironment().subscribe(activatedEnvironment => {
+    const envSub = this._environmentEntityService.getActiveEnvironment().subscribe(activatedEnvironment => {
       if (currentEnvironmentUrl) {
-        this.handleExistingRouteParam(currentEnvironmentUrl, userIsLoggedIn, activatedEnvironment)
+        this.handleExistingRouteParam(currentEnvironmentUrl, userIsLoggedIn, activatedEnvironment);
       } else {
-        this.handleEmptyRouteParam(componentPath, userIsLoggedIn, activatedEnvironment)
+        this.handleEmptyRouteParam(componentPath, userIsLoggedIn, activatedEnvironment);
       }
-    })
+    });
+    
+    this.subscription.add(envSub);
   }
 
   private handleExistingRouteParam(currentEnvironmentUrl: string, userIsLoggedIn: boolean, activatedEnvironment: EnvironmentModel) {
-
-    console.log('currentEnvironmentUrl', currentEnvironmentUrl, 'activatedEnvironment', activatedEnvironment.url, 'userIsLoggedIn', userIsLoggedIn)
-
     if (userIsLoggedIn) {
       if (currentEnvironmentUrl === activatedEnvironment.url) {
-        return
+        return;
       } else {
-        this.findEnvironmentInUsersEnvironmentsAndConnect(activatedEnvironment.url)
+        this.findEnvironmentInUsersEnvironmentsAndConnect(activatedEnvironment.url);
       }
     } else {
-      this.findEnvironmentInUsersEnvironmentsAndConnect(activatedEnvironment.url)
+      this.findEnvironmentInUsersEnvironmentsAndConnect(activatedEnvironment.url);
     }
   }
 
   private handleEmptyRouteParam(componentPath: string, userIsLoggedIn: boolean, activatedEnvironment: EnvironmentModel) {
-
-    console.log('activatedEnvironment', activatedEnvironment, 'userIsLoggedIn', userIsLoggedIn, 'componentPath', componentPath)
-
     if (userIsLoggedIn) {
       if (activatedEnvironment) {
-        const queryParams: Params = { [UrlRouteParams.environment]: activatedEnvironment.url.slice(8) }
+        const queryParams: Params = { [UrlRouteParams.environment]: activatedEnvironment.url.slice(8) };
         this._router.navigate(
           [componentPath],
           { queryParams }
-        )
+        );
       } else {
-        return
+        return;
       }
     }
-    return
+    return;
   }
 
   private findEnvironmentInUsersEnvironmentsAndConnect(urlParam: string) {
-    this._environmentEntityService.getEnvironments()
+    const envSub = this._environmentEntityService.getEnvironments()
       .subscribe(environments => {
         if (environments) {
-          let matchingEnvironment = environments.find(item => item.url === urlParam)
-          this._environmentEntityService.setActiveEnvironment(matchingEnvironment)
+          let matchingEnvironment = environments.find(item => item.url === urlParam);
+          this._environmentEntityService.setActiveEnvironment(matchingEnvironment);
         } else {
-          this._router.navigateByUrl('**')
+          this._router.navigateByUrl('**');
         }
-      })
+      });
+    
+    this.subscription.add(envSub);
   }
-
 
   getCurrentEnvironmentUrl(): string {
-    const param = this._route.snapshot.paramMap.get(UrlRouteParams.environment)
+    const param = this._route.snapshot.paramMap.get(UrlRouteParams.environment);
 
-    return param ? `https://${param}` : null
+    return param ? `https://${param}` : null;
   }
 
-
   addActiveEnvironmentToInterceptorConfig() {
-    this._environmentEntityService.getActiveEnvironment().subscribe(env => {
-      this._authService.addProtectedResourceToInterceptorConfig(env.apiUrl)
-      this._authService.checkProtectedResource()
-    }
-    )
+    const envSub = this._environmentEntityService.getActiveEnvironment().subscribe(env => {
+      if (env) {
+        this._authService.addProtectedResourceToInterceptorConfig(env.apiUrl);
+        this._authService.checkProtectedResource();
+      }
+    });
+    
+    this.subscription.add(envSub);
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe()
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
   }
-
 }
 
 

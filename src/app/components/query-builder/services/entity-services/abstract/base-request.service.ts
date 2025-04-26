@@ -19,7 +19,6 @@ export abstract class BaseRequestService {
         this.activeEnvironmentUrl$ = this.activeEnvironmentUrlSubject$?.value
             ? this.activeEnvironmentUrlSubject$.asObservable()
             : this.environmentService.getActiveEnvironment().pipe(
-                distinctUntilChanged((prev, curr) => prev.apiUrl === curr.apiUrl),
                 map(env => env?.apiUrl),
                 shareReplay({ bufferSize: 1, refCount: true })
             );
