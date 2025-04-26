@@ -13,6 +13,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { CacheStorageService } from '../../../services/data-sorage/cache-storage.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { ExternalLinkService } from '../../../services/external-link.service';
 
 @Component({
     selector: 'app-result-table',
@@ -71,6 +72,9 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
   // Add destroy$ Subject
   private destroy$ = new Subject<void>();
+  
+  // Store reference to the event listener
+  private externalLinkEventListener: EventListener;
 
   constructor(
     private xmlExecutor: XmlExecutorService,
@@ -78,7 +82,8 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     private nodeTreeService: NodeTreeService,
     private cacheStorageService: CacheStorageService,
     private cdr: ChangeDetectorRef,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private externalLinkService: ExternalLinkService
   ) {
     this.destroy$ = new Subject<void>();
   }
@@ -87,6 +92,16 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Check the initial loading state
     this.isLoading = this.xmlExecutor.isLoading();
+    
+    // Create and store event listener
+    this.externalLinkEventListener = ((event: CustomEvent) => {
+      if (event.detail) {
+        this.openExternalLink(event.detail);
+      }
+    }) as EventListener;
+    
+    // Add event listener for external links
+    window.addEventListener('openExternalLink', this.externalLinkEventListener);
     
     // Subscribe to our local result observable instead of cache service
     this.resultSubscription = this.mostRecentResult
@@ -192,6 +207,9 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    // Remove event listener using the stored reference
+    window.removeEventListener('openExternalLink', this.externalLinkEventListener);
+    
     if (this.environmentSubscription) {
       this.environmentSubscription.unsubscribe();
     }
@@ -512,8 +530,9 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     if (columnName === 'No.') {
       const rowData = row['__rowData'];
       if (rowData && rowData.dataverseRowLink) {
+        // Return a custom link that uses our externalLinkService
         return this.sanitizer.bypassSecurityTrustHtml(
-          `<a href="${rowData.dataverseRowLink}" target="_blank" class="row-number-link">${row[columnName]}</a>`
+          `<a href="javascript:void(0)" onclick="window.dispatchEvent(new CustomEvent('openExternalLink', { detail: '${rowData.dataverseRowLink}' }))" class="row-number-link">${row[columnName]}</a>`
         );
       }
       return row[columnName]?.toString() || '';
@@ -723,5 +742,12 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           console.error('Error in direct execution with provided data:', error);
         }
       );
+  }
+
+  // Add a method to handle external link clicks
+  openExternalLink(url: string): void {
+    if (url) {
+      this.externalLinkService.openExternalLink(url);
+    }
   }
 }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const url = require('url');
 const fs = require('fs');
@@ -7,11 +7,15 @@ const AuthHandler = require('./auth-handler');
 let mainWindow;
 let authHandler;
 
+// Disable Electron security warnings (doesn't affect security, just the console warnings)
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+
 // Check if the build file exists
 function getBuildPath() {
   // Try multiple possible build paths with the correct one first
   const possiblePaths = [
-    path.join(__dirname, '../dist/power-suite-app/index.html'),  // This should be the correct path
+    path.join(__dirname, '../dist/power-explorer/index.html'),  // This should be the correct path based on latest build
+    path.join(__dirname, '../dist/power-suite-app/index.html'),
     path.join(__dirname, '../dist/PowerExplorer/index.html'),
     path.join(__dirname, '../dist/power-explorer/index.html'),
     path.join(__dirname, '../dist/browser/index.html'),
@@ -112,6 +116,22 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   }
 
+  // Handle external links - open in default browser
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // Open URLs in the user's browser
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  // Also handle regular anchor links with target="_blank"
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    // Only handle external URLs, not app navigation
+    if (!url.startsWith('file:')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
+
   // Initialize authentication handler
   console.log('[MAIN] Initializing authentication handler');
   authHandler = new AuthHandler(mainWindow);
@@ -168,4 +188,24 @@ app.on('activate', function () {
 // Handle IPC messages from renderer process
 ipcMain.on('app-ready', (event) => {
   console.log('[MAIN] App is ready in renderer process');
+});
+
+// Add IPC handler for opening external links
+ipcMain.handle('open-external', async (_, url) => {
+  if (url) {
+    return shell.openExternal(url);
+  }
+  return false;
+});
+
+// Prevent default browser behavior
+app.on('web-contents-created', (event, contents) => {
+  contents.on('will-navigate', (event, navigationUrl) => {
+    // Prevent navigation from within the app to external sites
+    const parsedUrl = new URL(navigationUrl);
+    if (!parsedUrl.protocol.includes('file:')) {
+      event.preventDefault();
+      shell.openExternal(navigationUrl);
+    }
+  });
 }); 

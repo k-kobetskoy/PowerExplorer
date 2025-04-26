@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld(
       logout: () => ipcRenderer.invoke('logout'),
       setEnvironmentUrl: (environmentUrl) => ipcRenderer.invoke('setEnvironmentUrl', environmentUrl)
     },
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
     isElectron: true
   }
 ); 

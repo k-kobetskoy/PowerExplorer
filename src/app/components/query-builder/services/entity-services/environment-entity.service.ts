@@ -65,6 +65,7 @@ export class EnvironmentEntityService {
           if (activeEnvironment) {
             activeEnvironment$.next(activeEnvironment);
             this._activeEnvironmentUrl.next(activeEnvironment.apiUrl);
+            this._activeEnvironmentBrowserUrl.next(activeEnvironment.url);
 
             this._authService.addProtectedResourceToInterceptorConfig(activeEnvironment.apiUrl);
           }
@@ -90,6 +91,7 @@ export class EnvironmentEntityService {
     if (environment && environment.apiUrl) {
       console.log('Updating active environment URL to:', environment.apiUrl);
       this._activeEnvironmentUrl.next(environment.apiUrl);
+      this._activeEnvironmentBrowserUrl.next(environment.url);
     }
 
     let environments = this._localStorageService.getItem<EnvironmentModel[]>(CacheKeys.RecentActiveEnvironments);

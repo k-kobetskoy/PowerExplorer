@@ -31,7 +31,7 @@
 
             <!-- Special rendering for entity URL links -->
             <ng-container *ngIf="column === '__entity_url'; else normalCell">
-              <a *ngIf="element[column]?.url" [href]="element[column].url" target="_blank" rel="noopener"
+              <a *ngIf="element[column]?.url" href="javascript:void(0)" (click)="openExternalLink(element[column].url)"
                 class="dynamics-link" title="Open record in Dynamics">
                 🔗
               </a>
@@ -50,7 +50,7 @@
                 <ng-container *ngIf="element[column]; else emptyCellTpl">
                   <!-- Handle lookup fields with links -->
                   <ng-container *ngIf="element[column].link; else regularValueTpl">
-                    <a [href]="element[column].link" target="_blank" rel="noopener" class="dynamics-link">
+                    <a href="javascript:void(0)" (click)="openExternalLink(element[column].link)" class="dynamics-link">
                       {{showFormattedValues && element[column].attributeFormattedValue ? 
                         element[column].attributeFormattedValue : element[column].attributeRawValue}}
                     </a>

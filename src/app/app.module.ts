@@ -8,6 +8,7 @@ import { MainToolbarComponent } from './components/toolbar/main-toolbar/main-too
 import { MenuComponent } from './components/toolbar/menu/menu.component';
 import { UserInfoComponent } from './components/toolbar/user-info/user-info.component';
 import { NodeStyleDirective } from './directives/node-style.directive';
+import { ExternalLinkDirective } from './directives/external-link.directive';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ValidationService } from './components/query-builder/services/validation.service';
 import { ErrorDialogComponent } from './components/error-dialog/error-dialog.component';
@@ -44,6 +45,7 @@ const isElectron = window && window['electron'] !== undefined;
     MenuComponent,
     UserInfoComponent,
     NodeStyleDirective,
+    ExternalLinkDirective,
     ErrorDialogComponent,
   ],
   imports: [

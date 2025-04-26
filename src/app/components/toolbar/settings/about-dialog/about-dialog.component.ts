@@ -3,6 +3,7 @@ import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
+import { ExternalLinkService } from '../../../../services/external-link.service';
 
 @Component({
   standalone: true,
@@ -12,9 +13,16 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./about-dialog.component.css']
 })
 export class AboutDialogComponent {
-  constructor(public dialogRef: MatDialogRef<AboutDialogComponent>) {}
+  constructor(
+    public dialogRef: MatDialogRef<AboutDialogComponent>,
+    private externalLinkService: ExternalLinkService
+  ) {}
 
   closeDialog(): void {
     this.dialogRef.close();
+  }
+
+  openExternalLink(url: string): void {
+    this.externalLinkService.openExternalLink(url);
   }
 } 
