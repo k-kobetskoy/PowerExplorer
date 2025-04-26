@@ -40,6 +40,6 @@ onAboutClick() {
 
 onLogoutClick() {
   console.log('Logout clicked');
-  this.authService.logoutPopup();
+  this.authService.logout();
 }
 } 

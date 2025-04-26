@@ -1,7 +1,7 @@
 {
     "msal": {
       "auth": {
-        "clientId": "ecf5ee34-a289-457c-908a-079a2a431d86",        
+        "clientId": "51f81489-12ee-4a9e-aaae-a2591f45987d",        
         "redirectUri": "http://localhost:4200/",
         "postLogoutRedirectUri": "http://localhost:4200/",
         "navigateToLoginRequestUrl": true
