@@ -2,25 +2,21 @@
   "name": "power-explorer",
   "version": "0.0.0",
   "main": "dist-electron/main.js",
+  "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build --base-href ./ --deploy-url ./",
-    "build:prod": "ng build --configuration=production --base-href ./ --deploy-url ./ && node config-env.js",
+    "build": "ng build",
+    "build:prod": "ng build --configuration=production && node config-env.js",
+    "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    
-    "tsc:electron": "tsc -p tsconfig.electron.json",
-    "tsc:electron:watch": "tsc -p tsconfig.electron.json -w",
-    
-    "electron": "npm run tsc:electron && electron .",
-    "electron:dev": "node electron-dev.js",
-    "electron:build": "npm run tsc:electron && npm run build && electron .",
-    
-    "package": "npm run tsc:electron && npm run build && electron-builder build --win --publish never",
-    "package:mac": "npm run tsc:electron && npm run build && electron-builder build --mac --publish never",
-    "package:linux": "npm run tsc:electron && npm run build && electron-builder build --linux --publish never"
+    "electron": "node electron-launcher.js",
+    "electron-dev": "concurrently \"npm run start\" \"wait-on http://localhost:4200 && set ELECTRON_START_URL=http://localhost:4200 && electron .\"",
+    "electron-build": "ng build --configuration production && electron .",
+    "package": "electron-builder build --win --publish never",
+    "package-mac": "electron-builder build --mac --publish never",
+    "package-linux": "electron-builder build --linux --publish never"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^18.2.13",
     "@angular/cdk": "^18.2.14",
@@ -88,21 +84,15 @@
       ]
     },
     "win": {
-      "target": [
-        "nsis"
-      ],
+      "target": ["nsis"],
       "icon": "src/assets/icons/icon.ico"
     },
     "mac": {
-      "target": [
-        "dmg"
-      ],
+      "target": ["dmg"],
       "icon": "src/assets/icons/icon.icns"
     },
     "linux": {
-      "target": [
-        "AppImage"
-      ],
+      "target": ["AppImage"],
       "icon": "src/assets/icons/icon.png"
     }
   }

@@ -36,9 +36,7 @@
               "src/styles/syling.scss",
               "src/styles/forms-styles.css"
             ],
-            "scripts": [],
-            "baseHref": "./",
-            "deployUrl": "./"
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -54,10 +52,7 @@
                   "maximumError": "10kb"
                 }
               ],
-              "outputHashing": "all",
-              "baseHref": "./",
-              "deployUrl": "./",
-              "aot": true
+              "outputHashing": "all"
             },
             "development": {
               "buildOptimizer": false,
