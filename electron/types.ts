@@ -8,7 +8,6 @@ export interface EnvironmentModel {
   apiUrl: string;
   friendlyName: string;
   urlName: string;
-  scopes?: string[];
 }
 
 // Authentication configuration

@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 import { EnvironmentModel, UserConfig } from './types';
+import { AccountInfo, AuthenticationResult } from '@azure/msal-node';
 
 // Authentication channels
 const AUTH_LOGIN = 'login';
@@ -54,17 +55,19 @@ interface ElectronAPI {
     send: (channel: string, data?: any) => void;
     receive: (channel: string, func: (...args: any[]) => void) => void;
     auth: {
-        login: (environmentUrl?: string, userConfig?: UserConfig) => Promise<any>;
-        getToken: (scopes?: string[], environmentUrl?: string, userConfig?: UserConfig) => Promise<any>;
-        logout: () => Promise<any>;
-        setEnvironmentUrl: (environmentUrl: string) => Promise<any>;
+        login: (environmentUrl?: string, userConfig?: UserConfig) => Promise<AuthenticationResult>;
+        getToken: (scopes?: string[], environmentUrl?: string, userConfig?: UserConfig) => Promise<string>;
+        logout: () => Promise<void>;
+        getActiveAccount: () => Promise<AccountInfo | null>;
+        handleAuthRedirect: (params: any) => Promise<void>;
+        handleRedirect: (params: any) => Promise<any>;
     };
     environment: {
         saveModel: (environmentModel: EnvironmentModel) => Promise<any>;
-        getModels: () => Promise<any>;
+        getModels: () => EnvironmentModel[];
         deleteModel: (environmentUrl: string) => Promise<any>;
         setActive: (environmentModel: EnvironmentModel) => Promise<any>;
-        getActive: () => Promise<any>;
+        getActive: () => Promise<EnvironmentModel | null>;
     };
     openExternal: (url: string) => Promise<boolean>;
     isElectron: boolean;
@@ -113,7 +116,9 @@ const electronAPI: ElectronAPI = {
         login: (environmentUrl?: string, userConfig?: UserConfig) => ipcRenderer.invoke(IpcChannels.AUTH_LOGIN, environmentUrl, userConfig),
         getToken: (scopes?: string[], environmentUrl?: string, userConfig?: UserConfig) => ipcRenderer.invoke(IpcChannels.AUTH_GET_TOKEN, scopes, environmentUrl, userConfig),
         logout: () => ipcRenderer.invoke(IpcChannels.AUTH_LOGOUT),
-        setEnvironmentUrl: (environmentUrl: string) => ipcRenderer.invoke(IpcChannels.AUTH_SET_ENVIRONMENT_URL, environmentUrl),
+        getActiveAccount: () => ipcRenderer.invoke(IpcChannels.AUTH_GET_ACTIVE_ACCOUNT),
+        handleAuthRedirect: (params: any) => ipcRenderer.invoke(IpcChannels.AUTH_HANDLE_REDIRECT, params),
+        handleRedirect: (params: any) => ipcRenderer.invoke(IpcChannels.AUTH_HANDLE_REDIRECT, params)
     },
     environment: {
         saveModel: (environmentModel: EnvironmentModel) => ipcRenderer.invoke(IpcChannels.ENV_SAVE_MODEL, environmentModel),

@@ -225,8 +225,8 @@ export class DesktopAuthService {
     return from(this.electronService.auth.logout()).pipe(
       tap(result => {
         console.log('[ELECTRON-AUTH] Logout result:', result);
-        this.activeAccount.next(null);
-        this.activeEnvironmentModel.next(null);
+        // this.activeAccount.next(null);
+        // this.activeEnvironmentModel.next(null);
         this.eventBus.emitAndSaveLast(new EventData(AppEvents.USER_REMOVED, null));
         this.notificationService.showInfo('You have been logged out');
       }),

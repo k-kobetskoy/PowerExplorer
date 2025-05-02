@@ -180,7 +180,7 @@ class AuthHandler {
 
                 // Make sure to save the account immediately
                 console.log('[AUTH-HANDLER: IPC-LOGIN] Setting active account after login:', result.account);
-                this.setActiveAccount(result.account);
+                this.storeActiveAccount(result.account);
 
                 return { success: true, account: result.account, accessToken: result.accessToken };
             } catch (error) {
@@ -223,7 +223,7 @@ class AuthHandler {
         // Handle set active account request
         ipcMain.handle(IpcChannels.AUTH_SET_ACTIVE_ACCOUNT, async (event, account: AccountInfo): Promise<GenericResponse> => {
             try {
-                this.setActiveAccount(account);
+                this.storeActiveAccount(account);
                 return { success: true };
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error setting active account';
@@ -344,7 +344,7 @@ class AuthHandler {
                     this.updateStoredEnvironments(this.pendingAuthRequest.environmentModel);
                     
                     // Set the active account
-                    this.setActiveAccount(authResult.account);
+                    this.storeActiveAccount(authResult.account);
                     
                     // Notify the renderer that auth was successful
                     this.mainWindow.webContents.send('auth-success', { account: authResult.account });
@@ -547,7 +547,7 @@ class AuthHandler {
                 
                 // Save the environment and account
                 this.updateStoredEnvironments(environmentModel);
-                this.setActiveAccount(response.account);
+                this.storeActiveAccount(response.account);
                 
                 // Resolve the promise
                 if (this.pendingAuthRequest) {
@@ -602,7 +602,7 @@ class AuthHandler {
 
             // Store the account immediately after successful login
             console.log('[AUTH-HANDLER] Setting active account after login:', result.account);
-            this.setActiveAccount(result.account);
+            this.storeActiveAccount(result.account);
             
             this.updateStoredEnvironments(environmentModel);
 
@@ -706,7 +706,7 @@ class AuthHandler {
         }
     }
 
-    setActiveAccount(account: AccountInfo): void {
+    storeActiveAccount(account: AccountInfo): void {
         try {
             // Store just the account ID instead of the full object
             console.log('[AUTH-HANDLER: SET-ACTIVE-ACCOUNT] Storing account ID:', account.homeAccountId);

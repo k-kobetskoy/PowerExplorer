@@ -143,6 +143,18 @@ export class ElectronService {
    */
   get auth(): ElectronAuthAPI {
     if (this.isElectronApp && this.electron) {
+      // Add getActiveAccount method if it's not available in the electron API
+      const getActiveAccount = (): Promise<AccountInfo> => {
+        // Check if getActiveAccount exists in the electron API
+        if (this.electron.auth.getActiveAccount) {
+          return this.electron.auth.getActiveAccount();
+        }
+        
+        // If not available, use a fallback (empty account or stored account)
+        console.warn('getActiveAccount is not available in electron API');
+        return Promise.resolve(null);
+      };
+      
       // Add handleRedirect for backward compatibility
       return {
         login: (environmentModel: EnvironmentModel): Promise<AuthResponse> => 
@@ -154,15 +166,22 @@ export class ElectronService {
         logout: (): Promise<GenericResponse> => 
           this.electron.auth.logout(),
         
-        getActiveAccount: (): Promise<AccountInfo> => 
-          this.electron.auth.getActiveAccount(),
+        getActiveAccount: getActiveAccount,
         
         handleAuthRedirect: (params: any): Promise<GenericResponse> => 
-          this.electron.auth.handleAuthRedirect(params),
+          this.electron.auth.handleAuthRedirect ? 
+          this.electron.auth.handleAuthRedirect(params) : 
+          this.electron.auth.handleRedirect ? 
+          this.electron.auth.handleRedirect(params) : 
+          Promise.reject({ success: false, error: 'No redirect handler available' }),
         
         // Alias for backward compatibility
         handleRedirect: (params: any): Promise<GenericResponse> => 
-          this.electron.auth.handleAuthRedirect(params)
+          this.electron.auth.handleAuthRedirect ? 
+          this.electron.auth.handleAuthRedirect(params) : 
+          this.electron.auth.handleRedirect ? 
+          this.electron.auth.handleRedirect(params) : 
+          Promise.reject({ success: false, error: 'No redirect handler available' })
       };
     }
 
