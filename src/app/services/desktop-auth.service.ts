@@ -167,6 +167,7 @@ export class DesktopAuthService {
    */
   login(environmentModel: EnvironmentModel): Observable<boolean> {
     if (!this.electronService.isElectronApp || !this.electronService.electron) {
+      console.log('[DESKTOP-AUTH] Login failed, not an electron app');
       return of(false);
     }
 
@@ -219,14 +220,15 @@ export class DesktopAuthService {
    */
   logout(): Observable<boolean> {
     if (!this.electronService.isElectronApp) {
+      console.log('[DESKTOP-AUTH] Logout failed, not an electron app');
       return of(false);
     }
 
     return from(this.electronService.auth.logout()).pipe(
       tap(result => {
         console.log('[ELECTRON-AUTH] Logout result:', result);
-        // this.activeAccount.next(null);
-        // this.activeEnvironmentModel.next(null);
+        this.activeAccount.next(null);
+        this.activeEnvironmentModel.next(null);
         this.eventBus.emitAndSaveLast(new EventData(AppEvents.USER_REMOVED, null));
         this.notificationService.showInfo('You have been logged out');
       }),

@@ -64,7 +64,7 @@ interface ElectronAPI {
     };
     environment: {
         saveModel: (environmentModel: EnvironmentModel) => Promise<any>;
-        getModels: () => EnvironmentModel[];
+        getModels: () => Promise<EnvironmentModel[]>;
         deleteModel: (environmentUrl: string) => Promise<any>;
         setActive: (environmentModel: EnvironmentModel) => Promise<any>;
         getActive: () => Promise<EnvironmentModel | null>;

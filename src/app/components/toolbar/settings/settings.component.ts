@@ -4,6 +4,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialog, MatDialogModule, MatDialogConfig } from '@angular/material/dialog';
 import { AboutDialogComponent } from './about-dialog/about-dialog.component';
 import { DesktopAuthService } from '../../../services/desktop-auth.service';
+import { take } from 'rxjs/operators';
 
 @Component({
   standalone: true,
@@ -36,6 +37,8 @@ onAboutClick() {
 
 onLogoutClick() {
   console.log('Logout clicked');
-  this.electronAuthService.logout();
+  this.electronAuthService.logout().pipe(take(1)).subscribe(result => {
+    console.log('Logout result:', result);
+  });
 }
 } 
