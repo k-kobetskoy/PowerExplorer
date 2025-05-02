@@ -388,7 +388,7 @@ class AuthHandler {
           <title>Authentication Complete</title>
           <style>
             body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
               display: flex;
               flex-direction: column;
               align-items: center;
@@ -400,26 +400,17 @@ class AuthHandler {
             .container {
               text-align: center;
               padding: 2rem;
-              background-color: white;
-              border-radius: 8px;
-              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
               max-width: 450px;
             }
             h2 {
-              color: #0078d4;
+              color: #414141;
               margin-bottom: 1rem;
-            }
-            p {
-              margin-bottom: 1.5rem;
-              color: #333;
-              line-height: 1.5;
-            }
+            }            
           </style>
         </head>
         <body>
           <div class="container">
             <h2>Authentication Complete</h2>
-            <p>Authentication successful!</p>
           </div>
           
           <script>
