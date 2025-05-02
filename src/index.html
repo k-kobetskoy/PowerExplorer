@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Power Explorer</title>
+  <base href="./">
+  
+  <!-- Emergency path fixer script - first script to load -->
+  <script src="./assets/path-fix.js"></script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+
+  <link href="https://cdn.jsdelivr.net/npm/hack-font@3/build/web/hack.css" rel="stylesheet">
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Raleway:ital,wght@0,100..900;1,100..900&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+
+  <!-- Fix for Electron file:// protocol asset loading -->
+  <script>
+    // Fix for asset loading in Electron
+    (function() {
+      // Only run in Electron
+      if (window.navigator.userAgent.indexOf('Electron') !== -1) {
+        // Ensure we have the app's base path
+        let basePath = window.location.href;
+        // Make sure basePath ends with a slash
+        if (!basePath.endsWith('/')) {
+          basePath = basePath.substring(0, basePath.lastIndexOf('/') + 1);
+        }
+        console.log('Base URL for assets:', basePath);
+        
+        // Find the base directory path
+        let baseDir = basePath;
+        if (baseDir.includes('/dist/')) {
+          // Extract the base directory (up to /dist/)
+          baseDir = baseDir.substring(0, baseDir.indexOf('/dist/') + 6); // +6 for '/dist/'
+        }
+        console.log('Base directory:', baseDir);
+        
+        // Fix links with absolute root paths (/assets, etc.)
+        function fixRootPaths() {
+          // Find all elements that might have a src or href attribute
+          document.querySelectorAll('[src], [href]').forEach(el => {
+            // Skip elements that don't need fixing
+            if (!el.hasAttribute('src') && !el.hasAttribute('href')) return;
+            
+            // Fix src attributes
+            if (el.hasAttribute('src')) {
+              const src = el.getAttribute('src');
+              if (src && src.startsWith('/') && !src.startsWith('//') && !src.startsWith('http')) {
+                const newSrc = baseDir + src.substring(1);
+                console.log('Fixing src:', src, 'to', newSrc);
+                el.setAttribute('src', newSrc);
+              }
+            }
+            
+            // Fix href attributes
+            if (el.hasAttribute('href')) {
+              const href = el.getAttribute('href');
+              if (href && href.startsWith('/') && !href.startsWith('//') && !href.startsWith('http')) {
+                const newHref = baseDir + href.substring(1);
+                console.log('Fixing href:', href, 'to', newHref);
+                el.setAttribute('href', newHref);
+              }
+              
+              // Also ensure CDN links use https
+              if (href && href.startsWith('//')) {
+                const newHref = 'https:' + href;
+                console.log('Fixing protocol-relative URL:', href, 'to', newHref);
+                el.setAttribute('href', newHref);
+              }
+            }
+          });
+        }
+        
+        // Fix paths when DOM is ready
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', fixRootPaths);
+        } else {
+          fixRootPaths();
+        }
+        
+        // Also watch for dynamically added content
+        const observer = new MutationObserver((mutations) => {
+          fixRootPaths();
+        });
+        observer.observe(document.documentElement, { 
+          childList: true,
+          subtree: true
+        });
+      }
+    })();
+  </script>
+
+  <!-- Load configuration before app -->
+  <script src="./assets/config.js"></script>
+</head>
+
+<body>
+  <app-root></app-root>
+  <app-redirect></app-redirect>
+</body>
+
+</html>

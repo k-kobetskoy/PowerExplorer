@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "outDir": "./dist-electron",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "dist-electron/*"]
+    },
+    "strict": true,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true
+  },
+  "include": ["electron/**/*"],
+  "exclude": ["node_modules", "dist", "dist-electron"]
+} 

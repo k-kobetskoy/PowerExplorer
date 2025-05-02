@@ -1,0 +1,14 @@
+<div class="settings-container">
+  <a class="settings-button" [matMenuTriggerFor]="settingsMenu">
+    <mat-icon class="settings-icon">more_vert</mat-icon>     
+  </a>
+</div>
+
+<mat-menu #settingsMenu="matMenu">
+  <button mat-menu-item (click)="onAboutClick()">
+    <span class="settings-menu-item-text">About</span>
+  </button>
+  <button mat-menu-item (click)="onLogoutClick()">
+    <span class="settings-menu-item-text">Logout</span>
+  </button>
+</mat-menu> 

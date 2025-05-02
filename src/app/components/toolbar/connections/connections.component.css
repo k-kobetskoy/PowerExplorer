@@ -1,0 +1,237 @@
+.envName {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    color: var(--main-text-color);
+    
+    &:hover {
+        color: var(--main-text-color-hover);        
+        
+        .chevron-icon {
+            color: var(--main-text-color-hover);
+        }
+
+        .env-name, .env-url.small {
+            color: var(--main-text-color-hover);
+        }
+    }    
+}
+
+.env-name{
+    font-weight: 600 !important;
+    font-size: 0.83rem !important;
+    color: var(--main-text-color);
+}
+
+.env-url.small {
+    margin: 0;
+    font-size: 0.78rem !important;
+    color: var(--main-text-color);
+}
+
+.env-info {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-right: 10px;    
+    h3, p {
+        color: var(--main-text-color);
+        z-index: 50;
+    }
+}
+
+.chevron-container {
+    display: flex;
+    align-items: center;
+}
+
+.chevron-icon {
+    width: 22px;
+    height: 22px;
+    color: var(--main-text-color);
+}
+
+.environment-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.environment-item {
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.environment-item:hover {
+    background-color: #f5f5f5;
+}
+
+.environment-item_selected {
+    background-color: rgba(95, 79, 247, 0.1);
+}
+
+.environment-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.environment-url {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.tui-form__buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.tui-form__button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.tui-form__button:hover:not(:disabled) {
+    background-color: #e9e9e9;
+}
+
+.tui-form__button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.prevent-select {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* CDK Dialog Styles */
+.cdk-dialog-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    min-width: 300px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    max-height: 90vh;
+}
+
+.cdk-dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.cdk-dialog-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.cdk-dialog-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    color: #888;
+    padding: 0 5px;
+}
+
+.cdk-dialog-content {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.cdk-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid #eee;
+    gap: 8px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.environment-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.environment-item {
+    padding: 12px;
+    margin: 8px 0;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.environment-item:hover {
+    background-color: rgba(95, 79, 247, 0.05);
+    border-color: rgba(95, 79, 247, 0.2);
+}
+
+.environment-item_selected {
+    background-color: rgba(95, 79, 247, 0.1);
+    border-color: rgba(95, 79, 247, 0.3);
+}
+
+.environment-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.environment-url {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.dialog-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    border: none;
+}
+
+.dialog-btn-primary {
+    background-color: #5F4FF7;
+    color: white;
+}
+
+.dialog-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dialog-btn-secondary {
+    background-color: #e9e9e9;
+    color: #333;
+}

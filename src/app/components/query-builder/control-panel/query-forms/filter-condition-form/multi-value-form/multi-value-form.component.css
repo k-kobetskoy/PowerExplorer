@@ -1,0 +1,39 @@
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.hint-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.hint-info mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.mat-mdc-form-field {
+    width: 100%;
+}
+
+.error-message {
+    color: var(--color-error);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+} 

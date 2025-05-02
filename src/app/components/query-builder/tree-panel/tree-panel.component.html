@@ -1,0 +1,120 @@
+<div class="tree-container">
+  <!-- Tree content only -->
+  <div class="tree">
+    <div *ngFor="let node of dataSource$ | async">
+      <div class="node-container" [style.padding-left.px]="node ? node.level * 20 : 0">
+        <!-- Expandable node -->
+        <div *ngIf="node&&node.expandable&&node.visible">
+          <div class="tree-node parent-node-element">
+            <!-- Separate the expand icon -->
+            <div class="expand-icon-container">
+              <mat-icon class="expand-icon" [class.collapsed]="!node.isExpanded" (click)="toggleNode(node)">expand_more</mat-icon>
+            </div>
+            
+            <!-- Node content including selection area -->
+            <div class="node-element-select-area" (click)="selectNode(node)"
+              [ngClass]="{active: (this.selectedNode$ | async) ===node, inactive: (this.selectedNode$ | async)!==node}"
+              [matTooltip]="(node.validationResult$|async)?.isValid === false ? ((node.validationResult$|async)?.errors || []).join('\n') : ''"
+              [matTooltipDisabled]="(node.validationResult$|async)?.isValid !== false"
+              [matTooltipPosition]="'below'"
+              matTooltipClass="validation-error-tooltip">
+              
+              <!-- Node icon -->
+              <ng-container *ngIf="getNodeIcon(node)">
+                @switch(node.tagName) {
+                @case('entity') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/entity-icon.svg" alt="entity-icon">
+                }
+                @case('attribute') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/attribute-icon.svg" alt="attribute-icon">
+                }
+                @case ('condition') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/condition-icon.svg" alt="condition-icon">
+                }
+                @case ('filter') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/filter-icon.svg" alt="filter-icon">
+                }
+                @case ('link-entity') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/link-icon.svg" alt="link-icon">
+                }
+                @case ('order') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/order-icon.svg" alt="order-icon">
+                }
+                }
+              </ng-container>
+              
+              <!-- Node text -->
+              <p class="small prevent-select">
+                {{node.nodeDisplayValue$|async}}
+              </p>
+              
+              <!-- Warning icon should alway be on the fixed position so when node is not selected it should left the place for remove icon -->
+              <div class="icons-container">
+                <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
+                  <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
+                </ng-container>
+                
+                <img class="remove-icon" *ngIf="(selectedNode$ | async) === node" (click)="removeNode(node)" src="assets/icons/x.svg" alt="x">
+                
+                <img class="remove-icon placeholder-icon" *ngIf="(selectedNode$ | async) !== node" src="assets/icons/x.svg" alt="x">                
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Non-expandable node -->
+        <div *ngIf="node&&!node.expandable&&node.visible">
+          <div class="tree-node">
+            <!-- Keep consistent spacing with fixed width container -->
+            <div class="expand-icon-container">
+              <mat-icon class="expand-icon-disabled" [style.font-size.rem]="1">chevron_right</mat-icon>
+            </div>
+
+            <div class="node-element-select-area" (click)="selectNode(node)"
+              [ngClass]="{active: (this.selectedNode$ | async)===node, inactive: (this.selectedNode$ | async)!==node}"
+              [matTooltip]="(node.validationResult$|async)?.isValid === false ? ((node.validationResult$|async)?.errors || []).join('\n') : ''"
+              [matTooltipDisabled]="(node.validationResult$|async)?.isValid !== false"
+              [matTooltipPosition]="'below'"
+              matTooltipClass="validation-error-tooltip">
+
+              <ng-container *ngIf="getNodeIcon(node)">
+                @switch(node.tagName) {
+                @case('entity') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/entity-icon.svg" alt="entity-icon">
+                }
+                @case('attribute') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/attribute-icon.svg" alt="attribute-icon">
+                }
+                @case ('condition') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/condition-icon.svg" alt="condition-icon">
+                }
+                @case ('filter') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/filter-icon.svg" alt="filter-icon">
+                }
+                @case ('link-entity') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/link-icon.svg" alt="link-icon">
+                }
+                @case ('order') {
+                <img class="tree-element-icon prevent-select" src="assets/icons/order-icon.svg" alt="order-icon">
+                }
+                }
+              </ng-container>
+              <p class="small prevent-select">
+                {{node.nodeDisplayValue$|async}}
+              </p>
+              <!-- Warning icon should alway be on the fixed position so when node is not selected it should left the place for remove icon -->
+              <div class="icons-container">
+                <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
+                  <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
+                </ng-container>
+                <img class="remove-icon" *ngIf="(selectedNode$ | async) === node" (click)="removeNode(node)" src="assets/icons/x.svg" alt="x">
+                
+                <img class="remove-icon placeholder-icon" *ngIf="(selectedNode$ | async) !== node" src="assets/icons/x.svg" alt="x">                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

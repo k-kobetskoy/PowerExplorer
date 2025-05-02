@@ -1,0 +1,45 @@
+
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select [formControl]="operatorFormControl">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <ng-container *ngIf="!(showMultiValueInput$ | async)">
+    <mat-form-field class="form-field">
+      <mat-label>Value</mat-label>
+      <mat-select [formControl]="valueFormControl">  
+        <ng-container *ngIf="booleanOptions$ | async as booleanOptions">
+          <mat-option [value]="booleanOptions.true.value">
+            <div class="option-content">
+              <span>{{booleanOptions.true.label}} ({{booleanOptions.true.value}})</span>
+            </div>
+          </mat-option>
+          <mat-option [value]="booleanOptions.false.value">
+            <div class="option-content">
+              <span>{{booleanOptions.false.label}} ({{booleanOptions.false.value}})</span>
+            </div>
+          </mat-option>
+        </ng-container>
+      </mat-select>
+      <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
+      @if (valueFormControl.value) {
+        <button matSuffix mat-icon-button aria-label="Clear" (click)="valueFormControl.patchValue('')">
+          <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+        </button>
+      }
+    </mat-form-field>
+  </ng-container>
+  
+  <app-multi-value-form 
+      *ngIf="showMultiValueInput$ | async"
+      [selectedNode]="selectedNode"
+      [attributeValue]="attributeValue"
+      [hideOperator]="true">
+  </app-multi-value-form>
+  

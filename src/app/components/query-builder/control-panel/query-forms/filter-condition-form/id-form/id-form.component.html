@@ -1,0 +1,36 @@
+
+  <div>
+    <mat-form-field class="form-field">
+      <mat-label>Operator</mat-label>
+      <mat-select [formControl]="operatorFormControl">
+        <mat-option *ngFor="let option of filterOperators" [value]="option.value">
+          <div class="option-content">
+            <span>{{option.name}}</span>
+          </div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <ng-container *ngIf="!(showMultiValueInput$ | async)">
+    <mat-form-field class="form-field">
+      <mat-label>Value</mat-label>
+      <input matInput
+             type="text"
+             [formControl]="valueFormControl"
+             placeholder="Enter GUID or ID value">
+        @if (valueFormControl.value) {
+          <button matSuffix mat-icon-button aria-label="Clear" (click)="valueFormControl.patchValue('')">
+            <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+          </button>
+        }
+      </mat-form-field>
+    </ng-container>
+
+  <app-multi-value-form 
+      *ngIf="showMultiValueInput$ | async"
+      [selectedNode]="selectedNode"
+      [attributeValue]="attributeValue"
+      [hideOperator]="true">
+    </app-multi-value-form>
+
+  </div>

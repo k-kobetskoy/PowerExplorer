@@ -1,0 +1,134 @@
+import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import { EnvironmentModel, UserConfig } from './types';
+
+// Authentication channels
+const AUTH_LOGIN = 'login';
+const AUTH_GET_TOKEN = 'getToken';
+const AUTH_LOGOUT = 'logout';
+const AUTH_SET_ENVIRONMENT_URL = 'setEnvironmentUrl';
+const AUTH_GET_ACTIVE_ACCOUNT = 'getActiveAccount';
+const AUTH_SET_ACTIVE_ACCOUNT = 'setActiveAccount';
+const AUTH_HANDLE_REDIRECT = 'handleRedirect';
+// Environment model channels
+const ENV_SAVE_MODEL = 'saveEnvironmentModel';
+const ENV_GET_MODELS = 'getEnvironmentModels';
+const ENV_DELETE_MODEL = 'deleteEnvironmentModel';
+const ENV_SET_ACTIVE = 'setActiveEnvironment';
+const ENV_GET_ACTIVE = 'getActiveEnvironment';
+
+// Create a type for all channel names
+export type IpcChannel = 
+  | typeof AUTH_LOGIN
+  | typeof AUTH_GET_TOKEN
+  | typeof AUTH_LOGOUT
+  | typeof AUTH_SET_ENVIRONMENT_URL
+  | typeof AUTH_GET_ACTIVE_ACCOUNT
+  | typeof AUTH_SET_ACTIVE_ACCOUNT
+  | typeof ENV_SAVE_MODEL
+  | typeof ENV_GET_MODELS
+  | typeof ENV_DELETE_MODEL
+  | typeof ENV_SET_ACTIVE
+  | typeof ENV_GET_ACTIVE
+  | typeof AUTH_HANDLE_REDIRECT;
+
+// All channels in a single object
+const IpcChannels = {
+  AUTH_LOGIN,
+  AUTH_GET_TOKEN,
+  AUTH_GET_ACTIVE_ACCOUNT,
+  AUTH_SET_ACTIVE_ACCOUNT,
+  AUTH_LOGOUT,
+  AUTH_SET_ENVIRONMENT_URL,
+  AUTH_HANDLE_REDIRECT,
+  ENV_SAVE_MODEL,
+  ENV_GET_MODELS,
+  ENV_DELETE_MODEL,
+  ENV_SET_ACTIVE,
+  ENV_GET_ACTIVE,
+};
+
+console.log('[PRELOAD] Preload script started, exposing APIs to window...');
+
+// Define types for the exposed APIs
+interface ElectronAPI {
+    send: (channel: string, data?: any) => void;
+    receive: (channel: string, func: (...args: any[]) => void) => void;
+    auth: {
+        login: (environmentUrl?: string, userConfig?: UserConfig) => Promise<any>;
+        getToken: (scopes?: string[], environmentUrl?: string, userConfig?: UserConfig) => Promise<any>;
+        logout: () => Promise<any>;
+        setEnvironmentUrl: (environmentUrl: string) => Promise<any>;
+    };
+    environment: {
+        saveModel: (environmentModel: EnvironmentModel) => Promise<any>;
+        getModels: () => Promise<any>;
+        deleteModel: (environmentUrl: string) => Promise<any>;
+        setActive: (environmentModel: EnvironmentModel) => Promise<any>;
+        getActive: () => Promise<any>;
+    };
+    openExternal: (url: string) => Promise<boolean>;
+    isElectron: boolean;
+}
+
+interface ElectronInvokeAPI {
+    invoke: (channel: IpcChannel, ...args: any[]) => Promise<any>;
+}
+
+// Expose IPC channel constants to renderer
+contextBridge.exposeInMainWorld('IPC_CHANNELS', {
+    ...IpcChannels
+});
+
+// Expose protected methods that allow the renderer process to use
+// the ipcRenderer without exposing the entire object
+contextBridge.exposeInMainWorld('electronAPI', {
+    invoke: (channel: IpcChannel, ...args: any[]) => {
+        // Validate the channel is one we've defined
+        const validChannels = Object.values(IpcChannels);
+        if (validChannels.includes(channel)) {
+            return ipcRenderer.invoke(channel, ...args);
+        }
+
+        throw new Error(`Unauthorized IPC channel: ${channel}`);
+    }
+});
+
+// Create the main electron API object
+const electronAPI: ElectronAPI = {
+    send: (channel: string, data?: any) => {
+        // whitelist channels
+        const validChannels = ['app-ready'];
+        if (validChannels.includes(channel)) {
+            ipcRenderer.send(channel, data);
+        }
+    },
+    receive: (channel: string, func: (...args: any[]) => void) => {
+        const validChannels = ['deep-link'];
+        if (validChannels.includes(channel)) {
+            // Deliberately strip event as it includes `sender` 
+            ipcRenderer.on(channel, (_event: IpcRendererEvent, ...args: any[]) => func(...args));
+        }
+    },
+    auth: {
+        login: (environmentUrl?: string, userConfig?: UserConfig) => ipcRenderer.invoke(IpcChannels.AUTH_LOGIN, environmentUrl, userConfig),
+        getToken: (scopes?: string[], environmentUrl?: string, userConfig?: UserConfig) => ipcRenderer.invoke(IpcChannels.AUTH_GET_TOKEN, scopes, environmentUrl, userConfig),
+        logout: () => ipcRenderer.invoke(IpcChannels.AUTH_LOGOUT),
+        setEnvironmentUrl: (environmentUrl: string) => ipcRenderer.invoke(IpcChannels.AUTH_SET_ENVIRONMENT_URL, environmentUrl),
+    },
+    environment: {
+        saveModel: (environmentModel: EnvironmentModel) => ipcRenderer.invoke(IpcChannels.ENV_SAVE_MODEL, environmentModel),
+        getModels: () => ipcRenderer.invoke(IpcChannels.ENV_GET_MODELS),
+        deleteModel: (environmentUrl: string) => ipcRenderer.invoke(IpcChannels.ENV_DELETE_MODEL, environmentUrl),
+        setActive: (environmentModel: EnvironmentModel) => ipcRenderer.invoke(IpcChannels.ENV_SET_ACTIVE, environmentModel),
+        getActive: () => ipcRenderer.invoke(IpcChannels.ENV_GET_ACTIVE)
+    },
+    openExternal: (url: string) =>
+        ipcRenderer.invoke('open-external', url),
+    isElectron: true
+};
+
+// Expose the electron API to the window
+console.log('[PRELOAD] Exposing electron API to window...');
+contextBridge.exposeInMainWorld('electron', electronAPI);
+
+console.log('[PRELOAD] Preload script completed successfully'); 

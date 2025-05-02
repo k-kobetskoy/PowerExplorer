@@ -1,0 +1,53 @@
+.main-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 55px;
+  padding: 0 10px;
+}
+
+.logo-menu {
+  display: flex;
+  align-items: center; 
+  cursor: pointer;
+}
+
+.menu-logo {
+  font-weight: 600;
+  
+}
+
+.logo {
+  height: 45px;
+  width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.logo img {
+  width: 45px;
+  height: 45px;
+  padding: 0;
+  margin: 0;
+}
+
+.menu {
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--main-text-color);
+  &:hover {
+    color: var(--main-text-color-hover);
+  }
+}
+
+
+.toolbar-right {
+display: flex;
+align-items: center;
+}
+

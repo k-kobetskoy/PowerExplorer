@@ -1,0 +1,11 @@
+app-code-editor-footer {
+    display: flex;
+    align-items: stretch;
+}
+
+app-code-editor-footer .code-editor-footer-content {
+    display: flex;
+    flex: 1;
+    height: var(--code-footer-height);
+    background-color: rgb(240, 240, 240);
+}

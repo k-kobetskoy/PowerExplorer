@@ -1,0 +1,44 @@
+<div class="about-dialog-container">
+  <button class="close-button" (click)="closeDialog()">
+    <mat-icon>close</mat-icon>
+  </button>
+  
+  <div class="two-column-layout">
+    <div class="left-column">
+      <div class="questions-section">
+        <h1>Any questions?</h1>
+        <p>Feel free to reach out to me!</p>
+        
+        <div class="social-links">
+          <div class="social-icon square-icon">
+            <a href="javascript:void(0)" (click)="openExternalLink('https://t.me/Artstar99')"><img src="assets/images/telegramicon.svg" alt="Telegram"></a>
+          </div>
+          <div class="social-icon square-icon">
+            <a href="javascript:void(0)" (click)="openExternalLink('https://www.linkedin.com/in/kostiantyn-kobetskyi-11596b251/')"><img src="assets/images/linkedinicon.svg" alt="LinkedIn"></a>
+          </div>
+          <div class="social-icon square-icon">
+            <a href="mailto:k.kobetskoy@outlook.com"><img src="assets/images/mailicon.svg" alt="Mail"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="right-column">
+      <div class="about-content">
+        <h1>Hello World 👋</h1>
+        <h2>Nice to meet you</h2>
+        
+        <p>This project is my take on creating a web-based alternative to the popular FetchXML Builder by Jonas Rapp, widely used by Dynamics developers. The app is still in early development — think of it as an MVP — so there's a lot more to come.</p>
+        
+        <p>Since I haven't had much time for thorough testing, you might encounter some bugs or rough edges. I'd really appreciate your feedback if you run into issues or have ideas for improvements 😊.</p>
+        
+        <p>The app is completely free and open-source. There's no backend involved, so none of your data is stored anywhere — everything stays local in your browser 🙈. For critical work, I recommend cross-checking your results with the original FetchXML Builder.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="dialog-footer">
+    <div class="last-updated">Last updated: Apr 2025</div>
+    <div class="made-with">Made with 🥰 by Kostiantyn Kobetskyi</div>
+  </div>
+</div> 

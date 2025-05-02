@@ -1,0 +1,15 @@
+<ng-container *ngIf="getNodeActions().length > 0">
+<div class="node-editor-container">  
+  <div class="quick-actions-header">
+    <span class="quick-actions-header-text">Add Node</span>
+  </div>
+  <div class="quick-actions">
+    <ng-container *ngFor="let nodeName of getNodeActions()">
+      <button mat-button (click)="addNode(nodeName)">
+        <img *ngIf="nodeName!='Value'" class="add-button-icon" src="assets/icons/plus-button-alt.svg" alt="entity-icon">
+        <span class="add-button-text">{{nodeName}}</span>
+      </button>
+    </ng-container>
+  </div>
+</div>
+</ng-container>

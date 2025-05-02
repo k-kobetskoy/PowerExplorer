@@ -1,0 +1,56 @@
+<div class="control-panel-container">
+    <!-- Quick actions - will be sticky -->
+    <div class="sticky-actions">
+        <app-quick-actions [selectedNode]="selectedNode"></app-quick-actions>
+    </div>
+
+    <div class="form-scrollable-content">
+        <div class="form-container">
+            <div class="form-header">
+                <span class="form-header-text">Node Properties</span>
+                <div class="form-header-actions">                                                
+                    <app-node-actions [selectedNode]="selectedNode"></app-node-actions>       
+                </div>
+            </div>
+            <div class="form-body">
+                <form [formGroup]="attributeForm">
+                    <div class="form-flex">
+                        <mat-form-field class="input-full-width">
+                            <mat-label>Attribute</mat-label>
+                            <input type="text" matInput formControlName="name" [matAutocomplete]="auto"
+                                placeholder="Select an attribute">
+                            <mat-autocomplete #auto="matAutocomplete">
+                                <mat-option *ngFor="let attr of filteredAttributes$ | async" [value]="attr.logicalName">
+                                    <div class="option-content">
+                                        <span class="logical-name">{{attr.logicalName}}</span>
+                                        <span class="display-name">{{attr.displayName}}</span>
+                                    </div>
+                                </mat-option>
+                            </mat-autocomplete>
+                            
+                            <!-- Use async pipe with the loading state observable -->
+                            <mat-spinner class="loading-spinner" *ngIf="(isLoadingAttributes$ | async)" matSuffix [diameter]="20"></mat-spinner>
+                        
+                            @if (attributeForm.value.name) {
+                                <button *ngIf="!(isLoadingAttributes$ | async)" matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({name: ''})">
+                                <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+                                </button>
+                            }
+                        </mat-form-field>
+
+                        <mat-form-field class="input-full-width">
+                            <mat-label>Alias</mat-label>
+                            <input type="text" matInput formControlName="alias" placeholder="Enter an alias">
+                       
+                        @if (attributeForm.value.alias) {
+                            <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeForm.patchValue({alias: ''})">
+                              <span class="form-clear-icon"><mat-icon>close</mat-icon></span>
+                            </button>
+                          }
+                        </mat-form-field>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+<div class="connections-desktop-container">
+  <div class="form-header">
+    <span class="form-header-text">Select or add an environment</span>
+  </div>
+  <div class="form-body">
+    <div class="form-desktop-flex">
+
+      <div class="custom-list-container">
+        <ul class="custom-list">
+          <li *ngFor="let environment of environments$ | async" 
+              class="custom-list-item"
+              [class.selected]="environment === selectedEnvironment"
+              (click)="onEnvironmentSelected(environment)">
+            <div class="custom-list-item-content">
+              <div class="custom-list-item-title">{{environment.urlName}}</div>
+              <div class="custom-list-item-subtitle">{{environment.friendlyName}}</div>
+            </div>
+          </li>
+        </ul>
+      </div>      
+      <form [formGroup]="environmentForm" 
+            class="{{isFormActive ? 'form-active' : ''}}"
+            (mousedown)="setFormActive(true)"
+            (click)="setFormActive(true)"
+            (focusout)="checkFormFocus($event)">
+        <div class="form-desktop-input-container">
+        <mat-form-field class="input-full-width">
+          <mat-label>Environment URL</mat-label>
+          <input type="text" matInput formControlName="environmentUrl" 
+                 placeholder="orgXXXXXXXX.crmX.dynamics.com"
+                 (focus)="setFormActive(true)">
+          <mat-error *ngIf="environmentForm.get('environmentUrl').hasError('required')">URL is required</mat-error>
+          <mat-error *ngIf="environmentForm.get('environmentUrl').hasError('pattern')">Enter a valid environment URL</mat-error>
+          <mat-error *ngIf="environmentForm.get('environmentUrl').hasError('urlFormat')">{{environmentForm.get('environmentUrl').getError('urlFormat')}}</mat-error>
+          <mat-error *ngIf="environmentForm.get('environmentUrl').hasError('urlName')">{{environmentForm.get('environmentUrl').getError('urlName')}}</mat-error>
+        </mat-form-field>
+        </div>
+
+        <div class="form-desktop-input-container">
+        <mat-form-field class="input-full-width">
+          <mat-label>Environment Friendly Name</mat-label>
+          <input type="text" matInput formControlName="friendlyName" 
+                 placeholder="My Environment"
+                 (focus)="setFormActive(true)">
+          <mat-error *ngIf="environmentForm.get('friendlyName').hasError('required')">Friendly name is required</mat-error>
+          <mat-error *ngIf="environmentForm.get('friendlyName').hasError('minlength')">Name must be at least 3 characters</mat-error>
+          <mat-error *ngIf="environmentForm.get('friendlyName').hasError('maxlength')">Name cannot exceed 50 characters</mat-error>
+          <mat-error *ngIf="environmentForm.get('friendlyName').hasError('friendlyName')">{{environmentForm.get('friendlyName').getError('friendlyName')}}</mat-error>
+        </mat-form-field>
+        </div>
+      </form>
+
+    </div>
+  </div>
+  <button mat-flat-button color="primary" (click)="connectToEnvironment()" [disabled]="!selectedEnvironment && environmentForm.invalid">Connect</button>
+
+</div>

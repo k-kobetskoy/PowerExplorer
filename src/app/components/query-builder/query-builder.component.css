@@ -1,0 +1,329 @@
+.query-builder {
+  display: flex;
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Angular Split styles */
+.main-split {
+  height: 100% !important;
+  min-height: 0 !important;
+  flex: 1 1 auto;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+.right-panel {
+  flex: 1 1 auto !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.left-panel-split {
+  height: 100% !important;
+  min-height: 817px !important; /* 400px + 417px + 10px gutter */
+}
+
+as-split-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+[_nghost-ng-c3013344202] > .as-split-gutter[_ngcontent-ng-c3013344202],
+[_nghost] > .as-split-gutter,
+:host ::ng-deep .as-split-gutter {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.as-split-gutter {
+  background-color: transparent !important;
+  flex-basis: 10px !important;
+  z-index: 49;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none !important;
+}
+
+as-split[direction="vertical"] > .as-split-gutter {
+  flex-basis: 10px !important;
+  transition: all 0.2s ease;
+  cursor: row-resize;
+}
+
+as-split[direction="vertical"] > .as-split-gutter .as-split-gutter-icon {
+  background-image: none !important;
+  background-color: #D4D5D8;
+  z-index: 50;
+  width: 120px !important;
+  height: 2px !important;
+  border-radius: 1px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+as-split[direction="vertical"] > .as-split-gutter:hover .as-split-gutter-icon {
+  background-color: #bec6df;
+  opacity: 1;
+  transform: scaleY(2);
+}
+
+/* Vertical gutter (appears between left/right areas) */
+as-split[direction="horizontal"] > .as-split-gutter {
+  flex-basis: 10px !important;
+  transition: all 0.2s ease;
+  cursor: col-resize;
+}
+
+as-split[direction="horizontal"] > .as-split-gutter .as-split-gutter-icon {
+  background-image: none !important;
+  background-color: #D4D5D8;
+  z-index: 50;
+  width: 2px !important;
+  height: 400px !important;
+  border-radius: 1px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+as-split[direction="horizontal"] > .as-split-gutter:hover .as-split-gutter-icon {
+  background-color: #bec6df;
+  opacity: 1;
+  transform: scaleX(2);
+}
+
+/* Component styles */
+app-query-tree-button-block {
+  display: flex;
+  height: var(--tab-bar-height);
+  flex-shrink: 0;
+  width: 100%;
+}
+
+app-tree-panel, app-control-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  width: 100%;
+}
+
+.code-editor-toolbar {
+  display: flex;
+  /* height: var(--tab-bar-height); */
+  align-items: end;
+  justify-content: space-between;
+  padding: 0px 10px 0px 15px;
+  box-sizing: border-box;
+  z-index: 2;
+  height: 40px!important;
+  min-height: 40px!important;
+  max-height: 40px!important;
+  line-height: 40px;
+}
+
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-button {
+  position: relative;
+  width: 130px;
+  height: 28px;
+  background-color: #CCCFDB;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 0 0px 10px  rgba(64, 64, 70, 0.123);
+
+  &:hover {
+    background-color: #b8bbc9;
+  }
+}
+
+.toggle-slider {
+  position: absolute;
+  width: 62px;
+  height: 24px;
+  background-color: white;
+  border-radius: 10px;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease;
+  z-index: 1;
+  box-shadow: 0 0px 6px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-slider.slide-right {
+  transform: translateX(64px);
+}
+
+.toggle-options {
+  position: relative;
+  display: flex;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+  transition: color 0.2s ease;
+}
+
+.option.active {
+  color: #303244;
+  font-weight: 600;
+}
+
+.tab-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.fetch-xml-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  align-items: stretch;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.fetch-result-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+app-code-editor, app-result-table {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: auto;
+}
+
+.router-container,
+div[class*="router-container"] {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* Fix for router-outlet issue */
+router-outlet {
+  display: none !important;
+}
+
+router-outlet + .query-builder-container {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+as-split[direction="vertical"] > as-split-area {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tab-content {
+  display: flex;
+  margin-top: 10px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.switch-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555969;
+}
+
+/* Parse Button Styling */
+.parse-button {
+  min-width: 80px;
+  height: 32px;
+  padding: 0 12px;
+}
+
+.parse-button .button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.parse-button .tree-element-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  display: flex;
+}
+
+.parse-button .custom-button-text {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: 1px; /* Fine-tuning vertical alignment */
+}
+
+.query-builder-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

@@ -1,0 +1,165 @@
+.connections-desktop-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  max-height: 800px;
+  min-width: 400px;
+  width: 100%;
+  flex-direction: column;
+  padding: 20px;
+  overflow: auto;
+}
+
+.connections-desktop-container .form-desktop-flex{
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.connections-desktop-container form{
+  padding: 20px 15px 0px 15px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  margin: 1px;
+}
+
+.connections-desktop-container form:hover:not(.form-active) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.connections-desktop-container form.form-active,
+form.form-active {
+  background-color: rgba(34, 80, 189, 0.1) !important;
+  box-shadow: 0 0 0 1px rgba(34, 80, 189, 0.3) !important;
+}
+
+/* Make sure input focus also maintains the active appearance */
+.connections-desktop-container form:has(input:focus) {
+  background-color: rgba(34, 80, 189, 0.1) !important;
+  box-shadow: 0 0 0 1px rgba(34, 80, 189, 0.3) !important;
+}
+
+.connections-desktop-container button {
+  margin-top: 20px;
+}
+
+/* Custom list styling */
+.custom-list-container {
+  margin-bottom: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.custom-list {
+  list-style-type: none;
+  padding: 1px;
+  margin: 0;
+  width: 100%;
+}
+
+.custom-list-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-bottom: 4px;
+}
+
+.custom-list-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.custom-list-item.selected {
+  background-color: rgba(34, 80, 189, 0.1);
+  box-shadow: 0 0 0 1px rgba(34, 80, 189, 0.3);
+}
+
+.custom-list-item-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-list-item-title {
+  font-family: "Work Sans", sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.custom-list-item-subtitle {
+  font-family: "Work Sans", sans-serif;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 4px;
+}
+
+.connections-desktop-container .form-header {
+  margin-bottom: 0px;
+  max-width: 100% !important;
+}
+
+/* .form-desktop-input-container {
+  margin-bottom: 20px;
+} */
+
+/* Dialog styles */
+.connections-desktop-container .mat-dialog-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dialog-button-block {
+  padding: 10px 20px 10px 20px;
+}
+
+.connections-desktop-container .mat-mdc-dialog-actions {
+  justify-content: space-between;
+}
+
+/* Ensure dialog fits content but respects max height */
+:host ::ng-deep .mat-mdc-dialog-container {
+  display: flex;
+  flex-direction: column;
+  max-height: 800px !important;
+}
+
+:host ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
+  display: flex;
+  flex-direction: column;
+  max-height: 800px !important;
+  overflow: hidden;
+}
+
+:host ::ng-deep .mat-mdc-dialog-content {
+  max-height: unset !important;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Add styles for global snackbar classes */
+::ng-deep .success-snackbar {
+  background-color: #4caf50;
+  color: white;
+}
+
+::ng-deep .error-snackbar {
+  background-color: #f44336;
+  color: white;
+}
+
+::ng-deep .success-snackbar .mat-simple-snackbar-action,
+::ng-deep .error-snackbar .mat-simple-snackbar-action {
+  color: white;
+}
+
+/* Specific rule for the form-active class */
+.form-active {
+  background-color: rgba(34, 80, 189, 0.1) !important;
+  box-shadow: 0 0 0 1px rgba(34, 80, 189, 0.3) !important;
+}
+
+
