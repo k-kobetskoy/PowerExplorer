@@ -1,104 +1,102 @@
-import { BrowserWindow, ipcMain, shell } from 'electron';
-import { PublicClientApplication, LogLevel, AuthenticationResult, SilentFlowRequest, Configuration, AccountInfo, ICachePlugin } from '@azure/msal-node';
-import Store from 'electron-store';
-import IpcChannels from './ipc-channels';
-import { EnvironmentModel, AuthResponse, TokenResponse, EnvironmentsResponse, GenericResponse } from './types';
-import * as fs from 'fs';
-import * as path from 'path';
-import { app } from 'electron';
-
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const electron_1 = require("electron");
+const msal_node_1 = require("@azure/msal-node");
+const electron_store_1 = __importDefault(require("electron-store"));
+const ipc_channels_1 = __importDefault(require("./ipc-channels"));
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
+const electron_2 = require("electron");
 // Custom protocol for deep linking
 const APP_PROTOCOL = 'powerexplorer';
 const DEEP_LINK_URL = `${APP_PROTOCOL}://auth`;
-
 // Persistent cache plugin for MSAL
-class PersistentCachePlugin implements ICachePlugin {
-    private cachePath: string;
-
+class PersistentCachePlugin {
     constructor() {
         // Use user data path for persistent storage
-        this.cachePath = path.join(app.getPath('userData'), 'msal-cache.json');
+        this.cachePath = path.join(electron_2.app.getPath('userData'), 'msal-cache.json');
         console.log('[AUTH-HANDLER] MSAL cache path:', this.cachePath);
     }
-
-    async beforeCacheAccess(cacheContext: any): Promise<void> {
+    async beforeCacheAccess(cacheContext) {
         try {
             if (fs.existsSync(this.cachePath)) {
                 const cacheData = await fs.promises.readFile(this.cachePath, 'utf-8');
                 cacheContext.tokenCache.deserialize(cacheData);
                 console.log('[AUTH-HANDLER] Loaded MSAL cache from disk');
-            } else {
+            }
+            else {
                 console.log('[AUTH-HANDLER] No MSAL cache file exists yet');
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error loading MSAL cache:', error);
         }
     }
-
-    async afterCacheAccess(cacheContext: any): Promise<void> {
+    async afterCacheAccess(cacheContext) {
         if (cacheContext.cacheHasChanged) {
             try {
                 const cacheData = cacheContext.tokenCache.serialize();
                 await fs.promises.writeFile(this.cachePath, cacheData);
                 console.log('[AUTH-HANDLER] Wrote MSAL cache to disk');
-            } catch (error) {
+            }
+            catch (error) {
                 console.error('[AUTH-HANDLER] Error writing MSAL cache:', error);
             }
         }
     }
 }
-
-interface InteractiveRequest {
-    scopes: string[];
-    openBrowser: (url: string) => Promise<void>;
-    successTemplate?: string;
-    errorTemplate?: string;
-    redirectUri: string;
-    authority?: string;
-}
-
 // This module handles Microsoft authentication in Electron
 class AuthHandler {
-    private mainWindow: BrowserWindow;
-    private pca: PublicClientApplication | null;
-    private store: Store;
-    private authority: string = 'https://login.microsoftonline.com/common';
-    private clientId: string = '51f81489-12ee-4a9e-aaae-a2591f45987d';
-    private redirectUri: string = 'http://localhost';
-    private pendingAuthRequest: {
-        environmentModel: EnvironmentModel;
-        scopes: string[];
-        resolve: (value: AuthenticationResult) => void;
-        reject: (reason: any) => void;
-    } | null = null;
-
-    constructor(mainWindow: BrowserWindow) {
+    constructor(mainWindow) {
+        this.authority = 'https://login.microsoftonline.com/common';
+        this.clientId = '51f81489-12ee-4a9e-aaae-a2591f45987d';
+        this.redirectUri = 'http://localhost';
+        this.pendingAuthRequest = null;
         this.mainWindow = mainWindow;
         this.pca = null;
-        this.store = new Store({ name: 'power-explorer-settings' });
-
+        this.store = new electron_store_1.default({ name: 'power-explorer-settings' });
         this.initializeWithActiveEnvironment();
-
         this.registerIpcHandlers();
     }
-
     async initializeWithActiveEnvironment() {
         try {
             // Get active environment from store
             const activeEnv = this.getActiveEnvironment();
             console.log('[AUTH-HANDLER: INIT] Active environment:', activeEnv);
-
             if (activeEnv) {
                 this.initializeMsal();
-
                 // Check if we have a valid token before attempting silent authentication
                 const isValid = await this.checkTokenValidity();
-
                 if (isValid) {
                     console.log('[AUTH-HANDLER: INIT] Token is valid, skipping authentication');
                     return; // Token is still valid, no need to authenticate
                 }
-
                 // Try silent authentication if there's an active account
                 if (this.pca) {
                     try {
@@ -108,44 +106,44 @@ class AuthHandler {
                         if (activeAccount) {
                             // Get environment-specific scopes
                             const scopes = [`${activeEnv.apiUrl}/user_impersonation`];
-
                             // Try silent token acquisition
                             if (scopes.length > 0) {
-                                const silentRequest: SilentFlowRequest = {
+                                const silentRequest = {
                                     account: activeAccount,
                                     scopes: scopes,
                                     authority: this.authority
                                 };
-
                                 try {
                                     await this.pca.acquireTokenSilent(silentRequest);
                                     // Token acquired successfully, no need to do anything else
-                                } catch (silentError) {
+                                }
+                                catch (silentError) {
                                     this.removeActiveEnvironment();
                                 }
                             }
                         }
-                    } catch (error) {
+                    }
+                    catch (error) {
                         // Failed to get accounts or silent auth, but that's okay
                         // User will need to log in explicitly
                     }
                 }
-            } else {
+            }
+            else {
                 // No active environment, just initialize MSAL with default config
                 this.initializeMsal();
             }
-        } catch (error) {
+        }
+        catch (error) {
             // Fall back to default initialization
             this.initializeMsal();
         }
     }
-
     initializeMsal() {
         try {
             // Create persistent cache plugin
             const persistentCachePlugin = new PersistentCachePlugin();
-            
-            const msalConfig: Configuration = {
+            const msalConfig = {
                 auth: {
                     clientId: this.clientId,
                     authority: this.authority
@@ -156,148 +154,142 @@ class AuthHandler {
                             console.log(`[MSAL-${level}] ${message}`);
                         },
                         piiLoggingEnabled: false,
-                        logLevel: LogLevel.Verbose,
+                        logLevel: msal_node_1.LogLevel.Verbose,
                     },
                 },
                 cache: {
                     cachePlugin: persistentCachePlugin
                 }
             };
-
-            this.pca = new PublicClientApplication(msalConfig);
-        } catch (error) {
+            this.pca = new msal_node_1.PublicClientApplication(msalConfig);
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error initializing MSAL:', error);
         }
     }
-
     registerIpcHandlers() {
         // Handle authentication requests from the renderer process
-        ipcMain.handle(IpcChannels.AUTH_LOGIN, async (event, environmentModel: EnvironmentModel): Promise<AuthResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.AUTH_LOGIN, async (event, environmentModel) => {
             try {
                 const result = await this.login(environmentModel);
-
                 // Save the environment model with auth config
                 this.updateStoredEnvironments(environmentModel);
-
                 // Make sure to save the account immediately
                 console.log('[AUTH-HANDLER: IPC-LOGIN] Setting active account after login:', result.account);
                 this.storeActiveAccount(result.account);
-
                 return { success: true, account: result.account, accessToken: result.accessToken };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error during login';
                 return { success: false, error: errorMessage };
             }
         });
-
         // Handle token acquisition
-        ipcMain.handle(IpcChannels.AUTH_GET_TOKEN, async (event, environmentModel: EnvironmentModel): Promise<TokenResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.AUTH_GET_TOKEN, async (event, environmentModel) => {
             try {
                 const token = await this.getToken(environmentModel);
                 return { success: true, accessToken: token };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error getting token';
                 return { success: false, error: errorMessage };
             }
         });
-
         // Handle log out requests
-        ipcMain.handle(IpcChannels.AUTH_LOGOUT, async (): Promise<GenericResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.AUTH_LOGOUT, async () => {
             try {
                 await this.logout();
                 return { success: true };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error during logout';
                 return { success: false, error: errorMessage };
             }
         });
-
         // Handle get active account request
-        ipcMain.handle(IpcChannels.AUTH_GET_ACTIVE_ACCOUNT, async (): Promise<AccountInfo | null> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.AUTH_GET_ACTIVE_ACCOUNT, async () => {
             console.log('[AUTH-HANDLER] Direct getActiveAccount handler called');
             try {
                 const account = await this.getActiveAccount();
                 console.log('[AUTH-HANDLER] Direct getActiveAccount result:', account ? 'Account found' : 'No account');
                 return account;
-            } catch (error) {
+            }
+            catch (error) {
                 console.error('[AUTH-HANDLER] Direct getActiveAccount error:', error);
                 return null;
             }
         });
-
         // Handle set active account request
-        ipcMain.handle(IpcChannels.AUTH_SET_ACTIVE_ACCOUNT, async (event, account: AccountInfo): Promise<GenericResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.AUTH_SET_ACTIVE_ACCOUNT, async (event, account) => {
             try {
                 this.storeActiveAccount(account);
                 return { success: true };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error setting active account';
                 return { success: false, error: errorMessage };
             }
         });
-
         // Handle get cached environments request
-        ipcMain.handle(IpcChannels.ENV_GET_MODELS, async (): Promise<EnvironmentsResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.ENV_GET_MODELS, async () => {
             try {
                 const environments = this.getEnvironmentModels();
                 return { success: true, environments };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error getting cached environments';
                 return { success: false, error: errorMessage };
             }
         });
-
         // Handle delete cached environment request
-        ipcMain.handle(IpcChannels.ENV_DELETE_MODEL, async (event, environmentModel: EnvironmentModel): Promise<GenericResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.ENV_DELETE_MODEL, async (event, environmentModel) => {
             try {
                 this.deleteEnvironmentModel(environmentModel);
                 return { success: true };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error deleting cached environment';
                 return { success: false, error: errorMessage };
             }
         });
-
-        ipcMain.handle(IpcChannels.ENV_SET_ACTIVE, async (event, environmentModel: EnvironmentModel): Promise<GenericResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.ENV_SET_ACTIVE, async (event, environmentModel) => {
             try {
                 if (!environmentModel) {
                     return { success: false, error: 'No environment model provided' };
                 }
-
                 const result = await this.setActiveEnvironment(environmentModel);
                 return { success: result };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error setting active environment';
                 return { success: false, error: errorMessage };
             }
         });
-
-        ipcMain.handle(IpcChannels.ENV_GET_ACTIVE, async (): Promise<EnvironmentsResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.ENV_GET_ACTIVE, async () => {
             try {
                 const activeEnv = this.getActiveEnvironment();
                 return { success: true, environment: activeEnv };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error getting active environment';
                 return { success: false, error: errorMessage };
             }
         });
-
         // Add new handler for auth redirect from renderer
-        ipcMain.handle(IpcChannels.AUTH_HANDLE_REDIRECT, async (event, params: Record<string, string>): Promise<GenericResponse> => {
+        electron_1.ipcMain.handle(ipc_channels_1.default.AUTH_HANDLE_REDIRECT, async (event, params) => {
             try {
                 await this.handleAuthRedirect(params);
                 return { success: true };
-            } catch (error) {
+            }
+            catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error handling redirect';
                 return { success: false, error: errorMessage };
             }
         });
     }
-
     // Handle auth redirect when returning from browser
-    async handleAuthRedirect(params: Record<string, string>): Promise<void> {
+    async handleAuthRedirect(params) {
         console.log('[AUTH-HANDLER] Handling auth deep link or redirect');
-        
         // Focus the main window - ensure it's visible and brought to front
         if (this.mainWindow) {
             if (this.mainWindow.isMinimized()) {
@@ -305,33 +297,26 @@ class AuthHandler {
             }
             this.mainWindow.focus();
             this.mainWindow.moveTop(); // Ensure window is on top of others
-            
             // Send notification to the renderer
             this.mainWindow.webContents.send('app-returned-from-auth');
         }
-        
         const code = params.code;
         const state = params.state;
         const error = params.error;
         const errorDescription = params.error_description;
-        
         if (code || error) {
             console.log('[AUTH-HANDLER] Processing auth code or error');
-            
             if (error || !this.pendingAuthRequest || !this.pca) {
                 // Handle error case
                 console.error('[AUTH-HANDLER] Auth redirect error:', error, errorDescription);
-                
                 if (this.pendingAuthRequest) {
                     this.pendingAuthRequest.reject(new Error(errorDescription || error || 'Authentication failed'));
                     this.pendingAuthRequest = null;
                 }
-                
                 // Notify the renderer that auth failed
                 this.mainWindow.webContents.send('auth-failed', { error, errorDescription });
                 return;
             }
-            
             if (code && this.pendingAuthRequest) {
                 try {
                     // Exchange code for token
@@ -341,49 +326,40 @@ class AuthHandler {
                         redirectUri: this.redirectUri,
                         authority: this.authority
                     });
-                    
                     console.log('[AUTH-HANDLER] Auth code exchange successful');
-                    
                     // Save the environment model
                     this.updateStoredEnvironments(this.pendingAuthRequest.environmentModel);
-                    
                     // Set the active account
                     this.storeActiveAccount(authResult.account);
-                    
                     // Notify the renderer that auth was successful
                     this.mainWindow.webContents.send('auth-success', { account: authResult.account });
-                    
                     // Resolve the pending promise
                     this.pendingAuthRequest.resolve(authResult);
                     this.pendingAuthRequest = null;
-                    
-                } catch (error) {
+                }
+                catch (error) {
                     console.error('[AUTH-HANDLER] Error exchanging auth code:', error);
-                    
                     if (this.pendingAuthRequest) {
                         this.pendingAuthRequest.reject(error);
                         this.pendingAuthRequest = null;
                     }
-                    
                     // Notify the renderer that auth failed
-                    this.mainWindow.webContents.send('auth-failed', { 
-                        error: 'code_exchange_error', 
+                    this.mainWindow.webContents.send('auth-failed', {
+                        error: 'code_exchange_error',
                         errorDescription: error instanceof Error ? error.message : String(error)
                     });
                 }
             }
-        } else {
+        }
+        else {
             // This is just a deep link to bring the app to the foreground
             console.log('[AUTH-HANDLER] Deep link activation without auth params');
         }
     }
-
-    async login(environmentModel: EnvironmentModel): Promise<AuthenticationResult> {
+    async login(environmentModel) {
         const scopes = [`${environmentModel.apiUrl}/user_impersonation`];
-
         try {
             console.log('[AUTH-HANDLER] Starting login process with interactive token acquisition');
-
             // Create HTML templates for success and error pages with a button to go back to the app
             const successTemplate = `
         <!DOCTYPE html>
@@ -426,7 +402,6 @@ class AuthHandler {
         </body>
         </html>
       `;
-
             const errorTemplate = `
         <!DOCTYPE html>
         <html>
@@ -496,15 +471,13 @@ class AuthHandler {
         </body>
         </html>
       `;
-
             // Browser open function - use shell.openExternal
-            const openBrowser = async (url: string) => {
+            const openBrowser = async (url) => {
                 console.log('[AUTH-HANDLER: LOGIN] Opening browser with URL:', url);
-                await shell.openExternal(url);
+                await electron_1.shell.openExternal(url);
             };
-
             // Create a promise that will be resolved when the auth redirect is handled
-            const authPromise = new Promise<AuthenticationResult>((resolve, reject) => {
+            const authPromise = new Promise((resolve, reject) => {
                 this.pendingAuthRequest = {
                     environmentModel: {
                         ...environmentModel,
@@ -514,7 +487,6 @@ class AuthHandler {
                     reject
                 };
             });
-
             // Set timeout to reject the promise after 5 minutes
             const timeoutId = setTimeout(() => {
                 if (this.pendingAuthRequest) {
@@ -522,9 +494,8 @@ class AuthHandler {
                     this.pendingAuthRequest = null;
                 }
             }, 5 * 60 * 1000);
-
             // Start the login process
-            const interactiveRequest: InteractiveRequest = {
+            const interactiveRequest = {
                 scopes: scopes,
                 openBrowser: openBrowser,
                 redirectUri: this.redirectUri,
@@ -532,169 +503,146 @@ class AuthHandler {
                 successTemplate: successTemplate,
                 errorTemplate: errorTemplate
             };
-
             try {
                 const response = await this.pca.acquireTokenInteractive(interactiveRequest);
                 clearTimeout(timeoutId);
-                
                 // Save the environment and account
                 this.updateStoredEnvironments(environmentModel);
                 this.storeActiveAccount(response.account);
-                
                 // Resolve the promise
                 if (this.pendingAuthRequest) {
                     this.pendingAuthRequest.resolve(response);
                     this.pendingAuthRequest = null;
                 }
-                
                 return response;
-            } catch (error) {
+            }
+            catch (error) {
                 clearTimeout(timeoutId);
                 console.error('[AUTH-HANDLER] Error during interactive login:', error);
-                
                 if (this.pendingAuthRequest) {
                     this.pendingAuthRequest.reject(error);
                     this.pendingAuthRequest = null;
                 }
-                
                 throw error;
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error during interactive login:', error);
             throw error;
         }
     }
-
-    async getToken(environmentModel: EnvironmentModel): Promise<string> {
-
+    async getToken(environmentModel) {
         const scopes = [`${environmentModel.apiUrl}/user_impersonation`];
-
         // First check if we have a valid token if an account exists
         const activeAccount = await this.getActiveAccount();
         if (activeAccount) {
             try {
                 // Try to silently acquire token
-                const silentRequest: SilentFlowRequest = {
+                const silentRequest = {
                     account: activeAccount,
                     scopes: scopes,
                     authority: this.authority
                 };
-
                 const response = await this.pca.acquireTokenSilent(silentRequest);
                 console.log('[AUTH-HANDLER: GET-TOKEN] Acquired token silently:', response.accessToken);
                 return response.accessToken;
-            } catch (error) {
+            }
+            catch (error) {
                 // Continue with interactive authentication flow below
             }
         }
-
         // If we reach here, we need to do an interactive login
         try {
             const result = await this.login(environmentModel);
-
             // Store the account immediately after successful login
             console.log('[AUTH-HANDLER] Setting active account after login:', result.account);
             this.storeActiveAccount(result.account);
-            
             this.updateStoredEnvironments(environmentModel);
-
             return result.accessToken;
-        } catch (error) {
+        }
+        catch (error) {
             throw error;
         }
     }
-
-    async logout(): Promise<void> {
+    async logout() {
         const activeAccount = await this.getActiveAccount();
         if (activeAccount) {
             try {
                 await this.pca.getTokenCache().removeAccount(activeAccount);
                 this.removeActiveAccount();
                 this.removeActiveEnvironment();
-            } catch (error) {
+            }
+            catch (error) {
                 throw error;
             }
         }
     }
-
     // Environment model methods
-    updateStoredEnvironments(environmentModel: EnvironmentModel): void {
-        if (!environmentModel || !environmentModel.url) return;
-
+    updateStoredEnvironments(environmentModel) {
+        if (!environmentModel || !environmentModel.url)
+            return;
         try {
             const models = this.getEnvironmentModels();
-
             const existingIndex = models.findIndex(env => env.url === environmentModel.url);
-
             if (existingIndex >= 0) {
                 models.splice(existingIndex, 1);
             }
-            
             models.unshift(environmentModel);
-            
             const MAX_ENVIRONMENTS = 6;
             if (models.length > MAX_ENVIRONMENTS) {
                 models.splice(MAX_ENVIRONMENTS, models.length - MAX_ENVIRONMENTS);
             }
-
             this.store.set('environmentModels', models);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error saving environment model:', error);
         }
     }
-
-    getEnvironmentModels(): EnvironmentModel[] {
+    getEnvironmentModels() {
         try {
-            return this.store.get('environmentModels', []) as EnvironmentModel[];
-        } catch (error) {
+            return this.store.get('environmentModels', []);
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error getting environment models:', error);
             return [];
         }
     }
-
-    deleteEnvironmentModel(environmentModel: EnvironmentModel): void {
-        if (!environmentModel) return;
-
+    deleteEnvironmentModel(environmentModel) {
+        if (!environmentModel)
+            return;
         try {
             // Get existing models with explicit type cast
             const models = this.getEnvironmentModels();
-
             // Remove model with matching URL
             const updatedModels = models.filter(env => env.url !== environmentModel.url);
-
             // Save updated models
             this.store.set('environmentModels', updatedModels);
-
             // If active environment was deleted, set active to null
             const activeEnv = this.getActiveEnvironment();
             if (activeEnv && activeEnv.url === environmentModel.url) {
                 this.store.delete('activeEnvironment');
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error deleting environment model:', error);
         }
     }
-
-    async getActiveAccount(): Promise<AccountInfo | null> {
+    async getActiveAccount() {
         try {
             // First try to get the active account ID from store
-            const activeAccountId = this.store.get('activeAccountId', null) as string;
-            
+            const activeAccountId = this.store.get('activeAccountId', null);
             console.log('[AUTH-HANDLER: GET-ACTIVE-ACCOUNT] Active account ID:', activeAccountId);
             if (!activeAccountId || !this.pca) {
                 return null;
             }
-            
             // Use the MSAL token cache to get all accounts
             const accounts = await this.pca.getTokenCache().getAllAccounts();
-            
             // Find the account that matches the stored ID
             const msalAccount = accounts.find(account => account.homeAccountId === activeAccountId) || null;
             console.log('[AUTH-HANDLER: GET-ACTIVE-ACCOUNT] Active account:', msalAccount);
-            
             // Create a clean version of the account for IPC transfer
             if (msalAccount) {
-                const cleanAccount: AccountInfo = {
+                const cleanAccount = {
                     homeAccountId: msalAccount.homeAccountId,
                     environment: msalAccount.environment,
                     tenantId: msalAccount.tenantId,
@@ -702,37 +650,32 @@ class AuthHandler {
                     localAccountId: msalAccount.localAccountId,
                     name: msalAccount.name
                 };
-                
                 console.log('[AUTH-HANDLER: GET-ACTIVE-ACCOUNT] Clean account for IPC:', cleanAccount);
                 return cleanAccount;
             }
-            
             return null;
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error getting active account from cache:', error);
             return null;
         }
     }
-
-    storeActiveAccount(account: AccountInfo): void {
+    storeActiveAccount(account) {
         try {
             if (!account || !account.homeAccountId) {
                 console.error('[AUTH-HANDLER: SET-ACTIVE-ACCOUNT] Invalid account:', account);
                 return;
             }
-            
             // Store just the account ID instead of the full object
             console.log('[AUTH-HANDLER: SET-ACTIVE-ACCOUNT] Storing account ID:', account.homeAccountId);
             this.store.set('activeAccountId', account.homeAccountId);
-            
             // Force immediate save to disk
             if (typeof this.store.store === 'function') {
                 console.log('[AUTH-HANDLER: SET-ACTIVE-ACCOUNT] Flushing store to disk');
                 this.store.store();
             }
-            
             // Create a clean account object for IPC transfer
-            const cleanAccount: AccountInfo = {
+            const cleanAccount = {
                 homeAccountId: account.homeAccountId,
                 environment: account.environment,
                 tenantId: account.tenantId,
@@ -740,101 +683,94 @@ class AuthHandler {
                 localAccountId: account.localAccountId,
                 name: account.name
             };
-            
             // Emit account changed event to renderer process
             console.log('[AUTH-HANDLER: SET-ACTIVE-ACCOUNT] Sending account to renderer:', cleanAccount);
             this.mainWindow.webContents.send('account-changed', cleanAccount);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error setting active account:', error);
         }
     }
-
-    removeActiveAccount(): void {
+    removeActiveAccount() {
         try {
             this.store.delete('activeAccountId');
             // Emit account changed event with null to renderer process
             this.mainWindow.webContents.send('account-changed', null);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error removing active account:', error);
         }
     }
-
-    async setActiveEnvironment(environmentModel: EnvironmentModel): Promise<boolean> {
-        if (!environmentModel) return false;
-
-        try {            
+    async setActiveEnvironment(environmentModel) {
+        if (!environmentModel)
+            return false;
+        try {
             const isTokenValid = await this.getToken(environmentModel);
-
-            if(isTokenValid) {
+            if (isTokenValid) {
                 this.store.set('activeEnvironment', environmentModel);
                 this.mainWindow.webContents.send('environment-changed', environmentModel);
                 return true;
-            } else {
+            }
+            else {
                 return false;
             }
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error setting active environment:', error);
             return false;
         }
     }
-
-    removeActiveEnvironment(): void {
+    removeActiveEnvironment() {
         try {
             this.store.delete('activeEnvironment');
             // Emit environment changed event with null to renderer process
             this.mainWindow.webContents.send('environment-changed', null);
-        } catch (error) {
+        }
+        catch (error) {
             console.error('[AUTH-HANDLER] Error removing active environment:', error);
         }
     }
-
-    getActiveEnvironment(): EnvironmentModel | null {
+    getActiveEnvironment() {
         try {
-            return this.store.get('activeEnvironment', null) as EnvironmentModel;
-        } catch (error) {
+            return this.store.get('activeEnvironment', null);
+        }
+        catch (error) {
             return null;
         }
     }
-
-    async checkTokenValidity(): Promise<boolean> {
+    async checkTokenValidity() {
         try {
             if (!this.pca) {
                 console.log('[AUTH-HANDLER: CHECK-TOKEN-VALIDITY] MSAL not initialized');
                 return false;
             }
-
             const activeAccount = await this.getActiveAccount();
-            
             if (!activeAccount) {
                 console.log('[AUTH-HANDLER: CHECK-TOKEN-VALIDITY] No active account');
                 return false;
             }
-
             const environmentModel = this.getActiveEnvironment();
-
             if (!environmentModel) {
                 console.log('[AUTH-HANDLER: CHECK-TOKEN-VALIDITY] No active environment');
                 return false;
             }
-
             // Get environment-specific scopes
             const scopes = [`${environmentModel.apiUrl}/user_impersonation`];
-
             // This will throw an error if token is expired or not found
             await this.pca.acquireTokenSilent({
                 account: activeAccount,
                 scopes: scopes,
                 forceRefresh: false
             });
-
             console.log('[AUTH-HANDLER: CHECK-TOKEN-VALIDITY] Token is valid');
             // If we reach here, token is valid
             return true;
-        } catch (error) {
+        }
+        catch (error) {
             console.log('[AUTH-HANDLER: CHECK-TOKEN-VALIDITY] Token is invalid');
             return false;
         }
     }
 }
-
-export default AuthHandler; 
+exports.default = AuthHandler;
+//# sourceMappingURL=auth-handler.js.map

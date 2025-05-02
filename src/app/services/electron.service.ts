@@ -143,15 +143,31 @@ export class ElectronService {
    */
   get auth(): ElectronAuthAPI {
     if (this.isElectronApp && this.electron) {
+      // Debug: Log available methods in electron.auth
+      // Filter out any non-implemented methods like setEnvironmentUrl
+      console.log('[ELECTRON-SERVICE] Available auth methods:', 
+        this.electron.auth ? Object.keys(this.electron.auth).filter(method => 
+          ['login', 'getToken', 'logout', 'getActiveAccount', 'handleAuthRedirect', 'handleRedirect'].includes(method)
+        ) : 'auth object not available');
+      
       // Add getActiveAccount method if it's not available in the electron API
       const getActiveAccount = (): Promise<AccountInfo> => {
-        // Check if getActiveAccount exists in the electron API
-        if (this.electron.auth.getActiveAccount) {
+        console.log('[ELECTRON-SERVICE] Calling auth.getActiveAccount');
+        
+        // First try the direct window method if available (more reliable)
+        if (typeof window['getActiveAccount'] === 'function') {
+          console.log('[ELECTRON-SERVICE] Using direct window.getActiveAccount');
+          return window['getActiveAccount']();
+        }
+        
+        // Then try through electron.auth if available
+        if (this.electron.auth && typeof this.electron.auth.getActiveAccount === 'function') {
+          console.log('[ELECTRON-SERVICE] Using electron.auth.getActiveAccount');
           return this.electron.auth.getActiveAccount();
         }
         
         // If not available, use a fallback (empty account or stored account)
-        console.warn('getActiveAccount is not available in electron API');
+        console.warn('[ELECTRON-SERVICE] getActiveAccount is not available in electron API');
         return Promise.resolve(null);
       };
       

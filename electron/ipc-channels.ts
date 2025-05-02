@@ -6,7 +6,7 @@
 export const AUTH_LOGIN = 'login';
 export const AUTH_GET_TOKEN = 'getToken';
 export const AUTH_LOGOUT = 'logout';
-export const AUTH_SET_ENVIRONMENT_URL = 'setEnvironmentUrl';
+// export const AUTH_SET_ENVIRONMENT_URL = 'setEnvironmentUrl'; // Removing non-implemented method
 export const AUTH_GET_ACTIVE_ACCOUNT = 'getActiveAccount';
 export const AUTH_SET_ACTIVE_ACCOUNT = 'setActiveAccount';
 export const AUTH_HANDLE_REDIRECT = 'handleRedirect';
@@ -22,7 +22,7 @@ export type IpcChannel =
   | typeof AUTH_LOGIN
   | typeof AUTH_GET_TOKEN
   | typeof AUTH_LOGOUT
-  | typeof AUTH_SET_ENVIRONMENT_URL
+  // | typeof AUTH_SET_ENVIRONMENT_URL // Removing non-implemented method
   | typeof AUTH_GET_ACTIVE_ACCOUNT
   | typeof AUTH_SET_ACTIVE_ACCOUNT
   | typeof ENV_SAVE_MODEL
@@ -39,7 +39,7 @@ export default {
   AUTH_GET_ACTIVE_ACCOUNT,
   AUTH_SET_ACTIVE_ACCOUNT,
   AUTH_LOGOUT,
-  AUTH_SET_ENVIRONMENT_URL,
+  // AUTH_SET_ENVIRONMENT_URL, // Removing non-implemented method
   AUTH_HANDLE_REDIRECT,
   ENV_SAVE_MODEL,
   ENV_GET_MODELS,

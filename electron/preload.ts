@@ -6,7 +6,7 @@ import { AccountInfo, AuthenticationResult } from '@azure/msal-node';
 const AUTH_LOGIN = 'login';
 const AUTH_GET_TOKEN = 'getToken';
 const AUTH_LOGOUT = 'logout';
-const AUTH_SET_ENVIRONMENT_URL = 'setEnvironmentUrl';
+// const AUTH_SET_ENVIRONMENT_URL = 'setEnvironmentUrl'; // Removing non-implemented method
 const AUTH_GET_ACTIVE_ACCOUNT = 'getActiveAccount';
 const AUTH_SET_ACTIVE_ACCOUNT = 'setActiveAccount';
 const AUTH_HANDLE_REDIRECT = 'handleRedirect';
@@ -22,7 +22,7 @@ export type IpcChannel =
   | typeof AUTH_LOGIN
   | typeof AUTH_GET_TOKEN
   | typeof AUTH_LOGOUT
-  | typeof AUTH_SET_ENVIRONMENT_URL
+  // | typeof AUTH_SET_ENVIRONMENT_URL // Removing non-implemented method
   | typeof AUTH_GET_ACTIVE_ACCOUNT
   | typeof AUTH_SET_ACTIVE_ACCOUNT
   | typeof ENV_SAVE_MODEL
@@ -39,7 +39,7 @@ const IpcChannels = {
   AUTH_GET_ACTIVE_ACCOUNT,
   AUTH_SET_ACTIVE_ACCOUNT,
   AUTH_LOGOUT,
-  AUTH_SET_ENVIRONMENT_URL,
+  // AUTH_SET_ENVIRONMENT_URL, // Removing non-implemented method
   AUTH_HANDLE_REDIRECT,
   ENV_SAVE_MODEL,
   ENV_GET_MODELS,
@@ -66,7 +66,7 @@ interface ElectronAPI {
         saveModel: (environmentModel: EnvironmentModel) => Promise<any>;
         getModels: () => Promise<EnvironmentModel[]>;
         deleteModel: (environmentUrl: string) => Promise<any>;
-        setActive: (environmentModel: EnvironmentModel) => Promise<any>;
+        setActive: (environmentModel: EnvironmentModel) => Promise<boolean>;
         getActive: () => Promise<EnvironmentModel | null>;
     };
     openExternal: (url: string) => Promise<boolean>;

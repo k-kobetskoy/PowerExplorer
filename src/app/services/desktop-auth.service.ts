@@ -107,17 +107,21 @@ export class DesktopAuthService {
       return of(false);
     }
 
+    console.log('[DESKTOP-AUTH] Setting active environment:', environmentModel);
+
     return from(this.electronService.environment.setActive(environmentModel)).pipe(
       map(result => {
         console.log('[ELECTRON-AUTH] Set environment URL result:', result);
-        this.activeEnvironmentModel.next(environmentModel);
         
         if (result.success) {
+          this.activeEnvironmentModel.next(environmentModel);
           this.notificationService.showSuccess(`Connected to ${environmentModel.friendlyName}`);
         } else {
           this.notificationService.showError(`Failed to connect to ${environmentModel.friendlyName}`);
         }
         
+        this.updateActiveAccount();
+
         return result.success;
       }),
       catchError(error => {
@@ -143,9 +147,27 @@ export class DesktopAuthService {
       return;
     }
 
-    from(this.electronService.auth.getActiveAccount()).subscribe(account => {
-      this.activeAccount.next(account);
-    });
+    console.log('[DESKTOP-AUTH] Requesting active account from main process');
+    
+    // Try using the standard method
+    from(this.electronService.auth.getActiveAccount())
+      .pipe(
+        catchError(error => {
+          console.error('[DESKTOP-AUTH] Error with standard getActiveAccount, trying direct method:', error);
+          
+          // Try direct method if standard method fails
+          if (typeof window['getActiveAccount'] === 'function') {
+            console.log('[DESKTOP-AUTH] Using direct window.getActiveAccount method');
+            return from(window['getActiveAccount']());
+          }
+          
+          return of(null);
+        })
+      )
+      .subscribe(account => {
+        console.log('[DESKTOP-AUTH] Active account updated:', account);
+        this.activeAccount.next(account);
+      });
   }
 
   updateActiveEnvironment(): void {

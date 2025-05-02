@@ -430,7 +430,7 @@ if (!gotTheLock) {
     console.log('[MAIN] Verifying IPC handlers are properly registered');
     
     // List expected handlers for auth
-    const expectedHandlers: string[] = ['login', 'getToken', 'logout', 'setEnvironmentUrl'];
+    const expectedHandlers: string[] = ['login', 'getToken', 'logout', 'getActiveAccount'];
     
     // Check if handlers exist in Electron
     const registeredHandlers = ipcMain.eventNames();

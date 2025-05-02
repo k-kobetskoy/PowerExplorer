@@ -1,9 +1,9 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy, Input, Inject } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { EntityModel } from 'src/app/models/incoming/environment/entity-model';
 import { Observable, Subject, combineLatest, BehaviorSubject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map, startWith, takeUntil } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, startWith, takeUntil, tap } from 'rxjs/operators';
 import { EntityEntityService } from '../../../services/entity-services/entity-entity.service';
 import { AttributeData } from '../../../models/constants/attribute-data';
 import { QueryNode } from '../../../models/query-node';
@@ -20,6 +20,9 @@ import { NodeTreeService } from '../../../services/node-tree.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NodeActionsComponent } from '../node-actions/node-actions.component';
+import { ACTIVE_ENVIRONMENT_MODEL, ACTIVE_ACCOUNT_MODEL } from 'src/app/models/tokens';
+import { EnvironmentModel } from 'src/app/models/environment-model';
+import { AccountInfo } from '@azure/msal-browser';
 @Component({
     standalone: true,
     imports: [
@@ -57,13 +60,36 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     private nameInputName = this.nameAttributeData.EditorName;
 
-    constructor(private entityService: EntityEntityService, private fb: FormBuilder, private nodeTreeProcessorService: NodeTreeService) {
+    constructor(
+        private entityService: EntityEntityService,
+        private fb: FormBuilder,
+        private nodeTreeProcessorService: NodeTreeService,
+        @Inject(ACTIVE_ENVIRONMENT_MODEL) private activeEnvironmentModel: BehaviorSubject<EnvironmentModel>,
+        @Inject(ACTIVE_ACCOUNT_MODEL) private activeAccount: BehaviorSubject<AccountInfo>
+    ) {
         super();
-        this.isLoading$ = this.entityService.getEntitiesIsLoading$;
+        // this.isLoading$ = this.entityService.getEntitiesIsLoading$;
     }
 
     ngOnInit() {
         this.initializeForm();
+        this.initializeIsLoading();
+    }
+
+    initializeIsLoading() {
+       combineLatest([this.activeEnvironmentModel, this.activeAccount]).pipe(
+        tap(([environment, account]) => {
+            console.log('environment', environment);
+            console.log('account', account);
+        }),
+        takeUntil(this.destroy$),
+        filter(([environment, account]) => environment !== null && environment !== undefined && account !== null && account !== undefined),
+        startWith(false)     
+       ).subscribe(isLoggedIn => {
+        if(isLoggedIn) {
+            this.isLoading$ = this.entityService.getEntitiesIsLoading$;
+        }
+       });
     }
 
     ngOnChanges(changes: SimpleChanges) {

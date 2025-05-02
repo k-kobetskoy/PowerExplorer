@@ -13,6 +13,7 @@
     "electron": "node electron-launcher.js",
     "electron-dev": "concurrently \"npm run start\" \"wait-on http://localhost:4200 && set ELECTRON_START_URL=http://localhost:4200 && electron .\"",
     "electron-build": "ng build --configuration production && electron .",
+    "build:electron": "npx tsc -p electron/tsconfig.electron.json && node scripts/copy-electron-files.js",
     "package": "electron-builder build --win --publish never",
     "package-mac": "electron-builder build --mac --publish never",
     "package-linux": "electron-builder build --linux --publish never"
