@@ -67,6 +67,7 @@ class AuthHandler {
     private redirectUri: string = 'http://localhost';
     private pendingAuthRequest: {
         environmentModel: EnvironmentModel;
+        scopes: string[];
         resolve: (value: AuthenticationResult) => void;
         reject: (reason: any) => void;
     } | null = null;
@@ -332,8 +333,7 @@ class AuthHandler {
                     // Exchange code for token
                     const authResult = await this.pca.acquireTokenByCode({
                         code,
-                        scopes: this.pendingAuthRequest.environmentModel.scopes || 
-                                [`${this.pendingAuthRequest.environmentModel.apiUrl}/user_impersonation`],
+                        scopes: [`${this.pendingAuthRequest.environmentModel.apiUrl}/user_impersonation`],
                         redirectUri: this.redirectUri,
                         authority: this.authority
                     });
@@ -516,8 +516,8 @@ class AuthHandler {
                 this.pendingAuthRequest = {
                     environmentModel: {
                         ...environmentModel,
-                        scopes: scopes
                     },
+                    scopes: scopes,
                     resolve,
                     reject
                 };
