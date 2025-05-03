@@ -274,6 +274,8 @@ export class XmlExecutorService extends BaseRequestService {
     
     let hasDefinedAttributes = false;
     Object.values(entityAttributeMap).forEach(entityData => {
+      console.log('[XML-EXECUTOR: PROCESS-DATA-WITH-STRATEGY] entityData', entityData);
+      
       if (entityData.attributeData && entityData.attributeData.length > 0) {
         hasDefinedAttributes = true;
       }

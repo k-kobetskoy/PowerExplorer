@@ -372,6 +372,7 @@ export class NodeTreeService {
       return map;
     }
 
+    
     this.traverseNodeTree(map, rootNode.next, {
       entityAlias: null,
       attributeData: [],
@@ -395,6 +396,7 @@ export class NodeTreeService {
       return;
     }
 
+    
     const nodeIsEntityOrLink = queryNode.tagName === QueryNodeData.Entity.TagName || queryNode.tagName === QueryNodeData.Link.TagName;
 
     if (nodeIsEntityOrLink) {
@@ -410,6 +412,7 @@ export class NodeTreeService {
 
       // Get attributes from the node
       const attributes = queryNode.attributes$.value;
+      
       const entityNameAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityName);
 
       if (entityNameAttribute) {
@@ -420,13 +423,15 @@ export class NodeTreeService {
         const primaryIdAttribute = `${entityLogicalName}id`;
 
         if (!map[entityLogicalName]) {
+          const isPrimary = queryNode.tagName === QueryNodeData.Entity.TagName &&
+              !entityName && // No previous entity
+              !queryNode.parent?.attributes$.value.some(a => a.editorName === AttributeNames.entityAlias); // Not an aliased entity
+                    
           map[entityLogicalName] = {
             entityAlias: null,
             attributeData: [],
             // If this is the first entity in traversal, mark it as primary
-            isPrimaryEntity: queryNode.tagName === QueryNodeData.Entity.TagName &&
-              !entityName && // No previous entity
-              !queryNode.parent?.attributes$.value.some(a => a.editorName === AttributeNames.entityAlias), // Not an aliased entity
+            isPrimaryEntity: isPrimary,
             primaryIdAttribute: primaryIdAttribute
           };
         }
@@ -441,16 +446,16 @@ export class NodeTreeService {
 
         const entityAliasAttribute = attributes.find(attr => attr.editorName === AttributeNames.entityAlias);
         nextEntityAttributeData.entityAlias = entityAliasAttribute ? entityAliasAttribute.value$.value : null;
-
+        
         this.traverseNodeTree(map, queryNode.next, nextEntityAttributeData, entityLogicalName);
+      } else {
+        // Continue traversal with current entity context if no entity name found
+        this.traverseNodeTree(map, queryNode.next, entityAttributeData, entityName);
       }
-    }
-
-    // Handle Attribute nodes
-    const nodeIsAttribute = queryNode.tagName === QueryNodeData.Attribute.TagName;
-
-    if (nodeIsAttribute) {
+    } else if (queryNode.tagName === QueryNodeData.Attribute.TagName) {
+      // Handle Attribute nodes
       const attributes = queryNode.attributes$.value;
+      
       const attributeLogicalName = attributes.find(attr => attr.editorName === AttributeNames.attributeName)?.value$.value;
       const attributeAlias = attributes.find(attr => attr.editorName === AttributeNames.attributeAlias)?.value$.value;
 
@@ -459,7 +464,12 @@ export class NodeTreeService {
           attributeLogicalName: attributeLogicalName || null,
           alias: attributeAlias || null
         });
+      } else {
       }
+      
+      this.traverseNodeTree(map, queryNode.next, entityAttributeData, entityName);
+    } else {
+      // For other node types, just continue traversal with current context
       this.traverseNodeTree(map, queryNode.next, entityAttributeData, entityName);
     }
   }

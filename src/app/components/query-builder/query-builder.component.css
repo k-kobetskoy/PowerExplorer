@@ -232,6 +232,8 @@ app-tree-panel, app-control-panel {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 app-code-editor, app-result-table {

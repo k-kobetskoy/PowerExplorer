@@ -8,11 +8,13 @@ app-result-table .format-toggle-label{
 }
 
 .mat-mdc-table {
-  min-width: 100%;
+  min-width: 0 !important;
   border: 0;
   border-spacing: 0;
   table-layout: auto;
   white-space: nowrap !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
 }
 
 mat-header-row .mat-mdc-header-row {
@@ -73,8 +75,9 @@ mat-header-row .mat-mdc-header-row {
 .full-size-table {
   height: auto;
   width: auto;
-  min-width: 100%;
-  margin: 0 auto;
+  /* min-width: 100%; */
+  margin: 0 !important;
+  text-align: left;
 }
 
 .mat-mdc-table {
@@ -305,6 +308,8 @@ tr.mat-mdc-row:hover {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
 
 .table-scroll-container {
@@ -314,6 +319,11 @@ tr.mat-mdc-row:hover {
   position: relative;
   flex: 1;
   height: calc(100vh - 245px); /* Adjust for header, controls, and paginator */
+  align-self: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 /* Fixed row height */
