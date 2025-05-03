@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, protocol } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, protocol, Menu } from 'electron';
 import { autoUpdater, AppUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
@@ -326,6 +326,9 @@ if (!gotTheLock) {
   }
 
   app.on('ready', () => {
+    // Remove the application menu
+    Menu.setApplicationMenu(null);
+    
     // Set up custom protocol before creating window
     if (!process.env.ELECTRON_START_URL) {
       const appPath = path.resolve(__dirname, '..');
