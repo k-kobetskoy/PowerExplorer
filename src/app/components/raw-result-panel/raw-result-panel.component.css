@@ -1,0 +1,27 @@
+.raw-result-panel-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+.raw-result-panel-header {
+    display: flex;
+    justify-content: flex-start;
+    padding: 10.5px 16px;
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0; /* Prevent header from shrinking */
+  }
+
+  .raw-result-panel-title{
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--main-text-color);
+}
+
+.raw-result-panel-content{
+    height: 100%;
+    width: 100%;
+    flex-grow: 1; /* Allow content to take remaining space */
+    overflow: auto; /* Add scrolling if needed */
+}

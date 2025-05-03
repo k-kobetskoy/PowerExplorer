@@ -7,6 +7,57 @@ app-result-table .format-toggle-label{
   font-weight: 500;
 }
 
+.result-table-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.results-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+.raw-result-panel {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 0px !important;
+}
+
+.closed-panel-icon {
+  display: flex;
+  align-self: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.closed-panel-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.closed-panel-icon img {
+  width: 1rem;
+}
+
+.closed-panel-icon:hover img {
+  display: none;
+}
+
+.closed-panel-icon:hover::after {
+  content: "";
+  display: block;
+  width: 1rem;
+  height: 1rem;
+  background-image: url('/assets/icons/open-pane-hover.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .mat-mdc-table {
   min-width: 0 !important;
   border: 0;
@@ -37,8 +88,6 @@ mat-header-row .mat-mdc-header-row {
 .mat-mdc-table {
   --mat-table-header-container-height: 30px;
 }
-
-
 
 .mat-mdc-table {
   --mat-table-header-headline-font: "Inter", sans-serif;
@@ -95,7 +144,6 @@ mat-header-row .mat-mdc-header-row {
   /* color: rgb(168, 168, 168); */
 }
 
-
 .mat-mdc-table .mat-mdc-header-cell {
   max-width: 300px;
   width: auto;
@@ -117,12 +165,10 @@ mat-header-row .mat-mdc-header-row {
   text-wrap-mode: wrap !important;
 }
 
-
 .mat-mdc-table .mat-mdc-cell.selected {
   max-width: 300px;
   white-space: normal;
 }
-
 
 .mat-mdc-table .selected {
     background-color: rgba(224, 225, 230, 0.9) !important;
@@ -191,7 +237,6 @@ mat-header-row .mat-mdc-header-row {
   background-color: rgba(245, 245, 245, 0.5) !important;
 }
 
-
 .mat-mdc-cell.picklist-cell {
     text-align: center !important;
     font-weight: 500 !important;
@@ -213,7 +258,7 @@ tr.mat-mdc-row:hover {
 
 .table-controls {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 8px 16px;
   background-color: #f8f8f8;
   border-bottom: 1px solid #e0e0e0;
@@ -500,7 +545,6 @@ ng-container {
 .empty-cell {
   background-color: #f9f9f9 !important;
 }
-
 
 .row-number-link {
   color: #2c70b9;

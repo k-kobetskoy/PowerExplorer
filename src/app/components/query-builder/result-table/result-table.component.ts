@@ -10,11 +10,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { CacheStorageService } from '../../../services/data-sorage/cache-storage.service';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ExternalLinkService } from '../../../services/external-link.service';
 import { EnvironmentModel } from 'src/app/models/environment-model';
 import { ACTIVE_ENVIRONMENT_MODEL } from 'src/app/models/tokens';
+import { RawResultPanelComponent } from '../../raw-result-panel/raw-result-panel.component';
+import { AngularSplitModule } from 'angular-split';
 
 @Component({
     selector: 'app-result-table',
@@ -26,7 +27,9 @@ import { ACTIVE_ENVIRONMENT_MODEL } from 'src/app/models/tokens';
         MatTableModule,
         MatProgressBarModule,
         MatIconModule,
-        MatPaginatorModule
+        MatPaginatorModule,
+        RawResultPanelComponent,
+        AngularSplitModule,
     ],
     templateUrl: './result-table.component.html',
     styleUrls: ['./result-table.component.css'],
@@ -35,6 +38,8 @@ import { ACTIVE_ENVIRONMENT_MODEL } from 'src/app/models/tokens';
     schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ResultTableComponent implements OnInit, OnDestroy {
+  closedPanel = true;
+  
   selectedRow: any;
   selectedOverflowCell: any;
   selectedColumn: string | null = null;
@@ -56,6 +61,11 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   
   // Local BehaviorSubject to store the most recent result
   private mostRecentResult = new BehaviorSubject<MatTableRawData | null>(null);
+  
+  // BehaviorSubject for raw result panel
+  dataSourceSubject = new BehaviorSubject<any>(null);
+  rawDataverseResult = new BehaviorSubject<any>(null);
+  formattedDataverseResult = new BehaviorSubject<any>(null);
   
   isLoading = false;
   hasError = false;
@@ -90,6 +100,12 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   @Output() resultTableGetResult = new EventEmitter<void>();
 
   ngOnInit() {
+
+    this.rawDataverseResult = this.xmlExecutor.getRawDataverseRawResult();
+    
+    this.rawDataverseResult.subscribe(result => {
+      this.dataSourceSubject.next(result);
+    });
     // Check the initial loading state
     this.isLoading = this.xmlExecutor.isLoading();
     
@@ -278,14 +294,14 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           .pipe(takeUntil(this.destroy$))
           .subscribe(
             result => {
-              console.log('Result table direct execution completed successfully');
               
+              console.log('Result table direct execution completed successfully');
               // Store the result in our local BehaviorSubject for components to use
               this.mostRecentResult.next(result);
               
               // For immediate feedback, process the result directly
               if (result && result.rows && result.rows.length > 0) {
-                this.resultData = result;
+                this.resultData = result;            
                 this.processResultData();
               }
             },
@@ -311,11 +327,12 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       return;
     }
 
+   // this.dataSourceSubject.next(this.resultData);
     // Reset cell selection when new data is loaded
     this.selectedOverflowCell = null;
     this.selectedColumn = null;
     this.selectedRow = null;
-
+    this.formattedDataverseResult.next(this.resultData.rows);
     // Get all columns from header but exclude __entity_url
     // This will include columns with null values after our processing strategy has run
     const headerColumns = Object.keys(this.resultData.header || {}).filter(col => col !== '__entity_url');
@@ -363,7 +380,14 @@ export class ResultTableComponent implements OnInit, OnDestroy {
   }
 
   selectRow(row: any) {
-    this.selectedRow = row;
+    // If clicking on the same row as previously selected, deselect it
+    if (this.selectedRow === row) {
+      this.selectedRow = null;
+      this.dataSourceSubject.next(this.rawDataverseResult.value);
+    } else {
+      this.selectedRow = row;
+      this.dataSourceSubject.next(this.formattedDataverseResult.value[row['No.'] - 1]['rowJson']);
+    }
   }
 
   selectCell(element: Object, event: MouseEvent) {
@@ -679,6 +703,7 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       // Update paginated view
       this.updatePaginatedData();
       
+            
     } catch (error) {
       console.error('Error refreshing data source:', error);
       this.dataSource = [];
@@ -742,6 +767,10 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           console.error('Error in direct execution with provided data:', error);
         }
       );
+  }
+
+  togglePanel() {
+    this.closedPanel = !this.closedPanel;
   }
 
   // Add a method to handle external link clicks

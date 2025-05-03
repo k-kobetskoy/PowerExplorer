@@ -47,7 +47,6 @@ export interface MatTableRawData {
   __original_data?: any[];
 }
 
-
 export interface XmlExecutionResult {
   header: { [key: string]: HeaderMetadata };
   rawValues: any[];
@@ -85,6 +84,8 @@ export class XmlExecutorService extends BaseRequestService {
     __original_data: []
   });
 
+  private rawDataverseResultSubject = new BehaviorSubject<DataverseExecuteXmlResponse>(null);
+
   // Add BehaviorSubject to track loading state
   private isLoadingState = new BehaviorSubject<boolean>(false);
   public isLoadingState$ = this.isLoadingState.asObservable();
@@ -115,6 +116,10 @@ export class XmlExecutorService extends BaseRequestService {
 
   clearError(): void {
     this.lastError = null;
+  }
+
+  getRawDataverseRawResult(): BehaviorSubject<DataverseExecuteXmlResponse> {
+    return this.rawDataverseResultSubject;
   }
 
   executeXmlRequest(xml: string, entityNode: QueryNode, options: FetchXmlQueryOptions = {}): Observable<MatTableRawData> {
@@ -209,6 +214,8 @@ export class XmlExecutorService extends BaseRequestService {
 
         return this.httpClient.get<DataverseExecuteXmlResponse>(url, headers).pipe(
           switchMap(response => {
+
+            this.rawDataverseResultSubject.next({...response});
             // Access the data directly from the response
             // The response object doesn't have a body property in this API
             const result = response?.value || [];
