@@ -15,6 +15,10 @@ const ENV_GET_MODELS = 'getEnvironmentModels';
 const ENV_DELETE_MODEL = 'deleteEnvironmentModel';
 const ENV_SET_ACTIVE = 'setActiveEnvironment';
 const ENV_GET_ACTIVE = 'getActiveEnvironment';
+// Auto-update channels
+const UPDATE_CHECK = 'check-for-updates';
+const UPDATE_DOWNLOAD = 'download-update';
+const UPDATE_QUIT_INSTALL = 'quit-and-install';
 // All channels in a single object
 const IpcChannels = {
     AUTH_LOGIN,
@@ -29,8 +33,10 @@ const IpcChannels = {
     ENV_DELETE_MODEL,
     ENV_SET_ACTIVE,
     ENV_GET_ACTIVE,
+    UPDATE_CHECK,
+    UPDATE_DOWNLOAD,
+    UPDATE_QUIT_INSTALL,
 };
-console.log('[PRELOAD] Preload script started, exposing APIs to window...');
 // Expose IPC channel constants to renderer
 electron_1.contextBridge.exposeInMainWorld('IPC_CHANNELS', {
     ...IpcChannels
@@ -57,7 +63,7 @@ const electronAPI = {
         }
     },
     receive: (channel, func) => {
-        const validChannels = ['deep-link'];
+        const validChannels = ['deep-link', 'update-available', 'update-not-available', 'update-error', 'update-progress', 'update-downloaded'];
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender` 
             electron_1.ipcRenderer.on(channel, (_event, ...args) => func(...args));
@@ -78,11 +84,38 @@ const electronAPI = {
         setActive: (environmentModel) => electron_1.ipcRenderer.invoke(IpcChannels.ENV_SET_ACTIVE, environmentModel),
         getActive: () => electron_1.ipcRenderer.invoke(IpcChannels.ENV_GET_ACTIVE)
     },
+    updater: {
+        checkForUpdates: () => electron_1.ipcRenderer.invoke(IpcChannels.UPDATE_CHECK),
+        downloadUpdate: () => electron_1.ipcRenderer.invoke(IpcChannels.UPDATE_DOWNLOAD),
+        quitAndInstall: () => electron_1.ipcRenderer.invoke(IpcChannels.UPDATE_QUIT_INSTALL),
+        onUpdateAvailable: (callback) => {
+            const listener = (_event, info) => callback(info);
+            electron_1.ipcRenderer.on('update-available', listener);
+            return () => { electron_1.ipcRenderer.removeListener('update-available', listener); };
+        },
+        onUpdateNotAvailable: (callback) => {
+            const listener = (_event, info) => callback(info);
+            electron_1.ipcRenderer.on('update-not-available', listener);
+            return () => { electron_1.ipcRenderer.removeListener('update-not-available', listener); };
+        },
+        onUpdateError: (callback) => {
+            const listener = (_event, error) => callback(error);
+            electron_1.ipcRenderer.on('update-error', listener);
+            return () => { electron_1.ipcRenderer.removeListener('update-error', listener); };
+        },
+        onUpdateProgress: (callback) => {
+            const listener = (_event, progressObj) => callback(progressObj);
+            electron_1.ipcRenderer.on('update-progress', listener);
+            return () => { electron_1.ipcRenderer.removeListener('update-progress', listener); };
+        },
+        onUpdateDownloaded: (callback) => {
+            const listener = (_event, info) => callback(info);
+            electron_1.ipcRenderer.on('update-downloaded', listener);
+            return () => { electron_1.ipcRenderer.removeListener('update-downloaded', listener); };
+        }
+    },
     openExternal: (url) => electron_1.ipcRenderer.invoke('open-external', url),
     isElectron: true
 };
-// Expose the electron API to the window
-console.log('[PRELOAD] Exposing electron API to window...');
 electron_1.contextBridge.exposeInMainWorld('electron', electronAPI);
-console.log('[PRELOAD] Preload script completed successfully');
 //# sourceMappingURL=preload.js.map

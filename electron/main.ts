@@ -82,32 +82,55 @@ if (!gotTheLock) {
       // Check if the directory exists
       if (!fs.existsSync(distPath)) {
         console.error(`[MAIN] Build folder not found at: ${distPath}`);
-        dialog.showErrorBox(
-          'Build Folder Not Found',
-          `Could not find the Angular build at ${distPath}. Please run "npm run build" first.`
-        );
-        app.quit();
-        return;
+        
+        // In packaged app, try to find the resources directory inside asar
+        const asarDistPath = path.join(appPath, 'dist');
+        if (fs.existsSync(asarDistPath)) {
+          console.log(`[MAIN] Found alternative build folder at: ${asarDistPath}`);
+          indexPath = path.join(asarDistPath, 'index.html');
+        } else {
+          dialog.showErrorBox(
+            'Build Folder Not Found',
+            `Could not find the Angular build. Please ensure the application is properly built.`
+          );
+          app.quit();
+          return;
+        }
+      } else {
+        // List files in the directory to verify
+        try {
+          const files = fs.readdirSync(distPath);
+          console.log('[MAIN] Files in dist folder:', files);
+        } catch (err) {
+          console.error('[MAIN] Error reading dist directory:', err);
+        }
+
+        // Construct the absolute path to index.html
+        indexPath = path.join(distPath, 'index.html');
       }
       
-      // List files in the directory to verify
-      const files = fs.readdirSync(distPath);
-
-      // Construct the absolute path to index.html
-      indexPath = path.join(distPath, 'index.html');
-      
-      // Check if the file exists
-      if (!fs.existsSync(indexPath)) {
-        dialog.showErrorBox(
-          'Index File Not Found',
-          `Could not find index.html at ${indexPath}. Please ensure the Angular build is complete.`
-        );
-        app.quit();
-        return;
+      // Check if the index file exists
+      if (!indexPath || !fs.existsSync(indexPath)) {
+        console.error(`[MAIN] Index file not found at: ${indexPath}`);
+        
+        // Try fallback path for packaged app
+        const fallbackPath = path.join(appPath, 'index.html');
+        if (fs.existsSync(fallbackPath)) {
+          indexPath = fallbackPath;
+          console.log(`[MAIN] Using fallback index file at: ${indexPath}`);
+        } else {
+          dialog.showErrorBox(
+            'Index File Not Found',
+            `Could not find index.html. Please ensure the application is properly built.`
+          );
+          app.quit();
+          return;
+        }
       }
 
       // Format the file URL correctly
       const fileUrl = 'file:///' + indexPath.replace(/\\/g, '/');
+      console.log('[MAIN] Loading application from:', fileUrl);
 
       // Load the index.html file directly
       mainWindow.loadURL(fileUrl).catch(err => {
@@ -124,7 +147,45 @@ if (!gotTheLock) {
           } else {
             // If loading.html doesn't exist, use the readFile approach
             const htmlContent = fs.readFileSync(indexPath, 'utf-8');
-            mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+            
+            // Fix paths in HTML content for packaged app
+            let modifiedHtml = htmlContent;
+            
+            // Fix base href for packaged app
+            if (!modifiedHtml.includes('<base href="app://')) {
+              modifiedHtml = modifiedHtml.replace(
+                /<base href=".*?">/,
+                `<base href="app://./">`
+              );
+            }
+            
+            // Fix absolute paths that might point to D:/ or other locations
+            modifiedHtml = modifiedHtml.replace(
+              /(href|src)="([a-zA-Z]:\/.*?\.(css|js))"/g,
+              (match, attr, filepath, ext) => {
+                // Extract just the filename
+                const filename = filepath.split(/[\/\\]/).pop();
+                return `${attr}="app://${filename}"`;
+              }
+            );
+            
+            mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(modifiedHtml));
+            
+            // After the page loads, fix any remaining style references
+            mainWindow.webContents.on('did-finish-load', () => {
+              mainWindow.webContents.executeJavaScript(`
+                // Fix any CSS links with absolute paths 
+                document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                  const href = link.getAttribute('href');
+                  if (href && href.match(/^[a-zA-Z]:\//)) {
+                    // Extract just the filename
+                    const filename = href.split(/[\/\\]/).pop();
+                    link.setAttribute('href', 'app://' + filename);
+                    console.log('Fixed CSS path:', href, 'to', 'app://' + filename);
+                  }
+                });
+              `).catch(err => console.error('Error fixing CSS paths:', err));
+            });
           }
         } catch (fallbackErr) {
           console.error('[MAIN] Error loading with fallback method:', fallbackErr);
@@ -177,9 +238,32 @@ if (!gotTheLock) {
       protocol.registerFileProtocol(protocolName, (request, callback) => {
         const url = request.url.substring(`${protocolName}://`.length);
         try {
-          return callback(path.join(distPath, url));
+          const appPath = path.resolve(__dirname, '..');
+          const distPath = path.join(appPath, 'dist', 'power-explorer');
+          
+          // First try standard dist path
+          const filePath = path.join(distPath, url);
+          if (fs.existsSync(filePath)) {
+            return callback(filePath);
+          }
+          
+          // If not found, try directly in dist (for packaged apps)
+          const asarPath = path.join(appPath, 'dist', url);
+          if (fs.existsSync(asarPath)) {
+            return callback(asarPath);
+          }
+          
+          // If still not found, try in app root
+          const rootPath = path.join(appPath, url);
+          if (fs.existsSync(rootPath)) {
+            return callback(rootPath);
+          }
+          
+          console.error(`[MAIN] Protocol handler: File not found: ${url}`);
+          console.error(`[MAIN] Tried paths: ${filePath}, ${asarPath}, ${rootPath}`);
+          return callback({ path: '' });
         } catch (error) {
-          console.error(error);
+          console.error('[MAIN] Protocol error:', error);
           return callback({ path: '' });
         }
       });
@@ -247,23 +331,153 @@ if (!gotTheLock) {
       const appPath = path.resolve(__dirname, '..');
       const distPath = path.join(appPath, 'dist', 'power-explorer');
       
-      // Register protocol handler for serving local files
-      protocol.registerFileProtocol('app', (request, callback) => {
-        const url = request.url.substring('app://'.length);
-        try {
-          return callback(path.join(distPath, url));
-        } catch (error) {
-          console.error('[MAIN] Protocol error:', error);
-          return callback({ path: '' });
-        }
-      });
-
+      // Register protocol handler for serving local files - skip as this is now in createWindow
+      
       // Intercept file:// protocol to fix path resolution
       protocol.interceptFileProtocol('file', (request, callback) => {
         let url = request.url.substr(8); // Strip 'file:///' prefix
         
         // Windows path handling
         url = decodeURIComponent(url);
+        
+        // Log the requested URL for debugging
+        console.log('[MAIN] Intercepted file request:', url);
+        
+        // Special debug for CSS files to track all style resources
+        if (url.includes('.css') || url.endsWith('styles')) {
+          console.log('[MAIN] Style resource requested:', url);
+          
+          // Try multiple approaches for styles
+          // 1. Direct file access
+          if (fs.existsSync(url)) {
+            console.log('[MAIN] Style found at direct path:', url);
+            callback(url);
+            return;
+          }
+          
+          // 2. Try in app.asar/dist
+          const appPath = path.resolve(__dirname, '..');
+          let styleFilename = url;
+          
+          // Extract filename from path
+          if (url.includes('/')) {
+            styleFilename = url.split('/').pop() || '';
+          } else if (url.includes('\\')) {
+            styleFilename = url.split('\\').pop() || '';
+          }
+          
+          // Search for style in dist directory with glob pattern
+          try {
+            const possibleLocations = [
+              path.join(appPath, 'dist', styleFilename),
+              path.join(appPath, 'dist', 'power-explorer', styleFilename),
+              path.join(appPath, 'dist', '**', styleFilename),
+              // If the file has hash, try with wildcard
+              styleFilename.includes('.') 
+                ? path.join(appPath, 'dist', '**', styleFilename.split('.')[0] + '.*.' + styleFilename.split('.').pop())
+                : null
+            ].filter(Boolean);
+            
+            console.log('[MAIN] Searching for style in possible locations:', possibleLocations);
+            
+            // Try each possible location
+            for (const location of possibleLocations) {
+              if (location.includes('*')) {
+                // This is a glob pattern, we need to do more complex search
+                // For simplicity, let's skip this for now
+                continue;
+              }
+              
+              if (fs.existsSync(location)) {
+                console.log('[MAIN] Style found at:', location);
+                callback(location);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('[MAIN] Error searching for style:', error);
+          }
+        }
+        
+        // Handle asar paths explicitly - check if this is a request for a file in the asar archive
+        if (url.includes('app.asar')) {
+          // For paths within the asar archive
+          try {
+            // No need to extract from the archive - Electron handles this automatically
+            // Just make sure the path is valid
+            if (fs.existsSync(url)) {
+              console.log('[MAIN] Found resource in asar at original path:', url);
+              callback(url);
+              return;
+            }
+            
+            // Special handling for CSS files in ASAR
+            if (url.includes('.css')) {
+              // Extract the CSS filename
+              const cssFilename = url.split('/').pop();
+              
+              // Check if we're dealing with a hashed filename like styles.254467662158fe59.css
+              if (cssFilename && cssFilename.includes('.')) {
+                // Try to find the file by traversing the asar structure
+                const asarRoot = url.substring(0, url.indexOf('app.asar') + 'app.asar'.length);
+                
+                // Common directories to look for styles in Angular app
+                const commonDirs = [
+                  path.join(asarRoot, 'dist'),
+                  path.join(asarRoot, 'dist', 'power-explorer'),
+                  path.join(asarRoot, 'dist', 'assets'),
+                  path.join(asarRoot, 'dist', 'styles')
+                ];
+                
+                // Try to find the file in common directories
+                for (const dir of commonDirs) {
+                  const possiblePath = path.join(dir, cssFilename);
+                  console.log('[MAIN] Checking for CSS in ASAR at:', possiblePath);
+                  
+                  if (fs.existsSync(possiblePath)) {
+                    console.log('[MAIN] Found CSS in ASAR at:', possiblePath);
+                    callback(possiblePath);
+                    return;
+                  }
+                  
+                  // Also try with the base name (without hash)
+                  const parts = cssFilename.split('.');
+                  if (parts.length > 2) {
+                    // This is likely a hashed filename like styles.254467662158fe59.css
+                    const baseFilename = parts[0] + '.' + parts[parts.length - 1];
+                    const baseFilePath = path.join(dir, baseFilename);
+                    
+                    console.log('[MAIN] Checking for base CSS in ASAR at:', baseFilePath);
+                    if (fs.existsSync(baseFilePath)) {
+                      console.log('[MAIN] Found base CSS in ASAR at:', baseFilePath);
+                      callback(baseFilePath);
+                      return;
+                    }
+                  }
+                }
+              }
+            }
+            
+            // If the direct path doesn't exist, try to find it based on path components
+            const components = url.split('/');
+            const distIndex = components.indexOf('dist');
+            
+            if (distIndex >= 0) {
+              // Rebuild the path relative to the app directory
+              const relativePath = components.slice(distIndex).join('/');
+              const appPath = path.resolve(__dirname, '..');
+              const distFilePath = path.join(appPath, relativePath);
+              
+              console.log('[MAIN] Trying alternative path:', distFilePath);
+              if (fs.existsSync(distFilePath)) {
+                callback(distFilePath);
+                return;
+              }
+            }
+          } catch (error) {
+            console.error('[MAIN] Error handling asar path:', error);
+          }
+        }
         
         // Special case for files at D:/ root (common error in Electron file loading)
         if (url.match(/^[A-Za-z]:\/(assets|runtime|polyfills|main|styles)/) || 
@@ -272,10 +486,20 @@ if (!gotTheLock) {
           
           // Extract the filename/path from the root
           const relativePath = url.split(/^[A-Za-z]:\//).pop() || '';
-          const distFilePath = path.join(distPath, relativePath);
+          const appPath = path.resolve(__dirname, '..');
+          const distFilePath = path.join(appPath, relativePath);
           
+          console.log('[MAIN] Trying path for root file:', distFilePath);
           if (fs.existsSync(distFilePath)) {
             callback(distFilePath);
+            return;
+          }
+          
+          // Also try with dist/power-explorer prefix
+          const distPowerExplorerPath = path.join(appPath, 'dist', 'power-explorer', relativePath);
+          console.log('[MAIN] Trying dist/power-explorer path:', distPowerExplorerPath);
+          if (fs.existsSync(distPowerExplorerPath)) {
+            callback(distPowerExplorerPath);
             return;
           }
         }
@@ -296,7 +520,8 @@ if (!gotTheLock) {
           
           // Try relative to the dist folder
           const relativePath = url.split(/[\\/]power-explorer[\\/]/).pop() || '';
-          const distFilePath = path.join(distPath, relativePath);
+          const appPath = path.resolve(__dirname, '..');
+          const distFilePath = path.join(appPath, 'dist', 'power-explorer', relativePath);
           
           console.log('[MAIN] Looking for file at:', distFilePath);
           if (fs.existsSync(distFilePath)) {

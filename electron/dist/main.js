@@ -27,6 +27,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
+const electron_updater_1 = require("electron-updater");
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const auth_handler_1 = __importDefault(require("./auth-handler"));
@@ -35,6 +36,8 @@ const APP_NAME = "Power Explorer";
 const APP_PROTOCOL = 'powerexplorer';
 // Disable Electron security warnings (doesn't affect security, just the console warnings)
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+electron_updater_1.autoUpdater.autoInstallOnAppQuit = true;
+electron_updater_1.autoUpdater.autoDownload = true;
 // Set application name
 electron_1.app.name = APP_NAME;
 let mainWindow = null;
@@ -48,7 +51,6 @@ if (!gotTheLock) {
 else {
     // This event will be emitted when a second instance is launched with arguments
     electron_1.app.on('second-instance', (event, commandLine, workingDirectory) => {
-        console.log('[MAIN] Second instance detected with args:', commandLine);
         // Someone tried to run a second instance, we should focus our window
         if (mainWindow) {
             if (mainWindow.isMinimized()) {
@@ -58,74 +60,17 @@ else {
             // Check for deep link URLs in command line arguments
             const deepLinkUrl = commandLine.find(arg => arg.startsWith(`${APP_PROTOCOL}://`));
             if (deepLinkUrl && authHandler) {
-                console.log('[MAIN] Deep link detected in second instance:', deepLinkUrl);
                 handleDeepLink(deepLinkUrl);
             }
         }
     });
-    // Check if the build file exists
-    function getBuildPath() {
-        // Get the app root path (where package.json is)
-        const appRoot = path.resolve(__dirname, '..');
-        console.log('[MAIN] App root directory:', appRoot);
-        // Try multiple possible build paths with the correct one first
-        const possiblePaths = [
-            path.join(appRoot, 'dist/power-explorer/index.html'),
-            path.join(appRoot, 'dist/PowerExplorer/index.html'),
-            path.join(appRoot, 'dist/browser/index.html'),
-            path.join(appRoot, 'dist/index.html')
-        ];
-        for (const filePath of possiblePaths) {
-            console.log('[MAIN] Checking build path:', filePath);
-            if (fs.existsSync(filePath)) {
-                console.log('[MAIN] Found build at:', filePath);
-                return filePath;
-            }
-        }
-        // If no build file found, check for folders
-        const distPath = path.join(appRoot, 'dist');
-        if (fs.existsSync(distPath)) {
-            console.log('[MAIN] dist folder exists, contents:');
-            try {
-                const files = fs.readdirSync(distPath);
-                console.log('[MAIN] Dist folder contents:');
-                files.forEach(file => {
-                    const filePath = path.join(distPath, file);
-                    const stats = fs.statSync(filePath);
-                    console.log(`[MAIN] - ${file} (${stats.isDirectory() ? 'directory' : 'file'})`);
-                    // If it's a directory, list its contents too
-                    if (stats.isDirectory()) {
-                        try {
-                            const subFiles = fs.readdirSync(filePath);
-                            subFiles.forEach(subFile => {
-                                console.log(`[MAIN]   - ${file}/${subFile}`);
-                            });
-                        }
-                        catch (err) {
-                            console.error(`[MAIN] Error reading ${file} subfolder:`, err);
-                        }
-                    }
-                });
-            }
-            catch (err) {
-                console.error('[MAIN] Error reading dist folder:', err);
-            }
-        }
-        else {
-            console.error('[MAIN] dist folder not found');
-        }
-        return null;
-    }
     function createWindow() {
-        console.log('[MAIN] Creating main window');
         // Get full path to preload script
         const preloadPath = path.join(__dirname, 'preload.js');
-        console.log('[MAIN] Preload script path:', preloadPath);
-        console.log('[MAIN] Preload script exists:', fs.existsSync(preloadPath));
         // Create the browser window
         mainWindow = new electron_1.BrowserWindow({
-            width: 1200,
-            height: 800,
+            width: 1600,
+            height: 1000,
             title: APP_NAME,
             webPreferences: {
                 nodeIntegration: false,
@@ -137,12 +82,10 @@ else {
         });
         // Get the absolute path to the app directory
         const appPath = path.resolve(__dirname, '..');
-        console.log('[MAIN] App root path:', appPath);
         // In development, use the dev server URL
         // In production, use an absolute file:// URL
         let indexPath;
         if (process.env.ELECTRON_START_URL) {
-            console.log('[MAIN] Loading from dev server:', process.env.ELECTRON_START_URL);
             mainWindow.loadURL(process.env.ELECTRON_START_URL);
         }
         else {
@@ -152,26 +95,48 @@ else {
             // Check if the directory exists
             if (!fs.existsSync(distPath)) {
                 console.error(`[MAIN] Build folder not found at: ${distPath}`);
-                electron_1.dialog.showErrorBox('Build Folder Not Found', `Could not find the Angular build at ${distPath}. Please run "npm run build" first.`);
-                electron_1.app.quit();
-                return;
+                // In packaged app, try to find the resources directory inside asar
+                const asarDistPath = path.join(appPath, 'dist');
+                if (fs.existsSync(asarDistPath)) {
+                    console.log(`[MAIN] Found alternative build folder at: ${asarDistPath}`);
+                    indexPath = path.join(asarDistPath, 'index.html');
+                }
+                else {
+                    electron_1.dialog.showErrorBox('Build Folder Not Found', `Could not find the Angular build. Please ensure the application is properly built.`);
+                    electron_1.app.quit();
+                    return;
+                }
             }
-            // List files in the directory to verify
-            const files = fs.readdirSync(distPath);
-            console.log('[MAIN] Files in build directory:', files);
-            // Construct the absolute path to index.html
-            indexPath = path.join(distPath, 'index.html');
-            console.log('[MAIN] Loading index.html from:', indexPath);
-            // Check if the file exists
-            if (!fs.existsSync(indexPath)) {
-                console.error(`[MAIN] index.html not found at: ${indexPath}`);
-                electron_1.dialog.showErrorBox('Index File Not Found', `Could not find index.html at ${indexPath}. Please ensure the Angular build is complete.`);
-                electron_1.app.quit();
-                return;
+            else {
+                // List files in the directory to verify
+                try {
+                    const files = fs.readdirSync(distPath);
+                    console.log('[MAIN] Files in dist folder:', files);
+                }
+                catch (err) {
+                    console.error('[MAIN] Error reading dist directory:', err);
+                }
+                // Construct the absolute path to index.html
+                indexPath = path.join(distPath, 'index.html');
+            }
+            // Check if the index file exists
+            if (!indexPath || !fs.existsSync(indexPath)) {
+                console.error(`[MAIN] Index file not found at: ${indexPath}`);
+                // Try fallback path for packaged app
+                const fallbackPath = path.join(appPath, 'index.html');
+                if (fs.existsSync(fallbackPath)) {
+                    indexPath = fallbackPath;
+                    console.log(`[MAIN] Using fallback index file at: ${indexPath}`);
+                }
+                else {
+                    electron_1.dialog.showErrorBox('Index File Not Found', `Could not find index.html. Please ensure the application is properly built.`);
+                    electron_1.app.quit();
+                    return;
+                }
             }
             // Format the file URL correctly
             const fileUrl = 'file:///' + indexPath.replace(/\\/g, '/');
-            console.log('[MAIN] Loading URL:', fileUrl);
+            console.log('[MAIN] Loading application from:', fileUrl);
             // Load the index.html file directly
             mainWindow.loadURL(fileUrl).catch(err => {
                 console.error('[MAIN] Error loading file:', err);
@@ -180,15 +145,40 @@ else {
                     // First try loading via our loading.html file
                     const loadingPath = path.join(distPath, 'assets', 'loading.html');
                     if (fs.existsSync(loadingPath)) {
-                        console.log('[MAIN] Attempting to load via loading.html:', loadingPath);
                         const loadingUrl = 'file:///' + loadingPath.replace(/\\/g, '/');
                         mainWindow.loadURL(loadingUrl);
                     }
                     else {
                         // If loading.html doesn't exist, use the readFile approach
-                        console.log('[MAIN] Attempting to load via readFile');
                         const htmlContent = fs.readFileSync(indexPath, 'utf-8');
-                        mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
+                        // Fix paths in HTML content for packaged app
+                        let modifiedHtml = htmlContent;
+                        // Fix base href for packaged app
+                        if (!modifiedHtml.includes('<base href="app://')) {
+                            modifiedHtml = modifiedHtml.replace(/<base href=".*?">/, `<base href="app://./">`);
+                        }
+                        // Fix absolute paths that might point to D:/ or other locations
+                        modifiedHtml = modifiedHtml.replace(/(href|src)="([a-zA-Z]:\/.*?\.(css|js))"/g, (match, attr, filepath, ext) => {
+                            // Extract just the filename
+                            const filename = filepath.split(/[\/\\]/).pop();
+                            return `${attr}="app://${filename}"`;
+                        });
+                        mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(modifiedHtml));
+                        // After the page loads, fix any remaining style references
+                        mainWindow.webContents.on('did-finish-load', () => {
+                            mainWindow.webContents.executeJavaScript(`
+                // Fix any CSS links with absolute paths 
+                document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                  const href = link.getAttribute('href');
+                  if (href && href.match(/^[a-zA-Z]:\//)) {
+                    // Extract just the filename
+                    const filename = href.split(/[\/\\]/).pop();
+                    link.setAttribute('href', 'app://' + filename);
+                    console.log('Fixed CSS path:', href, 'to', 'app://' + filename);
+                  }
+                });
+              `).catch(err => console.error('Error fixing CSS paths:', err));
+                        });
                     }
                 }
                 catch (fallbackErr) {
@@ -220,7 +210,6 @@ else {
             }
         });
         // Initialize authentication handler
-        console.log('[MAIN] Initializing authentication handler');
         authHandler = new auth_handler_1.default(mainWindow);
         mainWindow.on('closed', function () {
             mainWindow = null;
@@ -234,10 +223,29 @@ else {
             electron_1.protocol.registerFileProtocol(protocolName, (request, callback) => {
                 const url = request.url.substring(`${protocolName}://`.length);
                 try {
-                    return callback(path.join(distPath, url));
+                    const appPath = path.resolve(__dirname, '..');
+                    const distPath = path.join(appPath, 'dist', 'power-explorer');
+                    // First try standard dist path
+                    const filePath = path.join(distPath, url);
+                    if (fs.existsSync(filePath)) {
+                        return callback(filePath);
+                    }
+                    // If not found, try directly in dist (for packaged apps)
+                    const asarPath = path.join(appPath, 'dist', url);
+                    if (fs.existsSync(asarPath)) {
+                        return callback(asarPath);
+                    }
+                    // If still not found, try in app root
+                    const rootPath = path.join(appPath, url);
+                    if (fs.existsSync(rootPath)) {
+                        return callback(rootPath);
+                    }
+                    console.error(`[MAIN] Protocol handler: File not found: ${url}`);
+                    console.error(`[MAIN] Tried paths: ${filePath}, ${asarPath}, ${rootPath}`);
+                    return callback({ path: '' });
                 }
                 catch (error) {
-                    console.error(error);
+                    console.error('[MAIN] Protocol error:', error);
                     return callback({ path: '' });
                 }
             });
@@ -245,7 +253,6 @@ else {
     }
     // Handle deeplink activation - platform specific
     function handleDeepLink(deepLink) {
-        console.log('[MAIN] Received deep link:', deepLink);
         if (!deepLink || !deepLink.startsWith(`${APP_PROTOCOL}://`)) {
             return;
         }
@@ -286,52 +293,168 @@ else {
     // macOS specific - handle 'open-url' event
     electron_1.app.on('open-url', (event, url) => {
         event.preventDefault();
-        console.log('[MAIN] open-url event with URL:', url);
         handleDeepLink(url);
     });
     // Check for deep links at startup - Windows/Linux
     const deepLinkUrl = process.argv.find(arg => arg.startsWith(`${APP_PROTOCOL}://`));
     if (process.platform !== 'darwin' && deepLinkUrl) {
-        console.log('[MAIN] Deep link detected in startup arguments:', deepLinkUrl);
     }
     electron_1.app.on('ready', () => {
         // Set up custom protocol before creating window
         if (!process.env.ELECTRON_START_URL) {
             const appPath = path.resolve(__dirname, '..');
             const distPath = path.join(appPath, 'dist', 'power-explorer');
-            // Register protocol handler for serving local files
-            electron_1.protocol.registerFileProtocol('app', (request, callback) => {
-                const url = request.url.substring('app://'.length);
-                try {
-                    return callback(path.join(distPath, url));
-                }
-                catch (error) {
-                    console.error('[MAIN] Protocol error:', error);
-                    return callback({ path: '' });
-                }
-            });
+            // Register protocol handler for serving local files - skip as this is now in createWindow
             // Intercept file:// protocol to fix path resolution
             electron_1.protocol.interceptFileProtocol('file', (request, callback) => {
                 let url = request.url.substr(8); // Strip 'file:///' prefix
                 // Windows path handling
                 url = decodeURIComponent(url);
+                // Log the requested URL for debugging
+                console.log('[MAIN] Intercepted file request:', url);
+                // Special debug for CSS files to track all style resources
+                if (url.includes('.css') || url.endsWith('styles')) {
+                    console.log('[MAIN] Style resource requested:', url);
+                    // Try multiple approaches for styles
+                    // 1. Direct file access
+                    if (fs.existsSync(url)) {
+                        console.log('[MAIN] Style found at direct path:', url);
+                        callback(url);
+                        return;
+                    }
+                    // 2. Try in app.asar/dist
+                    const appPath = path.resolve(__dirname, '..');
+                    let styleFilename = url;
+                    // Extract filename from path
+                    if (url.includes('/')) {
+                        styleFilename = url.split('/').pop() || '';
+                    }
+                    else if (url.includes('\\')) {
+                        styleFilename = url.split('\\').pop() || '';
+                    }
+                    // Search for style in dist directory with glob pattern
+                    try {
+                        const possibleLocations = [
+                            path.join(appPath, 'dist', styleFilename),
+                            path.join(appPath, 'dist', 'power-explorer', styleFilename),
+                            path.join(appPath, 'dist', '**', styleFilename),
+                            // If the file has hash, try with wildcard
+                            styleFilename.includes('.')
+                                ? path.join(appPath, 'dist', '**', styleFilename.split('.')[0] + '.*.' + styleFilename.split('.').pop())
+                                : null
+                        ].filter(Boolean);
+                        console.log('[MAIN] Searching for style in possible locations:', possibleLocations);
+                        // Try each possible location
+                        for (const location of possibleLocations) {
+                            if (location.includes('*')) {
+                                // This is a glob pattern, we need to do more complex search
+                                // For simplicity, let's skip this for now
+                                continue;
+                            }
+                            if (fs.existsSync(location)) {
+                                console.log('[MAIN] Style found at:', location);
+                                callback(location);
+                                return;
+                            }
+                        }
+                    }
+                    catch (error) {
+                        console.error('[MAIN] Error searching for style:', error);
+                    }
+                }
+                // Handle asar paths explicitly - check if this is a request for a file in the asar archive
+                if (url.includes('app.asar')) {
+                    // For paths within the asar archive
+                    try {
+                        // No need to extract from the archive - Electron handles this automatically
+                        // Just make sure the path is valid
+                        if (fs.existsSync(url)) {
+                            console.log('[MAIN] Found resource in asar at original path:', url);
+                            callback(url);
+                            return;
+                        }
+                        // Special handling for CSS files in ASAR
+                        if (url.includes('.css')) {
+                            // Extract the CSS filename
+                            const cssFilename = url.split('/').pop();
+                            // Check if we're dealing with a hashed filename like styles.254467662158fe59.css
+                            if (cssFilename && cssFilename.includes('.')) {
+                                // Try to find the file by traversing the asar structure
+                                const asarRoot = url.substring(0, url.indexOf('app.asar') + 'app.asar'.length);
+                                // Common directories to look for styles in Angular app
+                                const commonDirs = [
+                                    path.join(asarRoot, 'dist'),
+                                    path.join(asarRoot, 'dist', 'power-explorer'),
+                                    path.join(asarRoot, 'dist', 'assets'),
+                                    path.join(asarRoot, 'dist', 'styles')
+                                ];
+                                // Try to find the file in common directories
+                                for (const dir of commonDirs) {
+                                    const possiblePath = path.join(dir, cssFilename);
+                                    console.log('[MAIN] Checking for CSS in ASAR at:', possiblePath);
+                                    if (fs.existsSync(possiblePath)) {
+                                        console.log('[MAIN] Found CSS in ASAR at:', possiblePath);
+                                        callback(possiblePath);
+                                        return;
+                                    }
+                                    // Also try with the base name (without hash)
+                                    const parts = cssFilename.split('.');
+                                    if (parts.length > 2) {
+                                        // This is likely a hashed filename like styles.254467662158fe59.css
+                                        const baseFilename = parts[0] + '.' + parts[parts.length - 1];
+                                        const baseFilePath = path.join(dir, baseFilename);
+                                        console.log('[MAIN] Checking for base CSS in ASAR at:', baseFilePath);
+                                        if (fs.existsSync(baseFilePath)) {
+                                            console.log('[MAIN] Found base CSS in ASAR at:', baseFilePath);
+                                            callback(baseFilePath);
+                                            return;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // If the direct path doesn't exist, try to find it based on path components
+                        const components = url.split('/');
+                        const distIndex = components.indexOf('dist');
+                        if (distIndex >= 0) {
+                            // Rebuild the path relative to the app directory
+                            const relativePath = components.slice(distIndex).join('/');
+                            const appPath = path.resolve(__dirname, '..');
+                            const distFilePath = path.join(appPath, relativePath);
+                            console.log('[MAIN] Trying alternative path:', distFilePath);
+                            if (fs.existsSync(distFilePath)) {
+                                callback(distFilePath);
+                                return;
+                            }
+                        }
+                    }
+                    catch (error) {
+                        console.error('[MAIN] Error handling asar path:', error);
+                    }
+                }
                 // Special case for files at D:/ root (common error in Electron file loading)
                 if (url.match(/^[A-Za-z]:\/(assets|runtime|polyfills|main|styles)/) ||
                     url.match(/^[A-Za-z]:\/.*\.(js|css|html|png|jpg|jpeg|gif|svg)$/)) {
                     // This is likely a file that should be in our app directory
-                    console.log('[MAIN] Intercepting root drive request:', url);
                     // Extract the filename/path from the root
                     const relativePath = url.split(/^[A-Za-z]:\//).pop() || '';
-                    const distFilePath = path.join(distPath, relativePath);
-                    console.log('[MAIN] Redirecting to app path:', distFilePath);
+                    const appPath = path.resolve(__dirname, '..');
+                    const distFilePath = path.join(appPath, relativePath);
+                    console.log('[MAIN] Trying path for root file:', distFilePath);
                     if (fs.existsSync(distFilePath)) {
                         callback(distFilePath);
+                        return;
+                    }
+                    // Also try with dist/power-explorer prefix
+                    const distPowerExplorerPath = path.join(appPath, 'dist', 'power-explorer', relativePath);
+                    console.log('[MAIN] Trying dist/power-explorer path:', distPowerExplorerPath);
+                    if (fs.existsSync(distPowerExplorerPath)) {
+                        callback(distPowerExplorerPath);
                         return;
                     }
                 }
                 // Handle app paths explicitly
                 if (url.includes('power-explorer') && !url.includes('node_modules')) {
-                    console.log('[MAIN] Intercepting app path request:', url);
                     // If URL ends with a directory, look for index.html
                     if (url.endsWith('/') || url.endsWith('\\')) {
                         url = path.join(url, 'index.html');
@@ -343,7 +466,8 @@ else {
                     }
                     // Try relative to the dist folder
                     const relativePath = url.split(/[\\/]power-explorer[\\/]/).pop() || '';
-                    const distFilePath = path.join(distPath, relativePath);
+                    const appPath = path.resolve(__dirname, '..');
+                    const distFilePath = path.join(appPath, 'dist', 'power-explorer', relativePath);
                     console.log('[MAIN] Looking for file at:', distFilePath);
                     if (fs.existsSync(distFilePath)) {
                         callback(distFilePath);
@@ -353,7 +477,6 @@ else {
                 // Handle CDN URLs that accidentally got file:// protocol
                 if (url.includes('cdn.jsdelivr.net') || url.includes('fonts.googleapis.com')) {
                     const httpUrl = 'https://' + url;
-                    console.log('[MAIN] Redirecting CDN URL to HTTPS:', httpUrl);
                     // For CDN URLs, we can't serve them locally, so we redirect to the real URL
                     // This requires opening an HTTP request, which we want to avoid
                     // Instead, let's just inform that this URL should be using https://
@@ -387,24 +510,51 @@ else {
                 }, 1000);
             }
         }
+        // Check for updates
+        electron_updater_1.autoUpdater.checkForUpdates();
+        // Setup auto-update event listeners
+        electron_updater_1.autoUpdater.on('update-available', (info) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('update-available', info);
+            }
+        });
+        electron_updater_1.autoUpdater.on('update-not-available', (info) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('update-not-available', info);
+            }
+        });
+        electron_updater_1.autoUpdater.on('error', (err) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('update-error', err.message);
+            }
+        });
+        // Since we're using silent updates, we can remove these event listeners if not needed
+        // But keeping them in case you want to add progress indicators later
+        electron_updater_1.autoUpdater.on('download-progress', (progressObj) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('update-progress', progressObj);
+            }
+        });
+        electron_updater_1.autoUpdater.on('update-downloaded', (info) => {
+            if (mainWindow) {
+                mainWindow.webContents.send('update-downloaded', info);
+            }
+        });
         // Verify handlers after a slight delay to ensure they're registered
         setTimeout(verifyIpcHandlers, 1000);
     });
     // Check if all required IPC handlers are registered
     function verifyIpcHandlers() {
-        console.log('[MAIN] Verifying IPC handlers are properly registered');
         // List expected handlers for auth
         const expectedHandlers = ['login', 'getToken', 'logout', 'getActiveAccount'];
         // Check if handlers exist in Electron
         const registeredHandlers = electron_1.ipcMain.eventNames();
-        console.log('[MAIN] Registered IPC handlers:', registeredHandlers);
         // Log missing handlers
         const missingHandlers = expectedHandlers.filter(handler => !registeredHandlers.includes(handler));
         if (missingHandlers.length > 0) {
             console.error('[MAIN] Missing IPC handlers:', missingHandlers);
         }
         else {
-            console.log('[MAIN] All expected IPC handlers are registered');
         }
     }
     electron_1.app.on('window-all-closed', function () {
@@ -419,7 +569,6 @@ else {
     });
     // Handle IPC messages from renderer process
     electron_1.ipcMain.on('app-ready', (event) => {
-        console.log('[MAIN] App is ready in renderer process');
     });
     // Add IPC handler for opening external links
     electron_1.ipcMain.handle('open-external', async (_, url) => {
@@ -439,25 +588,34 @@ else {
             }
         });
     });
-    // Add this function to help debug file paths
-    function debugFileAccess(filePath, description) {
-        console.log(`[MAIN] DEBUG - ${description}: ${filePath}`);
-        console.log(`[MAIN] DEBUG - Exists: ${fs.existsSync(filePath)}`);
+    // Add IPC handlers for autoupdater
+    electron_1.ipcMain.handle('check-for-updates', async () => {
         try {
-            // Try to get the stats of the file/directory
-            const stats = fs.statSync(filePath);
-            console.log(`[MAIN] DEBUG - Is directory: ${stats.isDirectory()}`);
-            console.log(`[MAIN] DEBUG - Size: ${stats.size} bytes`);
-            // If it's a directory, list its contents
-            if (stats.isDirectory()) {
-                const files = fs.readdirSync(filePath);
-                console.log(`[MAIN] DEBUG - Directory contents (${files.length} items):`);
-                files.forEach(file => console.log(`[MAIN] DEBUG -   ${file}`));
-            }
+            return await electron_updater_1.autoUpdater.checkForUpdates();
         }
         catch (error) {
-            console.error(`[MAIN] DEBUG - Error accessing ${filePath}:`, error);
+            console.error('Error checking for updates:', error);
+            return { error: error.message };
         }
-    }
+    });
+    electron_1.ipcMain.handle('download-update', async () => {
+        try {
+            return await electron_updater_1.autoUpdater.downloadUpdate();
+        }
+        catch (error) {
+            console.error('Error downloading update:', error);
+            return { error: error.message };
+        }
+    });
+    electron_1.ipcMain.handle('quit-and-install', () => {
+        electron_updater_1.autoUpdater.quitAndInstall(true, true);
+    });
+    // Setup periodic update checks (every 6 hours)
+    const SIX_HOURS = 6 * 60 * 60 * 1000;
+    setInterval(() => {
+        electron_updater_1.autoUpdater.checkForUpdates().catch(err => {
+            console.error('Error during scheduled update check:', err);
+        });
+    }, SIX_HOURS);
 }
 //# sourceMappingURL=main.js.map
