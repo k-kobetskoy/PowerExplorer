@@ -14,7 +14,7 @@ const APP_PROTOCOL = 'powerexplorer';
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
 autoUpdater.autoInstallOnAppQuit = true;
-autoUpdater.autoDownload = false;
+autoUpdater.autoDownload = true;
 
 // Set application name
 app.name = APP_NAME;
@@ -350,6 +350,39 @@ if (!gotTheLock) {
     // Check for updates
     autoUpdater.checkForUpdates();
 
+    // Setup auto-update event listeners
+    autoUpdater.on('update-available', (info) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-available', info);
+      }
+    });
+
+    autoUpdater.on('update-not-available', (info) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-not-available', info);
+      }
+    });
+
+    autoUpdater.on('error', (err) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-error', err.message);
+      }
+    });
+
+    // Since we're using silent updates, we can remove these event listeners if not needed
+    // But keeping them in case you want to add progress indicators later
+    autoUpdater.on('download-progress', (progressObj) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-progress', progressObj);
+      }
+    });
+
+    autoUpdater.on('update-downloaded', (info) => {
+      if (mainWindow) {
+        mainWindow.webContents.send('update-downloaded', info);
+      }
+    });
+
     // Verify handlers after a slight delay to ensure they're registered
     setTimeout(verifyIpcHandlers, 1000);
   });
@@ -410,4 +443,35 @@ if (!gotTheLock) {
       }
     });
   });
+
+  // Add IPC handlers for autoupdater
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      return await autoUpdater.checkForUpdates();
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+      return { error: error.message };
+    }
+  });
+
+  ipcMain.handle('download-update', async () => {
+    try {
+      return await autoUpdater.downloadUpdate();
+    } catch (error) {
+      console.error('Error downloading update:', error);
+      return { error: error.message };
+    }
+  });
+
+  ipcMain.handle('quit-and-install', () => {
+    autoUpdater.quitAndInstall(true, true);
+  });
+
+  // Setup periodic update checks (every 6 hours)
+  const SIX_HOURS = 6 * 60 * 60 * 1000;
+  setInterval(() => {
+    autoUpdater.checkForUpdates().catch(err => {
+      console.error('Error during scheduled update check:', err);
+    });
+  }, SIX_HOURS);
 } 

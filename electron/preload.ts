@@ -17,6 +17,11 @@ const ENV_DELETE_MODEL = 'deleteEnvironmentModel';
 const ENV_SET_ACTIVE = 'setActiveEnvironment';
 const ENV_GET_ACTIVE = 'getActiveEnvironment';
 
+// Auto-update channels
+const UPDATE_CHECK = 'check-for-updates';
+const UPDATE_DOWNLOAD = 'download-update';
+const UPDATE_QUIT_INSTALL = 'quit-and-install';
+
 // Create a type for all channel names
 export type IpcChannel = 
   | typeof AUTH_LOGIN
@@ -30,7 +35,10 @@ export type IpcChannel =
   | typeof ENV_DELETE_MODEL
   | typeof ENV_SET_ACTIVE
   | typeof ENV_GET_ACTIVE
-  | typeof AUTH_HANDLE_REDIRECT;
+  | typeof AUTH_HANDLE_REDIRECT
+  | typeof UPDATE_CHECK
+  | typeof UPDATE_DOWNLOAD
+  | typeof UPDATE_QUIT_INSTALL;
 
 // All channels in a single object
 const IpcChannels = {
@@ -46,6 +54,9 @@ const IpcChannels = {
   ENV_DELETE_MODEL,
   ENV_SET_ACTIVE,
   ENV_GET_ACTIVE,
+  UPDATE_CHECK,
+  UPDATE_DOWNLOAD,
+  UPDATE_QUIT_INSTALL,
 };
 
 
@@ -67,6 +78,16 @@ interface ElectronAPI {
         deleteModel: (environmentUrl: string) => Promise<any>;
         setActive: (environmentModel: EnvironmentModel) => Promise<boolean>;
         getActive: () => Promise<EnvironmentModel | null>;
+    };
+    updater: {
+        checkForUpdates: () => Promise<any>;
+        downloadUpdate: () => Promise<any>;
+        quitAndInstall: () => Promise<void>;
+        onUpdateAvailable: (callback: (info: any) => void) => () => void;
+        onUpdateNotAvailable: (callback: (info: any) => void) => () => void;
+        onUpdateError: (callback: (error: string) => void) => () => void;
+        onUpdateProgress: (callback: (progressObj: any) => void) => () => void;
+        onUpdateDownloaded: (callback: (info: any) => void) => () => void;
     };
     openExternal: (url: string) => Promise<boolean>;
     isElectron: boolean;
@@ -105,7 +126,7 @@ const electronAPI: ElectronAPI = {
         }
     },
     receive: (channel: string, func: (...args: any[]) => void) => {
-        const validChannels = ['deep-link'];
+        const validChannels = ['deep-link', 'update-available', 'update-not-available', 'update-error', 'update-progress', 'update-downloaded'];
         if (validChannels.includes(channel)) {
             // Deliberately strip event as it includes `sender` 
             ipcRenderer.on(channel, (_event: IpcRendererEvent, ...args: any[]) => func(...args));
@@ -125,6 +146,36 @@ const electronAPI: ElectronAPI = {
         deleteModel: (environmentUrl: string) => ipcRenderer.invoke(IpcChannels.ENV_DELETE_MODEL, environmentUrl),
         setActive: (environmentModel: EnvironmentModel) => ipcRenderer.invoke(IpcChannels.ENV_SET_ACTIVE, environmentModel),
         getActive: () => ipcRenderer.invoke(IpcChannels.ENV_GET_ACTIVE)
+    },
+    updater: {
+        checkForUpdates: () => ipcRenderer.invoke(IpcChannels.UPDATE_CHECK),
+        downloadUpdate: () => ipcRenderer.invoke(IpcChannels.UPDATE_DOWNLOAD),
+        quitAndInstall: () => ipcRenderer.invoke(IpcChannels.UPDATE_QUIT_INSTALL),
+        onUpdateAvailable: (callback: (info: any) => void) => {
+            const listener = (_event: IpcRendererEvent, info: any) => callback(info);
+            ipcRenderer.on('update-available', listener);
+            return () => { ipcRenderer.removeListener('update-available', listener); };
+        },
+        onUpdateNotAvailable: (callback: (info: any) => void) => {
+            const listener = (_event: IpcRendererEvent, info: any) => callback(info);
+            ipcRenderer.on('update-not-available', listener);
+            return () => { ipcRenderer.removeListener('update-not-available', listener); };
+        },
+        onUpdateError: (callback: (error: string) => void) => {
+            const listener = (_event: IpcRendererEvent, error: string) => callback(error);
+            ipcRenderer.on('update-error', listener);
+            return () => { ipcRenderer.removeListener('update-error', listener); };
+        },
+        onUpdateProgress: (callback: (progressObj: any) => void) => {
+            const listener = (_event: IpcRendererEvent, progressObj: any) => callback(progressObj);
+            ipcRenderer.on('update-progress', listener);
+            return () => { ipcRenderer.removeListener('update-progress', listener); };
+        },
+        onUpdateDownloaded: (callback: (info: any) => void) => {
+            const listener = (_event: IpcRendererEvent, info: any) => callback(info);
+            ipcRenderer.on('update-downloaded', listener);
+            return () => { ipcRenderer.removeListener('update-downloaded', listener); };
+        }
     },
     openExternal: (url: string) =>
         ipcRenderer.invoke('open-external', url),

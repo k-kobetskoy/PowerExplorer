@@ -41,6 +41,20 @@ interface EnvironmentModel {
   [key: string]: any;
 }
 
+interface UpdateInfo {
+  version: string;
+  releaseDate?: string;
+  releaseName?: string;
+  releaseNotes?: string;
+}
+
+interface ProgressInfo {
+  bytesPerSecond: number;
+  percent: number;
+  transferred: number;
+  total: number;
+}
+
 interface ElectronAuthAPI {
   login: (environmentUrl: EnvironmentModel) => Promise<AuthResponse>;
   getToken: (environmentUrl: EnvironmentModel) => Promise<TokenResponse>;
@@ -54,6 +68,17 @@ interface ElectronEnvironmentAPI {
   getModels: () => Promise<EnvironmentsResponse>;
   setActive: (model: EnvironmentModel) => Promise<GenericResponse>;
   getActive: () => Promise<EnvironmentsResponse>;
+}
+
+interface ElectronUpdaterAPI {
+  checkForUpdates: () => Promise<any>;
+  downloadUpdate: () => Promise<any>;
+  quitAndInstall: () => Promise<void>;
+  onUpdateAvailable: (callback: (info: UpdateInfo) => void) => () => void;
+  onUpdateNotAvailable: (callback: (info: UpdateInfo) => void) => () => void;
+  onUpdateError: (callback: (error: string) => void) => () => void;
+  onUpdateProgress: (callback: (progressObj: ProgressInfo) => void) => () => void;
+  onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => () => void;
 }
 
 /**
@@ -252,6 +277,57 @@ export class ElectronService {
       getModels: notAvailable,
       setActive: notAvailableGeneric,
       getActive: notAvailable
+    };
+  }
+
+  /**
+   * Get update-related functionality
+   */
+  get updater(): ElectronUpdaterAPI {
+    if (this.isElectronApp && this.electron && this.electron.updater) {
+      return {
+        checkForUpdates: (): Promise<any> => 
+          this.electron.updater.checkForUpdates(),
+        
+        downloadUpdate: (): Promise<any> => 
+          this.electron.updater.downloadUpdate(),
+        
+        quitAndInstall: (): Promise<void> => 
+          this.electron.updater.quitAndInstall(),
+        
+        onUpdateAvailable: (callback: (info: UpdateInfo) => void): (() => void) => 
+          this.electron.updater.onUpdateAvailable(callback),
+        
+        onUpdateNotAvailable: (callback: (info: UpdateInfo) => void): (() => void) => 
+          this.electron.updater.onUpdateNotAvailable(callback),
+        
+        onUpdateError: (callback: (error: string) => void): (() => void) => 
+          this.electron.updater.onUpdateError(callback),
+        
+        onUpdateProgress: (callback: (progressObj: ProgressInfo) => void): (() => void) => 
+          this.electron.updater.onUpdateProgress(callback),
+        
+        onUpdateDownloaded: (callback: (info: UpdateInfo) => void): (() => void) => 
+          this.electron.updater.onUpdateDownloaded(callback)
+      };
+    }
+
+    // Fallback for web environment
+    const notAvailable = (): Promise<any> => 
+      Promise.reject({ success: false, error: 'Updates not available in web environment' });
+    
+    // Empty function that returns an empty cleanup function
+    const noopListener = (callback: any): (() => void) => () => {};
+
+    return {
+      checkForUpdates: notAvailable,
+      downloadUpdate: notAvailable,
+      quitAndInstall: () => Promise.reject('Updates not available in web environment'),
+      onUpdateAvailable: noopListener,
+      onUpdateNotAvailable: noopListener,
+      onUpdateError: noopListener,
+      onUpdateProgress: noopListener,
+      onUpdateDownloaded: noopListener
     };
   }
 } 
