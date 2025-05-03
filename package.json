@@ -99,18 +99,6 @@
         "nsis"
       ],
       "icon": "src/assets/icons/icon.ico"
-    },
-    "mac": {
-      "target": [
-        "dmg"
-      ],
-      "icon": "src/assets/icons/icon.icns"
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "icon": "src/assets/icons/icon.png"
     }
   }
 }
