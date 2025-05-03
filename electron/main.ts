@@ -1,9 +1,10 @@
 import { app, BrowserWindow, ipcMain, dialog, shell, protocol } from 'electron';
+import { autoUpdater, AppUpdater } from 'electron-updater';
 import * as path from 'path';
 import * as url from 'url';
 import * as fs from 'fs';
 import AuthHandler from './auth-handler';
-import IpcChannels from './ipc-channels';
+
 
 // Get application info from package.json
 const APP_NAME = "Power Explorer";
@@ -11,6 +12,9 @@ const APP_PROTOCOL = 'powerexplorer';
 
 // Disable Electron security warnings (doesn't affect security, just the console warnings)
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.autoDownload = false;
 
 // Set application name
 app.name = APP_NAME;
@@ -27,7 +31,6 @@ if (!gotTheLock) {
 } else {
   // This event will be emitted when a second instance is launched with arguments
   app.on('second-instance', (event, commandLine, workingDirectory) => {
-    console.log('[MAIN] Second instance detected with args:', commandLine);
     
     // Someone tried to run a second instance, we should focus our window
     if (mainWindow) {
@@ -39,81 +42,20 @@ if (!gotTheLock) {
       // Check for deep link URLs in command line arguments
       const deepLinkUrl = commandLine.find(arg => arg.startsWith(`${APP_PROTOCOL}://`));
       if (deepLinkUrl && authHandler) {
-        console.log('[MAIN] Deep link detected in second instance:', deepLinkUrl);
         handleDeepLink(deepLinkUrl);
       }
     }
   });
   
-  // Check if the build file exists
-  function getBuildPath(): string | null {
-    // Get the app root path (where package.json is)
-    const appRoot = path.resolve(__dirname, '..');
-    
-    console.log('[MAIN] App root directory:', appRoot);
-    
-    // Try multiple possible build paths with the correct one first
-    const possiblePaths: string[] = [
-      path.join(appRoot, 'dist/power-explorer/index.html'),
-      path.join(appRoot, 'dist/PowerExplorer/index.html'),
-      path.join(appRoot, 'dist/browser/index.html'),
-      path.join(appRoot, 'dist/index.html')
-    ];
-
-    for (const filePath of possiblePaths) {
-      console.log('[MAIN] Checking build path:', filePath);
-      if (fs.existsSync(filePath)) {
-        console.log('[MAIN] Found build at:', filePath);
-        return filePath;
-      }
-    }
-
-    // If no build file found, check for folders
-    const distPath = path.join(appRoot, 'dist');
-    if (fs.existsSync(distPath)) {
-      console.log('[MAIN] dist folder exists, contents:');
-      try {
-        const files = fs.readdirSync(distPath);
-        console.log('[MAIN] Dist folder contents:');
-        files.forEach(file => {
-          const filePath = path.join(distPath, file);
-          const stats = fs.statSync(filePath);
-          console.log(`[MAIN] - ${file} (${stats.isDirectory() ? 'directory' : 'file'})`);
-          
-          // If it's a directory, list its contents too
-          if (stats.isDirectory()) {
-            try {
-              const subFiles = fs.readdirSync(filePath);
-              subFiles.forEach(subFile => {
-                console.log(`[MAIN]   - ${file}/${subFile}`);
-              });
-            } catch (err) {
-              console.error(`[MAIN] Error reading ${file} subfolder:`, err);
-            }
-          }
-        });
-      } catch (err) {
-        console.error('[MAIN] Error reading dist folder:', err);
-      }
-    } else {
-      console.error('[MAIN] dist folder not found');
-    }
-
-    return null;
-  }
-
   function createWindow(): void {
-    console.log('[MAIN] Creating main window');
     
     // Get full path to preload script
     const preloadPath = path.join(__dirname, 'preload.js');
-    console.log('[MAIN] Preload script path:', preloadPath);
-    console.log('[MAIN] Preload script exists:', fs.existsSync(preloadPath));
     
     // Create the browser window
     mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
+      width: 1600,
+      height: 1000,
       title: APP_NAME,
       webPreferences: {
         nodeIntegration: false,
@@ -126,13 +68,11 @@ if (!gotTheLock) {
 
     // Get the absolute path to the app directory
     const appPath = path.resolve(__dirname, '..');
-    console.log('[MAIN] App root path:', appPath);
 
     // In development, use the dev server URL
     // In production, use an absolute file:// URL
     let indexPath;
     if (process.env.ELECTRON_START_URL) {
-      console.log('[MAIN] Loading from dev server:', process.env.ELECTRON_START_URL);
       mainWindow.loadURL(process.env.ELECTRON_START_URL);
     } else {
       // Get the absolute path to the Angular app build folder
@@ -152,15 +92,12 @@ if (!gotTheLock) {
       
       // List files in the directory to verify
       const files = fs.readdirSync(distPath);
-      console.log('[MAIN] Files in build directory:', files);
 
       // Construct the absolute path to index.html
       indexPath = path.join(distPath, 'index.html');
-      console.log('[MAIN] Loading index.html from:', indexPath);
       
       // Check if the file exists
       if (!fs.existsSync(indexPath)) {
-        console.error(`[MAIN] index.html not found at: ${indexPath}`);
         dialog.showErrorBox(
           'Index File Not Found',
           `Could not find index.html at ${indexPath}. Please ensure the Angular build is complete.`
@@ -171,7 +108,6 @@ if (!gotTheLock) {
 
       // Format the file URL correctly
       const fileUrl = 'file:///' + indexPath.replace(/\\/g, '/');
-      console.log('[MAIN] Loading URL:', fileUrl);
 
       // Load the index.html file directly
       mainWindow.loadURL(fileUrl).catch(err => {
@@ -183,12 +119,10 @@ if (!gotTheLock) {
           const loadingPath = path.join(distPath, 'assets', 'loading.html');
           
           if (fs.existsSync(loadingPath)) {
-            console.log('[MAIN] Attempting to load via loading.html:', loadingPath);
             const loadingUrl = 'file:///' + loadingPath.replace(/\\/g, '/');
             mainWindow.loadURL(loadingUrl);
           } else {
             // If loading.html doesn't exist, use the readFile approach
-            console.log('[MAIN] Attempting to load via readFile');
             const htmlContent = fs.readFileSync(indexPath, 'utf-8');
             mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent));
           }
@@ -227,7 +161,6 @@ if (!gotTheLock) {
     });
 
     // Initialize authentication handler
-    console.log('[MAIN] Initializing authentication handler');
     authHandler = new AuthHandler(mainWindow);
 
     mainWindow.on('closed', function () {
@@ -255,7 +188,6 @@ if (!gotTheLock) {
 
   // Handle deeplink activation - platform specific
   function handleDeepLink(deepLink: string) {
-    console.log('[MAIN] Received deep link:', deepLink);
     
     if (!deepLink || !deepLink.startsWith(`${APP_PROTOCOL}://`)) {
       return;
@@ -301,14 +233,12 @@ if (!gotTheLock) {
   // macOS specific - handle 'open-url' event
   app.on('open-url', (event, url) => {
     event.preventDefault();
-    console.log('[MAIN] open-url event with URL:', url);
     handleDeepLink(url);
   });
 
   // Check for deep links at startup - Windows/Linux
   const deepLinkUrl = process.argv.find(arg => arg.startsWith(`${APP_PROTOCOL}://`));
   if (process.platform !== 'darwin' && deepLinkUrl) {
-    console.log('[MAIN] Deep link detected in startup arguments:', deepLinkUrl);
   }
 
   app.on('ready', () => {
@@ -339,13 +269,11 @@ if (!gotTheLock) {
         if (url.match(/^[A-Za-z]:\/(assets|runtime|polyfills|main|styles)/) || 
             url.match(/^[A-Za-z]:\/.*\.(js|css|html|png|jpg|jpeg|gif|svg)$/)) {
           // This is likely a file that should be in our app directory
-          console.log('[MAIN] Intercepting root drive request:', url);
           
           // Extract the filename/path from the root
           const relativePath = url.split(/^[A-Za-z]:\//).pop() || '';
           const distFilePath = path.join(distPath, relativePath);
           
-          console.log('[MAIN] Redirecting to app path:', distFilePath);
           if (fs.existsSync(distFilePath)) {
             callback(distFilePath);
             return;
@@ -354,7 +282,6 @@ if (!gotTheLock) {
         
         // Handle app paths explicitly
         if (url.includes('power-explorer') && !url.includes('node_modules')) {
-          console.log('[MAIN] Intercepting app path request:', url);
           
           // If URL ends with a directory, look for index.html
           if (url.endsWith('/') || url.endsWith('\\')) {
@@ -381,7 +308,6 @@ if (!gotTheLock) {
         // Handle CDN URLs that accidentally got file:// protocol
         if (url.includes('cdn.jsdelivr.net') || url.includes('fonts.googleapis.com')) {
           const httpUrl = 'https://' + url;
-          console.log('[MAIN] Redirecting CDN URL to HTTPS:', httpUrl);
           
           // For CDN URLs, we can't serve them locally, so we redirect to the real URL
           // This requires opening an HTTP request, which we want to avoid
@@ -421,13 +347,15 @@ if (!gotTheLock) {
       }
     }
     
+    // Check for updates
+    autoUpdater.checkForUpdates();
+
     // Verify handlers after a slight delay to ensure they're registered
     setTimeout(verifyIpcHandlers, 1000);
   });
 
   // Check if all required IPC handlers are registered
   function verifyIpcHandlers(): void {
-    console.log('[MAIN] Verifying IPC handlers are properly registered');
     
     // List expected handlers for auth
     const expectedHandlers: string[] = ['login', 'getToken', 'logout', 'getActiveAccount'];
@@ -435,7 +363,6 @@ if (!gotTheLock) {
     // Check if handlers exist in Electron
     const registeredHandlers = ipcMain.eventNames();
     
-    console.log('[MAIN] Registered IPC handlers:', registeredHandlers);
     
     // Log missing handlers
     const missingHandlers = expectedHandlers.filter(
@@ -445,7 +372,6 @@ if (!gotTheLock) {
     if (missingHandlers.length > 0) {
       console.error('[MAIN] Missing IPC handlers:', missingHandlers);
     } else {
-      console.log('[MAIN] All expected IPC handlers are registered');
     }
   }
 
@@ -463,7 +389,6 @@ if (!gotTheLock) {
 
   // Handle IPC messages from renderer process
   ipcMain.on('app-ready', (event) => {
-    console.log('[MAIN] App is ready in renderer process');
   });
 
   // Add IPC handler for opening external links
@@ -485,26 +410,4 @@ if (!gotTheLock) {
       }
     });
   });
-
-  // Add this function to help debug file paths
-  function debugFileAccess(filePath: string, description: string): void {
-    console.log(`[MAIN] DEBUG - ${description}: ${filePath}`);
-    console.log(`[MAIN] DEBUG - Exists: ${fs.existsSync(filePath)}`);
-    
-    try {
-      // Try to get the stats of the file/directory
-      const stats = fs.statSync(filePath);
-      console.log(`[MAIN] DEBUG - Is directory: ${stats.isDirectory()}`);
-      console.log(`[MAIN] DEBUG - Size: ${stats.size} bytes`);
-      
-      // If it's a directory, list its contents
-      if (stats.isDirectory()) {
-        const files = fs.readdirSync(filePath);
-        console.log(`[MAIN] DEBUG - Directory contents (${files.length} items):`);
-        files.forEach(file => console.log(`[MAIN] DEBUG -   ${file}`));
-      }
-    } catch (error) {
-      console.error(`[MAIN] DEBUG - Error accessing ${filePath}:`, error);
-    }
-  }
 } 

@@ -48,7 +48,6 @@ const IpcChannels = {
   ENV_GET_ACTIVE,
 };
 
-console.log('[PRELOAD] Preload script started, exposing APIs to window...');
 
 // Define types for the exposed APIs
 interface ElectronAPI {
@@ -132,8 +131,4 @@ const electronAPI: ElectronAPI = {
     isElectron: true
 };
 
-// Expose the electron API to the window
-console.log('[PRELOAD] Exposing electron API to window...');
 contextBridge.exposeInMainWorld('electron', electronAPI);
-
-console.log('[PRELOAD] Preload script completed successfully'); 
