@@ -25,12 +25,6 @@ export class AppComponent implements OnInit, OnDestroy {
   ) {
     // Check if we're running in an iframe
     this.isIframe = window !== window.parent && !window.opener;
-
-    if (this.electronService.isElectronApp) {
-      console.log('[APP] Running in Electron');
-    } else {
-      console.log('[APP] Not running in Electron');
-    }
   }
 
   ngOnInit(): void {
@@ -62,7 +56,6 @@ export class AppComponent implements OnInit, OnDestroy {
   private setupAutoUpdateListeners(): void {
     // For silent updates, we only need to listen for 'update-available'
     this.updateAvailableUnsubscribe = this.electronService.updater.onUpdateAvailable((info) => {
-      console.log('[APP] Update available:', info);
       this.updateInfo = info;
       this.showUpdateNotification = true;
     });
