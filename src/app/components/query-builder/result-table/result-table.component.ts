@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output, OnDestroy, ViewEncapsulation, ChangeDetectionStrategy, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA, ChangeDetectorRef, Inject } from '@angular/core';
-import { catchError, of, Subscription, takeUntil, tap, Subject, BehaviorSubject } from 'rxjs';
+import {  Subscription, takeUntil, tap, Subject, BehaviorSubject } from 'rxjs';
 import { MatTableRawData, XmlExecutorService } from '../services/xml-executor.service';
 import { NodeTreeService } from '../services/node-tree.service';
 import { QueryNode } from '../models/query-node';
