@@ -51,7 +51,7 @@
               <!-- Warning icon should alway be on the fixed position so when node is not selected it should left the place for remove icon -->
               <div class="icons-container">
                 <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
-                  <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
+                  <img class="warning-icon" src="assets/icons/warning-gutter.svg" alt="warning">
                 </ng-container>
                 
                 <img class="remove-icon" *ngIf="(selectedNode$ | async) === node" (click)="removeNode(node)" src="assets/icons/x.svg" alt="x">
@@ -105,7 +105,7 @@
               <!-- Warning icon should alway be on the fixed position so when node is not selected it should left the place for remove icon -->
               <div class="icons-container">
                 <ng-container *ngIf="!(node.validationResult$|async)?.isValid">
-                  <img class="warning-icon" src="assets/icons/warning.svg" alt="warning">
+                  <img class="warning-icon" src="assets/icons/warning-gutter.svg" alt="warning">
                 </ng-container>
                 <img class="remove-icon" *ngIf="(selectedNode$ | async) === node" (click)="removeNode(node)" src="assets/icons/x.svg" alt="x">
                 

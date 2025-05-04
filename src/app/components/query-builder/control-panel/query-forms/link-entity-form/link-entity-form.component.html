@@ -17,12 +17,8 @@
                 <!-- Fetch All Entities checkbox at the top -->
                 <div class="form-flex">
                     <div class="input-full-width">
-                        <mat-checkbox [formControl]="fetchAllEntitiesFormControl">
+                        <mat-checkbox [formControl]="fetchAllEntitiesFormControl" matTooltip="When disabled, only shows entities with existing relationships." matTooltipPosition="right">
                             Get All Entities
-                            <mat-icon class="info-icon" 
-                                matTooltip="When disabled, only shows entities with existing relationships." 
-                                matTooltipPosition="right"
-                                matTooltipClass="custom-tooltip">info</mat-icon>
                         </mat-checkbox>
                     </div>
                 </div>

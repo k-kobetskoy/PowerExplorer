@@ -4,23 +4,32 @@ import { LinterProviderService } from '../services/xml-parsing-services/linter-p
 import { ChangeDetectionStrategy, Component, ElementRef, Inject, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QueryRenderService } from '../services/query-render.service';
-import { basicSetup } from 'codemirror';
+import { basicSetup, minimalSetup } from 'codemirror';
 import { DOCUMENT } from '@angular/common';
 import { xml, xmlLanguage } from "@codemirror/lang-xml";
 import { EditorState, Extension } from '@codemirror/state';
-import { keymap, EditorView } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { keymap, EditorView, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, keymap as viewKeymap } from '@codemirror/view';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { lintGutter } from "@codemirror/lint"
-import {
-  oneDark,
-  oneDarkTheme,
-} from '@codemirror/theme-one-dark';
+import { foldGutter, foldService } from "@codemirror/language";
+import { defaultHighlightStyle, syntaxHighlighting, indentOnInput, bracketMatching } from "@codemirror/language";
+import { closeBrackets } from "@codemirror/autocomplete";
+import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 
-import { FormControl } from '@angular/forms';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { XmlParseService } from '../services/xml-parsing-services/xml-parse.service';
+import { CommonModule } from '@angular/common';
+
+// Import theme configuration from dedicated file
+import { powerExplorerTheme, foldGutterStyle, customFoldGutter } from './code-editor.theme';
 
 @Component({
   standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule
+  ],
   selector: 'app-code-editor',
   templateUrl: './code-editor.component.html',
   styleUrls: ['./code-editor.component.css'],
@@ -53,13 +62,41 @@ export class CodeEditorComponent implements OnInit {
   }
 
   initializeCodeMirror() {
+    // Custom setup without the default fold gutter
+    const customBasicSetup = [
+      lineNumbers(),
+      highlightActiveLineGutter(),
+      highlightSpecialChars(),
+      history(),
+      drawSelection(),
+      dropCursor(),
+      EditorState.allowMultipleSelections.of(true),
+      indentOnInput(),
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      bracketMatching(),
+      closeBrackets(),
+      autocompletion(),
+      rectangularSelection(),
+      crosshairCursor(),
+      highlightActiveLine(),
+      highlightSelectionMatches(),
+      keymap.of([
+        ...defaultKeymap,
+        ...searchKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+        indentWithTab
+      ])
+    ];
 
     const linter = this.linterProviderService.getLinter();
 
     let editorExtensions: Extension = [
-      basicSetup,
+      customBasicSetup,
       xml({ elements: [{ name: 'fetch', children: ['attribute', 'filter', 'link-entity', 'order', 'paging', 'value', 'link-entity'] }, xmlLanguage] }),
-      oneDark,
+      powerExplorerTheme,
+      foldGutterStyle,
+      customFoldGutter,
       linter,
       lintGutter({ hoverTime: 100 })];
 
@@ -74,7 +111,6 @@ export class CodeEditorComponent implements OnInit {
       extensions: [
         keymap.of([...defaultKeymap, ...historyKeymap]),
         history(),
-        oneDarkTheme,
       ]
     });
 

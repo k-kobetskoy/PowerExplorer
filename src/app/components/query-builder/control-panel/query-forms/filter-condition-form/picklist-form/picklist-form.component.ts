@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { distinctUntilChanged, map, switchMap, takeUntil } from 'rxjs/operators';
 import { FilterStaticData } from '../../../../models/constants/ui/filter-static-data';
 import { QueryNode } from '../../../../models/query-node';
@@ -21,6 +21,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
 @Component({
   standalone: true,
   imports: [
@@ -34,7 +35,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatButtonModule,
     FormsModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSelectModule,
+    MatInputModule
   ],  
   selector: 'app-picklist-form',
   templateUrl: './picklist-form.component.html',
@@ -61,7 +64,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
     .option-value {
       font-size: 0.85em;
-      color: rgba(0, 0, 0, 0.6);
+      color: rgba(255, 255, 255, 0.6);
     }
 
     .error-message {
@@ -75,7 +78,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 export class PicklistFormComponent extends OperatorValueBaseFormComponent {
   readonly filterOperators = FilterStaticData.FilterPickListOperators;
   picklistOptions$: Observable<PicklistModel[]>;
-
+  isLoading$ : BehaviorSubject<boolean>;
   constructor(
     private picklistService: PicklistEntityService, 
     multiValueNodesSvc: MultiValueNodesService) 
@@ -84,6 +87,11 @@ export class PicklistFormComponent extends OperatorValueBaseFormComponent {
   protected override initializeForm() {
     super.initializeForm();
     this.setupPicklistOptions();
+    this.isLoading$ = this.picklistService.getPicklistOptionsIsLoading$;
+
+    this.valueFormControl.valueChanges.subscribe(value => {
+      console.log('Value changed:', value);            
+    });
   }
 
   private setupPicklistOptions() {

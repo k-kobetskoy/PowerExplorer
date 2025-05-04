@@ -84,6 +84,10 @@ input, textarea, [contenteditable="true"] {
   --mdc-switch-selected-track-color: rgba(80, 145, 244, 0.5) !important;
 }
 
+.mat-mdc-form-field.mat-focused .mat-mdc-select-arrow {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
 .mat-mdc-option .mat-pseudo-checkbox {
   --mat-minimal-pseudo-checkbox-selected-checkmark-color: #ffffff !important;
 }

@@ -24,7 +24,7 @@
             </div>
           </mat-option>
         </mat-select>
-        <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
+        <mat-spinner *ngIf="(isLoading$ | async)" class="loading-spinner" diameter="20" matSuffix></mat-spinner>
         @if (valueFormControl.value) {
           <button matSuffix mat-icon-button aria-label="Clear" (click)="valueFormControl.patchValue('')">
             <span class="form-clear-icon"><mat-icon>close</mat-icon></span>

@@ -1,23 +1,29 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { EditorView, keymap } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectionStrategy, ViewEncapsulation } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
+import { EditorState, Extension } from '@codemirror/state';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { Extension } from '@codemirror/state';
-import { basicSetup } from 'codemirror';
+import { basicSetup, minimalSetup } from 'codemirror';
 import { lintGutter } from '@codemirror/lint';
-import { history } from '@codemirror/commands';
-import { defaultKeymap, historyKeymap } from '@codemirror/commands';
-import { linter } from '@codemirror/lint';
+import { history, historyKeymap, defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { json } from '@codemirror/lang-json';
 import { BehaviorSubject, Subscription } from 'rxjs';
+import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { autocompletion, completionKeymap, closeBrackets } from "@codemirror/autocomplete";
+import { syntaxHighlighting, defaultHighlightStyle, indentOnInput, bracketMatching, foldGutter } from "@codemirror/language";
+import { powerExplorerTheme } from '../query-builder/code-editor/code-editor.theme';
+
+// Import theme from code-editor if available, otherwise use oneDark
+// import { powerExplorerTheme, foldGutterStyle, customFoldGutter } from '../query-builder/code-editor/code-editor.theme';
 
 @Component({
   selector: 'app-raw-result-panel',
   templateUrl: './raw-result-panel.component.html',
   styleUrls: ['./raw-result-panel.component.css'],
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule],
+  encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RawResultPanelComponent implements OnInit, OnDestroy {
   @ViewChild('myeditor') myEditor: ElementRef;
@@ -52,10 +58,40 @@ export class RawResultPanelComponent implements OnInit, OnDestroy {
   }
 
   initializeCodeMirror() {
+    // Custom setup based on code-editor component
+    const customSetup = [
+      lineNumbers(),
+      highlightActiveLineGutter(),
+      highlightSpecialChars(),
+      history(),
+      drawSelection(),
+      dropCursor(),
+      EditorState.allowMultipleSelections.of(true),
+      indentOnInput(),
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      bracketMatching(),
+      closeBrackets(),
+      autocompletion(),
+      rectangularSelection(),
+      crosshairCursor(),
+      highlightActiveLine(),
+      highlightSelectionMatches(),
+      foldGutter(),
+      keymap.of([
+        ...defaultKeymap,
+        ...searchKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+        indentWithTab
+      ])
+    ];
+
     let editorExtensions: Extension = [
-      basicSetup,
+      customSetup,
       json(),
-      oneDark];
+      powerExplorerTheme,  // Use oneDark theme for JSON (or import powerExplorerTheme)
+      lintGutter({ hoverTime: 100 })
+    ];
 
     // Get initial value from BehaviorSubject if available
     const initialData = this.dataSource?.getValue();
@@ -67,12 +103,7 @@ export class RawResultPanelComponent implements OnInit, OnDestroy {
 
     this.editorView = new EditorView({
       state: initialState,
-      parent: this.myEditor.nativeElement,
-      extensions: [
-        keymap.of([...defaultKeymap, ...historyKeymap]),
-        history(),
-        oneDark,
-      ]
+      parent: this.myEditor.nativeElement
     });
   }
 

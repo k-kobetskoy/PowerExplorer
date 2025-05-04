@@ -1,6 +1,6 @@
 import { AttributeNames } from 'src/app/components/query-builder/models/constants/attribute-names';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { distinctUntilChanged, switchMap, takeUntil } from 'rxjs/operators';
 import { BooleanModel } from 'src/app/models/incoming/boolean/boolean-model';
 import { BooleanEntityService } from '../../../../services/entity-services/boolean-entity.service';
@@ -41,6 +41,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 })
 export class BooleanFormComponent extends OperatorValueBaseFormComponent {
   booleanOptions$: Observable<BooleanModel>;
+  isLoading$ : BehaviorSubject<boolean>;
 
   readonly filterOperators = FilterStaticData.FilterBooleanOperators;
 
@@ -52,6 +53,7 @@ export class BooleanFormComponent extends OperatorValueBaseFormComponent {
   protected override initializeForm() {
     super.initializeForm();
     this.setupBooleanOptions();
+    this.isLoading$ = this.booleanService.getBooleanValuesIsLoading$;
   }
 
   private setupBooleanOptions() {

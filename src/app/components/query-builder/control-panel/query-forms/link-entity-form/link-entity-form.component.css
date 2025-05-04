@@ -1,1 +1,15 @@
 
+.info-icon {
+    color: #000;
+}
+
+.custom-tooltip {
+    background-color: #000;
+    color: #fff;
+}
+
+.input-full-width{
+    display: flex;
+    flex-direction: row;
+    
+}

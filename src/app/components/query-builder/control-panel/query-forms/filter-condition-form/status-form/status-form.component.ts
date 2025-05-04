@@ -17,6 +17,8 @@ import { MultiValueFormComponent } from '../multi-value-form/multi-value-form.co
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+
 @Component({
   standalone: true,
   imports: [
@@ -30,7 +32,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatButtonModule,
     FormsModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatSelectModule
   ],  
   selector: 'app-status-form',
   templateUrl: './status-form.component.html',

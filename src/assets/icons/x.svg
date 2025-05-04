@@ -3,11 +3,7 @@
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
 	 viewBox="0 0 18 18" style="enable-background:new 0 0 18 18;" xml:space="preserve">
 <style type="text/css">
-	.st0{opacity:0.7;fill:none;stroke:#95969F;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
-	.st1{opacity:0.7;fill:none;stroke:#86878F;stroke-width:0.6;stroke-linecap:round;stroke-linejoin:round;}
+	.st0{fill:none;stroke:#994040;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
 </style>
-<path class="st0" d="M11.9,6.1l-5.9,5.9"/>
-<path class="st0" d="M6.1,6.1l5.9,5.9"/>
-<path class="st1" d="M11.9,6.1l-5.9,5.9"/>
-<path class="st1" d="M6.1,6.1l5.9,5.9"/>
+<path class="st0" d="M12.9,5.1l-7.7,7.7 M5.2,5.1l7.7,7.7"/>
 </svg>
