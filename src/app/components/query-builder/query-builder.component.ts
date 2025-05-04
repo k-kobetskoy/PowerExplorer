@@ -9,6 +9,10 @@ import { ControlPanelComponent } from './control-panel/control-panel.component';
 import { ResultTableComponent } from './result-table/result-table.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { ConnectionsComponent } from '../toolbar/connections/connections.component';
+import { SettingsComponent } from '../toolbar/settings/settings.component';
+import { ToggleButtonComponent } from '../toggle-button/toggle-button.component';
+
 export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
 
 @Component({
@@ -30,7 +34,10 @@ export const QUERY_BUILDER_COMPONENT_URL: string = '/querybuilder';
     ControlPanelComponent,
     MatIconModule,
     CodeEditorComponent,
-    MatButtonModule
+    MatButtonModule,
+    ConnectionsComponent,
+    SettingsComponent,
+    ToggleButtonComponent
   ],
 })
 export class QueryBuilder implements OnInit {

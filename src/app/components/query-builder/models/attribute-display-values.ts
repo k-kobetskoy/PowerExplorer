@@ -24,7 +24,7 @@ export class AttributeDisplayValues {
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
                     distinctUntilChanged(),
                     map(value => {
-                        if (value.toString().trim().length === 0) {
+                        if (value?.toString().trim().length === 0 || value === null) {
                             return '';
                         }
 
@@ -40,7 +40,7 @@ export class AttributeDisplayValues {
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
                     distinctUntilChanged(),
                     map(value => {
-                        if (value.toString().trim().length === 0) {
+                        if (value?.toString().trim().length === 0 || value === null) {
                             return '';
                         }
 
@@ -56,7 +56,7 @@ export class AttributeDisplayValues {
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
                     distinctUntilChanged(),
                     map(value => {
-                        if (value.toString().trim().length === 0) {
+                        if (value?.toString().trim().length === 0 || value === null) {
                             return '';
                         }
 
@@ -72,7 +72,7 @@ export class AttributeDisplayValues {
                 this.treeViewDisplayValue$ = attributeValue$.pipe(
                     distinctUntilChanged(),
                     map(value => {
-                        if (value.toString().trim().length === 0) {
+                        if (value?.toString().trim().length === 0 || value === null) {
                             return '';
                         }
 

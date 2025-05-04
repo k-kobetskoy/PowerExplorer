@@ -5,6 +5,7 @@ app-result-table .format-toggle-label{
   font-size: 0.8rem;
   font-family: "Inter", sans-serif;
   font-weight: 500;
+  color: #b5b5b5;
 }
 
 .result-table-container {
@@ -26,6 +27,7 @@ app-result-table .format-toggle-label{
   height: 100%;
   overflow: auto;
   padding: 0px !important;
+  color: #d4d4d4;
 }
 
 .closed-panel-icon {
@@ -66,17 +68,20 @@ app-result-table .format-toggle-label{
   white-space: nowrap !important;
   margin-left: 0 !important;
   margin-right: auto !important;
+  /* background-color: #1e1e1e; */
+  color: #d4d4d4;
+  background: none !important;
 }
 
 mat-header-row .mat-mdc-header-row {
   --mat-table-header-headline-weight: 600;
   --mat-table-header-headline-size: 12px;
-  color: #7e7e7e;
+  color: #b5b5b5;
   position: sticky;
   top: 0;
   height: 30px!important;
   z-index: 90;
-  background-color: white;
+  background-color: #252526;
 }
 
 /* row height */
@@ -107,7 +112,7 @@ mat-header-row .mat-mdc-header-row {
 }
 
 .mat-mdc-table .mat-mdc-cell {
-  color: #272727;
+  color: #d4d4d4;
   max-width: 300px;
   width: auto;
   padding-top: 0px;
@@ -135,11 +140,11 @@ mat-header-row .mat-mdc-header-row {
 }
 
 .mat-mdc-table .mat-mdc-header-cell:first-child {
-  border-right: 1px solid #f1f1f1;
+  border-right: 1px solid #333333;
 }
 
 .mat-mdc-table .mat-mdc-cell:first-child {
-  border-right: 1px solid #f1f1f1;
+  border-right: 1px solid #333333;
   text-align: center;
   /* color: rgb(168, 168, 168); */
 }
@@ -150,12 +155,12 @@ mat-header-row .mat-mdc-header-row {
 }
 
 .mat-mdc-table .mat-mdc-header-cell:hover {
-  background-color: #f1f1f1;
+  background-color: #2d2d2d;
 }
 
 /* cell hover */
 .mat-mdc-table .mat-mdc-cell:hover {
-  background-color: #f1f1f1;
+  background-color: #2d2d2d;
 }
 
 .mat-mdc-table .mat-mdc-cell.selected {
@@ -171,7 +176,7 @@ mat-header-row .mat-mdc-header-row {
 }
 
 .mat-mdc-table .selected {
-    background-color: rgba(224, 225, 230, 0.9) !important;
+    background-color:#3a3c3f !important;
     transition: background-color .3s;
 }
 
@@ -183,7 +188,7 @@ mat-header-row .mat-mdc-header-row {
 .mat-mdc-cell.number-cell {
   text-align: right !important;
   font-family: 'Hack', monospace !important;
-  color: #2c70b9 !important;
+  color: #b6c0cf !important;
   font-size: 0.8rem !important;
 }
 
@@ -195,12 +200,12 @@ mat-header-row .mat-mdc-header-row {
 .mat-mdc-cell.date-cell {
     text-align: center !important;
     font-style: italic !important;
-    color: #555 !important;
+    color: #d4d4d4 !important;
 }
 
 .mat-mdc-cell.lookup-cell {
     text-align: left !important;
-    color: #2c70b9 !important;
+    color: #b6c0cf !important;
     font-family: 'Hack', monospace !important;
     font-size: 0.79rem !important;
 }
@@ -210,7 +215,7 @@ mat-header-row .mat-mdc-header-row {
   font-family: 'Inter', sans-serif !important;
   font-size: 0.8rem !important;
   font-weight: 500 !important;
-  color: #333333 !important;
+  color: #d4d4d4 !important;
   text-align: left !important;
   padding-left: 12px !important;
   background-color: transparent !important;
@@ -219,7 +224,7 @@ mat-header-row .mat-mdc-header-row {
 
 /* Raw lookup style - technical appearance */
 .mat-mdc-cell.lookup-cell.lookup-cell-raw {
-  color: #2c70b9 !important;
+  color: #b6c0cf !important;
   font-family: 'Hack', monospace !important;
   font-size: 0.79rem !important;
   letter-spacing: -0.02em !important;
@@ -229,23 +234,23 @@ mat-header-row .mat-mdc-header-row {
 
 .mat-mdc-cell.uniqueidentifier-cell {
   text-align: left !important;
-  color: #2c70b9 !important;
+  color: #b6c0cf !important;
   font-family: 'Hack', monospace !important;
   letter-spacing: -0.05em !important;
   font-size: 0.8rem !important;
   font-variant-numeric: tabular-nums !important;
-  background-color: rgba(245, 245, 245, 0.5) !important;
+  background-color: rgba(40, 40, 40, 0.5) !important;
 }
 
 .mat-mdc-cell.picklist-cell {
     text-align: center !important;
     font-weight: 500 !important;
-     background-color: rgba(184, 172, 147, 0.1) !important;
+    background-color: rgba(45, 45, 45, 0.3) !important;
 }
 
 /* Row hover effect */
 tr.mat-mdc-row:hover {
-    background-color: rgba(224, 225, 230, 0.5) !important;
+    background-color: rgba(45, 45, 45, 0.5) !important;
 }
 
 /* Add a new class for code-like content */
@@ -253,33 +258,33 @@ tr.mat-mdc-row:hover {
   font-family: 'Hack', monospace !important;
   letter-spacing: -0.05em !important;
   font-size: 0.8rem !important;
-  background-color: rgba(245, 245, 245, 0.5) !important;
+  background-color: rgba(40, 40, 40, 0.5) !important;
 }
 
 .table-controls {
   display: flex;
   justify-content: space-between;
   padding: 8px 16px;
-  background-color: #f8f8f8;
-  border-bottom: 1px solid #e0e0e0;
+  /* background-color: #252526; */
 }
 
 .format-toggle-container {
   display: flex;
   align-items: center;
   font-size: 12px;
-  color: #555;
+  color: #b5b5b5;
 }
 
 .toggle-label {
   margin-right: 8px;
-  
+  color: #b5b5b5;
 }
 
 .format-toggle-label {
   font-size: 0.8rem;
   font-family: "Inter", sans-serif;
   font-weight: 500;
+  color: #b5b5b5;
 }
 
 .has-formatted-value {
@@ -288,7 +293,7 @@ tr.mat-mdc-row:hover {
 
 .null-value {
   font-style: italic !important;
-  color: #a0a0a0 !important;
+  color: #6d6d6d !important;
   font-weight: normal !important;
   /* Override type-specific styles */
   text-align: center !important;
@@ -296,7 +301,7 @@ tr.mat-mdc-row:hover {
   font-family: "Inter", sans-serif !important;
   letter-spacing: normal !important;
   font-size: 13px !important;
-  background-color: #f9f9f9 !important;
+  background-color: #252526 !important;
 }
 
 /* Ensure null value formatting takes precedence over cell type formatting */
@@ -308,18 +313,18 @@ tr.mat-mdc-row:hover {
 .mat-mdc-cell.picklist-cell.null-value,
 .mat-mdc-cell.code-cell.null-value {
   font-style: italic !important;
-  color: #a0a0a0 !important;
+  color: #6d6d6d !important;
   font-weight: normal !important;
   text-align: center !important;
   text-decoration: none !important;
   font-family: "Inter", sans-serif !important;
   letter-spacing: normal !important;
   font-size: 13px !important;
-  background-color: #f9f9f9 !important;
+  background-color: #252526 !important;
 }
 
 .dynamics-link {
-  color: #0078d4;
+  color: #b6c0cf;
   text-decoration: none;
   cursor: pointer;
   display: flex;
@@ -339,7 +344,7 @@ tr.mat-mdc-row:hover {
 
 /* Style for raw view links */
 .raw-link {
-  color: #107c10; /* Green color to distinguish from formatted view */
+  color: #6a9955; /* Green color to distinguish from formatted view */
   font-family: monospace; /* Use monospace font for technical/raw view */
   font-size: 0.8rem;
 }
@@ -348,13 +353,13 @@ tr.mat-mdc-row:hover {
   width: 100%;
   position: relative;
   z-index: 10;
-  background-color: white;
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
   align-items: flex-start;
   justify-content: flex-start;
+  background-color: #1e1e1e;
 }
 
 .table-scroll-container {
@@ -369,12 +374,14 @@ tr.mat-mdc-row:hover {
   text-align: left;
   margin-left: 0;
   margin-right: auto;
+  background-color: #1e1e1e;
 }
 
 /* Fixed row height */
 .mat-mdc-row {
   height: 20px !important;
   min-height: 20px !important;
+  background-color: #1e1e1e;
 }
 
 .no-data-message {
@@ -384,8 +391,9 @@ tr.mat-mdc-row:hover {
   height: 200px;
   width: 100%;
   font-size: 16px;
-  color: rgba(0, 0, 0, 0.6);
+  color: #b5b5b5;
   text-align: center;
+  background-color: #1e1e1e;
 }
 
 /* Cell styling */
@@ -395,17 +403,19 @@ tr.mat-mdc-row:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap!important;
+  color: #d4d4d4;
 }
 
 .mat-header-cell {
   padding: 8px 16px;
   font-weight: 500;
-  color: rgba(0, 0, 0, 0.87);
+  color: #b5b5b5;
+  background-color: #252526;
 }
 
 /* Selected states */
 .mat-row.selected {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: rgba(45, 45, 45, 0.7);
 }
 
 .mat-cell.selected {
@@ -418,14 +428,17 @@ tr.mat-mdc-row:hover {
 /* Special data type styles */
 .number-cell {
   text-align: right;
+  color: #c3cad3;
 }
 
 .boolean-cell {
   text-align: center;
+  color: #b6c0cf;
 }
 
 .date-cell {
   white-space: nowrap!important;
+  color: #d4d4d4;
 }
 
 /* .has-formatted-value {
@@ -435,7 +448,7 @@ tr.mat-mdc-row:hover {
 } */
 
 .dynamics-link {
-  color: #0078d4;
+  color: #d4d4d4;
   text-decoration: none;
 }
 
@@ -444,15 +457,16 @@ tr.mat-mdc-row:hover {
 }
 
 .raw-link {
-  color: #8a8886;
+  color: #6a9955;
 }
 
 .option-label {
   font-weight: normal;
+  color: #d4d4d4;
 }
 
 .option-value {
-  color: rgba(0, 0, 0, 0.54);
+  color: #b5b5b5;
   font-size: 0.85em;
   margin-left: 8px;
 }
@@ -464,6 +478,7 @@ tr.mat-mdc-row:hover {
   align-items: center;
   width: 100%;
   padding: 20px 0;
+  background-color: #1e1e1e;
 }
 
 /* Container needs to be positioned relative for absolute positioning to work */
@@ -473,6 +488,7 @@ tr.mat-mdc-row:hover {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: #1e1e1e;
 }
 
 ng-container {
@@ -482,28 +498,27 @@ ng-container {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  background-color: #1e1e1e;
 }
 
 .error-message {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: #4d1f1f;
+  color: #ff6666;
   padding: 15px;
   margin: 10px 0;
   border-radius: 4px;
-  border-left: 4px solid #c62828;
+  border-left: 4px solid #ff4444;
 }
 
 .no-data-message {
   padding: 20px;
   text-align: center;
-  color: #757575;
+  color: #b5b5b5;
   font-style: italic;
 }
 
 /* Paginator styling */
 .mat-mdc-paginator {
-  background-color: #fafafa;
-  border-top: 1px solid #e0e0e0;
   font-family: "Inter", sans-serif;
   position: sticky;
   right: 0;
@@ -511,23 +526,23 @@ ng-container {
   bottom: 0;
   z-index: 100;
   width: 100%;
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .mat-mdc-paginator-container {
   min-height: 45px;
   justify-content: flex-end;
   padding: 0 16px;
+  background-color: #3A3D44;
 }
 
 .mat-mdc-paginator-range-label {
   font-size: 0.8rem;
-  color: #555;
+  color: #b5b5b5;
 }
 
 .mat-mdc-paginator-page-size-label {
   font-size: 0.8rem;
-  color: #555;
+  color: #b5b5b5;
 }
 
 .mat-mdc-paginator .mat-mdc-select-value-text {
@@ -538,16 +553,11 @@ ng-container {
 .mat-mdc-paginator-navigation-previous,
 .mat-mdc-paginator-navigation-first,
 .mat-mdc-paginator-navigation-last {
-  color: #555;
-}
-
-/* Style for empty cells (to make them visually distinct) */
-.empty-cell {
-  background-color: #f9f9f9 !important;
+  color: #b5b5b5;
 }
 
 .row-number-link {
-  color: #2c70b9;
+  color: #d4d4d4;
   text-decoration: none;
   font-family: 'Hack', monospace;
   font-size: 0.8rem;

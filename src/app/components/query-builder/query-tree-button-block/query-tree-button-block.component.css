@@ -1,10 +1,13 @@
 .button-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: var(--tab-bar-height, 32px);
+  justify-content: flex-start;
+  flex-basis: 100%;
+  flex-grow: 0;
   padding: 0 10px;
   width: 100%;
+  margin-top: 6px;
+  margin-bottom: 6px;
 }
 
 .button-container-left {
@@ -22,20 +25,23 @@
 }
 
 /* Button styles */
-.custom-run-button {
+.custom-execute-button {
   margin-left: 10px;
+  margin-right: 10px;
   color: white;
   border: none;
   border-radius: 4px;
   padding: 0 8px;
-  height: 32px;
+  height: 36px;
   display: flex;
   align-items: center;
   cursor: pointer;
+  background-image: linear-gradient(45deg, #48C3F4, #6841F5);
+  background-color: transparent;
 
   &:hover {
-    background-color: #403f4b; /* Slightly darker */
     transition: background-color 0.2s ease;
+    background-image: linear-gradient(45deg,   #48ADF4, #6841F5, #810ce0);
   }
 
   &:active {
@@ -43,14 +49,65 @@
   }
 
   &:disabled {
-    background-color: #9190a3;
+  background-image: none;
     cursor: not-allowed;
     pointer-events: none; /* Prevents hover effects when disabled */
+    
+    .tree-element-icon {
+      opacity: 0.5; /* Makes the icon semi-transparent when button is disabled */
+    }
   }
 }
 
-.query-constructor-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--main-text-color);
+.custom-execute-button .tree-element-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  margin-left: 6px;
+  display: flex;
 }
+
+.parse-button {
+  min-width: 80px;
+  height: 36px;
+  padding: 0 12px;
+  background-color: #CCCCCC;
+  margin-right: 10px;
+  &:hover {
+    background-color: #a7a7a7;
+  }
+}
+
+.button-container .button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.parse-button .tree-element-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  display: flex;
+
+}
+
+.button-container .custom-button-text {
+  font-size: 0.8rem;
+}
+
+.parse-button .custom-button-text {
+  color: #2F2F2F;
+}
+
+.button-icon-only {
+  margin-left: 10px;
+  border: 2px dashed #2f313271;
+}
+
+.button-icon-only .tree-element-icon {
+  opacity: 0.5;
+}
+
+

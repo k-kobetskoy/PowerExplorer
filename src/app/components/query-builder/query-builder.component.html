@@ -1,12 +1,15 @@
 <div class="query-builder query-builder-container">
-  <as-split direction="horizontal" class="main-split" [style.height.%]="100" [style.width.%]="100" [gutterSize]="10"
+  <as-split direction="horizontal" class="main-split" [style.height.%]="100" [style.width.%]="100" [gutterSize]="0"
             [useTransition]="true" unit="pixel">
     <!-- Left panel -->
     <as-split-area [size]="392" [minSize]="392" [maxSize]="600">
+      <div class="main-toolbar-container">
+        <app-settings></app-settings>    
+        <app-connections></app-connections>
+      </div>
 
       <as-split direction="vertical" [gutterSize]="10" [useTransition]="true" class="left-panel-split" unit="pixel">
         <as-split-area [minSize]="400">      
-          <app-query-tree-button-block (executeXmlRequest)="handleExecuteXmlRequest($event)"></app-query-tree-button-block>
           <app-tree-panel></app-tree-panel>
         </as-split-area>
         <as-split-area [size]="417" order="4" [minSize]="218" [maxSize]="600">
@@ -19,27 +22,12 @@
     <as-split-area class="right-panel">
 
       <div class="code-editor-toolbar">
-        <div class="toggle-wrapper">
-          <div class="toggle-button">
-            <div class="toggle-slider" [class.slide-right]="selectedTabIndex === 1"></div>
-            <div class="toggle-options">
-              <div class="option" [class.active]="selectedTabIndex === 0" (click)="switchToTab(0)">
-    
-                Xml
-              </div>
-              <div class="option" [class.active]="selectedTabIndex === 1" (click)="switchToTab(1)">
-                
-                Result
-              </div>
-            </div>
-          </div>
-        </div>
-        <button mat-button *ngIf="selectedTabIndex === 0" class="parse-button" (click)="codeEditor.parseXml()">
-          <div class="button-content">
-            <img class="tree-element-icon prevent-select" src="assets/icons/parse.svg" alt="entity-icon">
-            <span class="custom-button-text">Parse</span>
-          </div>
-        </button>
+        <app-toggle-button 
+          [leftOptionLabel]="'Xml'" 
+          [rightOptionLabel]="'Result'" 
+          [selectedIndex]="selectedTabIndex" 
+          (selectionChange)="switchToTab($event)">
+        </app-toggle-button>
         <div *ngIf="selectedTabIndex === 1" class="switch-wrapper">
         </div>
       </div>
@@ -53,6 +41,8 @@
           <app-result-table #resultTable></app-result-table>
         </div>
       </div>
+      <app-query-tree-button-block (executeXmlRequest)="handleExecuteXmlRequest($event)" (parse)="codeEditor.parseXml()"></app-query-tree-button-block>
+
     </as-split-area>
   </as-split>
 </div>

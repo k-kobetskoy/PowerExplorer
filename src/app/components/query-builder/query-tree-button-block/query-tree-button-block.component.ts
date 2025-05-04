@@ -15,7 +15,7 @@ import { QueryRenderService } from '../services/query-render.service';
 import { EventBusService } from 'src/app/services/event-bus/event-bus.service';
 import { AppEvents } from 'src/app/services/event-bus/app-events';
 import { QueryNode } from '../models/query-node';
-
+import { MatTooltipModule } from '@angular/material/tooltip';
 // Define a safer event type
 export interface XmlRequestEvent {
   xml: string;
@@ -34,7 +34,8 @@ export interface XmlRequestEvent {
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatTooltipModule
   ]
 })
 export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
@@ -50,6 +51,8 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
   
   errorMessages$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
   private destroy$ = new Subject<void>();
+
+  @Output() parse = new EventEmitter<void>();
 
   constructor(
     private nodeTreeProcessor: NodeTreeService,
@@ -88,6 +91,10 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
   } 
+
+  parseRequest() {
+    this.parse.emit();
+  }
 
   execute() {
     console.log('Executing query...');

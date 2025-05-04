@@ -6,7 +6,6 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MainToolbarComponent } from './components/toolbar/main-toolbar/main-toolbar.component';
 import { MenuComponent } from './components/toolbar/menu/menu.component';
-import { UserInfoComponent } from './components/toolbar/user-info/user-info.component';
 import { NodeStyleDirective } from './directives/node-style.directive';
 import { ExternalLinkDirective } from './directives/external-link.directive';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -46,7 +45,6 @@ const isElectron = window && window['electron'] !== undefined;
   declarations: [
     AppComponent,
     MenuComponent,
-    UserInfoComponent,
     NodeStyleDirective,
     ExternalLinkDirective,
     ErrorDialogComponent,

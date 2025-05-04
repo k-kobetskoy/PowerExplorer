@@ -8,8 +8,8 @@
     display: flex;
     justify-content: flex-start;
     padding: 10.5px 16px;
-    background-color: #f8f8f8;
-    border-bottom: 1px solid #e0e0e0;
+    /* background-color: #f8f8f8;
+    border-bottom: 1px solid #e0e0e0; */
     flex-shrink: 0; /* Prevent header from shrinking */
   }
 

@@ -10,6 +10,13 @@
   box-sizing: border-box;
 }
 
+.main-toolbar-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px 10px 0px 10px;
+}
+
 /* Angular Split styles */
 .main-split {
   height: 100% !important;
@@ -20,11 +27,13 @@
 }
 
 .right-panel {
+  background-color: #1D1F21;
   flex: 1 1 auto !important;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   height: 100%;
+  /* padding: 0px 0px 5px 0px; */
 }
 
 .left-panel-split {
@@ -50,7 +59,7 @@ as-split-area {
 
 .as-split-gutter {
   background-color: transparent !important;
-  flex-basis: 10px !important;
+  flex-basis: 0px !important;
   z-index: 49;
   display: flex;
   align-items: center;
@@ -66,41 +75,37 @@ as-split[direction="vertical"] > .as-split-gutter {
 
 as-split[direction="vertical"] > .as-split-gutter .as-split-gutter-icon {
   background-image: none !important;
-  background-color: #D4D5D8;
+  background-color: #3A3D44;
   z-index: 50;
-  width: 120px !important;
+  width: 100% !important;
   height: 2px !important;
-  border-radius: 1px;
-  opacity: 0.7;
   transition: all 0.2s ease;
 }
 
 as-split[direction="vertical"] > .as-split-gutter:hover .as-split-gutter-icon {
-  background-color: #bec6df;
+  background-color: #5091F4;
   opacity: 1;
   transform: scaleY(2);
 }
 
 /* Vertical gutter (appears between left/right areas) */
 as-split[direction="horizontal"] > .as-split-gutter {
-  flex-basis: 10px !important;
+  flex-basis: 0px !important;
   transition: all 0.2s ease;
   cursor: col-resize;
 }
 
 as-split[direction="horizontal"] > .as-split-gutter .as-split-gutter-icon {
   background-image: none !important;
-  background-color: #D4D5D8;
+  background-color: #3A3D44;
   z-index: 50;
   width: 2px !important;
-  height: 400px !important;
-  border-radius: 1px;
-  opacity: 0.7;
+  height: 100% !important;
   transition: all 0.2s ease;
 }
 
 as-split[direction="horizontal"] > .as-split-gutter:hover .as-split-gutter-icon {
-  background-color: #bec6df;
+  background-color: #5091F4;
   opacity: 1;
   transform: scaleX(2);
 }
@@ -109,7 +114,10 @@ as-split[direction="horizontal"] > .as-split-gutter:hover .as-split-gutter-icon 
 app-query-tree-button-block {
   display: flex;
   height: var(--tab-bar-height);
-  flex-shrink: 0;
+  flex-shrink: 1;
+  flex-grow: 0;
+  flex-basis: 100%;
+  max-height: 54px;
   width: 100%;
 }
 
@@ -137,70 +145,18 @@ app-tree-panel, app-control-panel {
   line-height: 40px;
 }
 
-.toggle-wrapper {
+/* Toggle styles have been moved to the toggle-button component */
+
+.switch-wrapper {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
-.toggle-button {
-  position: relative;
-  width: 130px;
-  height: 28px;
-  background-color: #CCCFDB;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: inset 0 0px 10px  rgba(64, 64, 70, 0.123);
-
-  &:hover {
-    background-color: #b8bbc9;
-  }
-}
-
-.toggle-slider {
-  position: absolute;
-  width: 62px;
-  height: 24px;
-  background-color: white;
-  border-radius: 10px;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s ease;
-  z-index: 1;
-  box-shadow: 0 0px 6px rgba(0, 0, 0, 0.05);
-}
-
-.toggle-slider.slide-right {
-  transform: translateX(64px);
-}
-
-.toggle-options {
-  position: relative;
-  display: flex;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-}
-
-.toggle-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.option {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 13px;
+.switch-label {
+  font-size: 12px;
   font-weight: 500;
-  color: #ffffff;
-  transition: color 0.2s ease;
-}
-
-.option.active {
-  color: #303244;
-  font-weight: 600;
+  color: #555969;
 }
 
 .tab-content {
@@ -276,11 +232,12 @@ as-split[direction="vertical"] > as-split-area {
 .tab-content {
   display: flex;
   margin-top: 10px;
-  background-color: #ffffff;
-  border-radius: 10px;
   flex: 1 1 auto;
   flex-direction: column;
   min-height: 0;
+  border-top: 2px solid #3A3D44;
+  border-bottom: 2px solid #3A3D44;
+
 }
 
 .switch-wrapper {
@@ -293,34 +250,6 @@ as-split[direction="vertical"] > as-split-area {
   font-size: 12px;
   font-weight: 500;
   color: #555969;
-}
-
-/* Parse Button Styling */
-.parse-button {
-  min-width: 80px;
-  height: 32px;
-  padding: 0 12px;
-}
-
-.parse-button .button-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-
-.parse-button .tree-element-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  display: flex;
-}
-
-.parse-button .custom-button-text {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1;
-  margin-top: 1px; /* Fine-tuning vertical alignment */
 }
 
 .query-builder-container {

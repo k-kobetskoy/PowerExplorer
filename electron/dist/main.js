@@ -301,7 +301,7 @@ else {
     }
     electron_1.app.on('ready', () => {
         // Remove the application menu
-        electron_1.Menu.setApplicationMenu(null);
+        // Menu.setApplicationMenu(null);
         // Set up custom protocol before creating window
         if (!process.env.ELECTRON_START_URL) {
             const appPath = path.resolve(__dirname, '..');

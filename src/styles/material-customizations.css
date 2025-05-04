@@ -1,5 +1,120 @@
-.mat-mdc-unelevated-button.mat-primary {
-  --mdc-filled-button-container-color: #24272e;
+/* Override Angular Material's default theme colors with our custom blue */
+
+/* Primary color overrides */
+.mat-mdc-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-outlined-button.mat-primary {
+  --mdc-filled-button-container-color: #5091F4;
+  --mdc-filled-button-label-text-color: white;
+  --mdc-outlined-button-label-text-color: #5091F4;
+  --mdc-outlined-button-outline-color: #5091F4;
+}
+
+/* Primary color ripple effect */
+.mat-mdc-button.mat-primary .mat-ripple-element,
+.mat-mdc-icon-button.mat-primary .mat-ripple-element,
+.mat-mdc-outlined-button.mat-primary .mat-ripple-element {
+  background-color: rgba(80, 145, 244, 0.1);
+}
+
+/* Form field colors */
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-ripple {
+  background-color: #5091F4;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-label {
+  color: #5091F4;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-focus-overlay {
+  background-color: rgba(80, 145, 244, 0.05);
+}
+
+/* Input focused color */
+.mat-mdc-input-element:focus {
+  caret-color: #5091F4 !important;
+}
+
+/* General caret color for all inputs */
+input, textarea, [contenteditable="true"] {
+  caret-color: #5091F4 !important;
+}
+
+/* Form field outline colors */
+.mat-mdc-form-field-appearance-outline.mat-focused .mat-mdc-form-field-outline {
+  color: #5091F4;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-text-field-wrapper {
+  --mdc-outlined-text-field-focus-outline-color: #5091F4;
+  --mdc-outlined-text-field-focus-label-text-color: #5091F4;
+}
+
+/* Checkbox and radio buttons */
+.mat-mdc-checkbox .mdc-checkbox .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background,
+.mat-mdc-checkbox .mdc-checkbox .mdc-checkbox__native-control:indeterminate ~ .mdc-checkbox__background {
+  background-color: #5091F4;
+  border-color: #5091F4;
+}
+
+.mat-mdc-radio-button.mat-accent .mdc-radio__native-control:checked + .mdc-radio__background .mdc-radio__outer-circle,
+.mat-mdc-radio-button.mat-accent .mdc-radio__background .mdc-radio__inner-circle {
+  border-color: #5091F4;
+}
+
+/* Progress bar */
+.mat-mdc-progress-bar {
+  --mdc-linear-progress-active-indicator-color: #5091F4;
+  --mdc-linear-progress-track-color: rgba(80, 145, 244, 0.3);
+}
+
+/* Slide toggle */
+.mat-mdc-slide-toggle.mat-accent {
+  --mdc-switch-selected-focus-state-layer-color: #5091F4 !important;
+  --mdc-switch-selected-handle-color: #5091F4 !important;
+  --mdc-switch-selected-hover-state-layer-color: #5091F4 !important;
+  --mdc-switch-selected-pressed-state-layer-color: #5091F4 !important;
+  --mdc-switch-selected-focus-handle-color: #5091F4 !important;
+  --mdc-switch-selected-hover-handle-color: #5091F4 !important;
+  --mdc-switch-selected-pressed-handle-color: #5091F4 !important;
+  --mdc-switch-selected-focus-track-color: rgba(80, 145, 244, 0.5) !important;
+  --mdc-switch-selected-hover-track-color: rgba(80, 145, 244, 0.5) !important;
+  --mdc-switch-selected-pressed-track-color: rgba(80, 145, 244, 0.5) !important;
+  --mdc-switch-selected-track-color: rgba(80, 145, 244, 0.5) !important;
+}
+
+.mat-mdc-option .mat-pseudo-checkbox {
+  --mat-minimal-pseudo-checkbox-selected-checkmark-color: #ffffff !important;
+}
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color:  white !important;
+}
+
+.mat-mdc-option.mdc-list-item--selected:not(.mdc-list-item--disabled) .mdc-list-item__primary-text {
+  color: #ffffff !important;
+}
+
+/* Additional slide toggle properties to ensure blue color */
+.mat-mdc-slide-toggle .mat-primary {
+  --mdc-switch-selected-focus-state-layer-color: #5091F4;
+  --mdc-switch-selected-handle-color: #5091F4;
+  --mdc-switch-selected-hover-state-layer-color: #5091F4;
+  --mdc-switch-selected-pressed-state-layer-color: #5091F4;
+  --mdc-switch-selected-focus-handle-color: #5091F4;
+  --mdc-switch-selected-hover-handle-color: #5091F4;
+  --mdc-switch-selected-pressed-handle-color: #5091F4;
+  --mdc-switch-selected-focus-track-color: rgba(80, 145, 244, 0.5);
+  --mdc-switch-selected-hover-track-color: rgba(80, 145, 244, 0.5);
+  --mdc-switch-selected-pressed-track-color: rgba(80, 145, 244, 0.5);
+  --mdc-switch-selected-track-color: rgba(80, 145, 244, 0.5);
+}
+
+/* Progress spinner (circular) */
+.mat-mdc-progress-spinner .mdc-circular-progress__determinate-circle,
+.mat-mdc-progress-spinner .mdc-circular-progress__indeterminate-circle-graphic {
+  stroke: #5091F4 !important;
 }
 
 html {
@@ -43,7 +158,14 @@ html {
   --mdc-outlined-button-label-text-font: Inter, sans-serif;
   --mdc-protected-button-label-text-font: Inter, sans-serif;
 
-
+  /* Dark theme specific color customizations */
+  --mat-card-background-color: #424242;
+  --mat-dialog-container-background-color: #424242;
+  
+  /* Form field colors for dark theme */
+  --mdc-filled-text-field-container-color: #424242;
+  --mdc-outlined-text-field-outline-color: #5f5f5f;
+  --mdc-outlined-text-field-focus-outline-color: #5091F4;
 
   --mdc-text-button-label-text-size: 14px;
   --mdc-text-button-label-text-tracking: 0.03em;
@@ -88,8 +210,8 @@ html {
   }
   
   .mat-mdc-progress-bar {
-    --mdc-linear-progress-active-indicator-color: #585d64;
-    --mdc-linear-progress-track-color: rgb(202, 200, 214);
+    --mdc-linear-progress-active-indicator-color: #5091F4;
+    --mdc-linear-progress-track-color: rgba(80, 145, 244, 0.3);
     --mdc-linear-progress-track-height: 3px;
     --mdc-linear-progress-active-indicator-height: 3px;
   }
@@ -102,19 +224,4 @@ html {
   .mat-mdc-row {
     height: 0.8rem !important;
   }
-}
-
-
-html .mat-mdc-slide-toggle.mat-accent {
-  --mdc-switch-selected-focus-state-layer-color: #263238;
-  --mdc-switch-selected-handle-color: #263238;
-  --mdc-switch-selected-hover-state-layer-color: #263238;
-  --mdc-switch-selected-pressed-state-layer-color: #263238;
-  --mdc-switch-selected-focus-handle-color: #0d1b24;
-  --mdc-switch-selected-hover-handle-color: #0d1b24;
-  --mdc-switch-selected-pressed-handle-color: #0d1b24;
-  --mdc-switch-selected-focus-track-color: #454d64;
-  --mdc-switch-selected-hover-track-color: #454b64;
-  --mdc-switch-selected-pressed-track-color: #454d64;
-  --mdc-switch-selected-track-color: #454c64;
 }

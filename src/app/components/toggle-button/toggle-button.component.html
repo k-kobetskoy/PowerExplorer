@@ -1,0 +1,13 @@
+<div class="toggle-wrapper">
+  <div class="toggle-button">
+    <div class="toggle-slider" [class.slide-right]="selectedIndex === 1"></div>
+    <div class="toggle-options">
+      <div class="option" [class.active]="selectedIndex === 0" (click)="switchOption(0)">
+        {{ leftOptionLabel }}
+      </div>
+      <div class="option" [class.active]="selectedIndex === 1" (click)="switchOption(1)">
+        {{ rightOptionLabel }}
+      </div>
+    </div>
+  </div>
+</div> 

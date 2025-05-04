@@ -28,7 +28,7 @@
                 </div>
               </mat-option>
             </mat-autocomplete>
-            <mat-spinner class="loading-spinner" diameter="20" matSuffix></mat-spinner>
+            <mat-spinner *ngIf="(isLoadingAttributes$ | async)" class="loading-spinner" diameter="20" matSuffix></mat-spinner>
             @if (attributeFormControl.value) {
               <button matSuffix mat-icon-button aria-label="Clear" (click)="attributeFormControl.patchValue('')">
                 <span class="form-clear-icon"><mat-icon>close</mat-icon></span>

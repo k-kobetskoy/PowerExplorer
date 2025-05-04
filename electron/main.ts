@@ -327,7 +327,7 @@ if (!gotTheLock) {
 
   app.on('ready', () => {
     // Remove the application menu
-    Menu.setApplicationMenu(null);
+    // Menu.setApplicationMenu(null);
     
     // Set up custom protocol before creating window
     if (!process.env.ELECTRON_START_URL) {

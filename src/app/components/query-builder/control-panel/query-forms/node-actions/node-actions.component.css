@@ -11,12 +11,8 @@
     height: 28px;
     cursor: pointer;
     border-radius: 4px;
-    background-color: rgb(255, 255, 255);
 }
 
-.form-header-button:hover {
-    background-color: #EBECF0;
-}
 
 .form-header-delete-icon-hover,
 .form-header-copy-icon-hover {
@@ -31,7 +27,7 @@
 .form-header-button:hover .form-header-copy-icon-hover,
 .form-header-button:hover .form-header-delete-icon-hover {
     display: inline-block;
-    animation: pulse 0.2s ease-in-out;
+    animation: pulse 0.15s ease-in-out;
 }
 
 @keyframes pulse {

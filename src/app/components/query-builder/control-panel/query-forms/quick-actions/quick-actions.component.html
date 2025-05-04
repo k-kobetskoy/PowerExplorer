@@ -1,8 +1,5 @@
 <ng-container *ngIf="getNodeActions().length > 0">
 <div class="node-editor-container">  
-  <div class="quick-actions-header">
-    <span class="quick-actions-header-text">Add Node</span>
-  </div>
   <div class="quick-actions">
     <ng-container *ngFor="let nodeName of getNodeActions()">
       <button mat-button (click)="addNode(nodeName)">

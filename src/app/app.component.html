@@ -1,12 +1,13 @@
 <div class="container">
-  <app-main-toolbar></app-main-toolbar>
   <main class="view-container">
     <!--This is to avoid reload during acquireTokenSilent() because of hidden iframe -->
     <router-outlet *ngIf="!isIframe"></router-outlet>
   </main>
   
   <!-- Update notification -->
-  <div *ngIf="showUpdateNotification" class="update-notification">
+  <div
+   *ngIf="showUpdateNotification" 
+    class="update-notification">
     <div class="update-content">
       <span class="update-message">
         <strong>Update Available:</strong> Version {{ updateInfo?.version }} will be installed when you close the app.

@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { BaseFormComponent } from '../base-form.component';
 import { FormControl, FormsModule, ReactiveFormsModule    } from '@angular/forms';
-import { Observable, Subject, combineLatest, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, combineLatest, of } from 'rxjs';
 import { distinctUntilChanged, map, startWith, switchMap, takeUntil, filter, take, catchError, shareReplay } from 'rxjs/operators';
 import { AttributeModel } from 'src/app/models/incoming/attrubute/attribute-model';
 import { AttributeEntityService } from '../../../services/entity-services/attribute-entity.service';
@@ -45,7 +45,7 @@ import { NodeActionsComponent } from '../node-actions/node-actions.component';
 })
 export class OrderFormComponent extends BaseFormComponent implements OnInit, OnDestroy, OnChanges {
   private destroy$ = new Subject<void>();
-
+  isLoadingAttributes$ : BehaviorSubject<boolean>;
   filteredAttributes$: Observable<AttributeModel[]>;
 
   attributeFormControl = new FormControl('');
@@ -60,6 +60,7 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
 
   ngOnInit() {
     this.initializeForm();
+    this.isLoadingAttributes$ = this.attributeService.getAttributesIsLoading$;
   }
 
   ngOnChanges(changes: SimpleChanges) {

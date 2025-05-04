@@ -9,7 +9,7 @@
 }
 
 :root {
-  @include mat.progress-spinner-overrides((active-indicator-color: var(--main-text-color),
+  @include mat.progress-spinner-overrides((active-indicator-color: #5091F4,
     ));
 }
 

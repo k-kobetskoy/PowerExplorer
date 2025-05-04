@@ -8,8 +8,7 @@ app-tree-panel .tree-container {
   flex-direction: column;
   height: 100%;
   /* background-color: rgb(245, 245, 248); */
-  border-radius: 10px;
-  padding: 10px 0px;
+  border-radius: 10px;  
   overflow-x: hidden;
 }
 
@@ -53,7 +52,6 @@ app-tree-panel .node-element-select-area {
   display: flex;
   align-items: center;
   flex: 1;
-  border-radius: 4px;
   position: relative;
   height: 24px;
   padding: 0 4px;
@@ -63,13 +61,14 @@ app-tree-panel .node-element-select-area {
 }
 
 app-tree-panel .node-element-select-area:active {
-  background-color: #dadce7 !important;
-  transform: scale(0.997);
+  background-color: #0000004d !important;
 }
 
 app-tree-panel .active {
-  background-color: #ffffff !important;
+  background-color: #0000004d !important;
   height: 24px;
+  border-left: 4px solid #4AA4F4 !important;
+  padding-left: 0px;
 }
 
 app-tree-panel p {
@@ -90,7 +89,7 @@ app-tree-panel .tree-element-icon {
   height: 18px;
   overflow: visible;
   font-size: medium;
-  margin-left: 0;
+  margin-left: 3px;
 }
 
 app-tree-panel .warning-icon {
@@ -134,7 +133,7 @@ app-tree-panel .expand-icon-disabled {
 
 /* Hover effect on the node */
 app-tree-panel .node-element-select-area:hover {
-  background-color: #f7f8fa;
+  background-color: #0000004d;
 }
 
 .invisible-icon {

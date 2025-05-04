@@ -1,10 +1,18 @@
-<div class="settings-container">
+<!-- <div class="settings-container">
   <a class="settings-button" [matMenuTriggerFor]="settingsMenu">
     <mat-icon class="settings-icon">more_vert</mat-icon>     
   </a>
+</div> -->
+
+<div *ngIf="this.activeAccount | async" class="avatar" [matMenuTriggerFor]="settingsMenu" [ngStyle]="{'background-color': backgroundColor}">
+  {{ initials }}
 </div>
 
 <mat-menu #settingsMenu="matMenu">
+  <button mat-menu-item *ngIf="this.activeAccount | async as account">
+    <span class="settings-menu-item-text">{{ account.name  }}</span>
+    </button>
+  
   <button mat-menu-item (click)="onAboutClick()">
     <span class="settings-menu-item-text">About</span>
   </button>
