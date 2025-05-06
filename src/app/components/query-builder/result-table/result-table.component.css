@@ -359,7 +359,7 @@ tr.mat-mdc-row:hover {
   overflow: hidden;
   align-items: flex-start;
   justify-content: flex-start;
-  background-color: #1e1e1e;
+  /* background-color: #1e1e1e; */
 }
 
 .table-scroll-container {
@@ -374,7 +374,7 @@ tr.mat-mdc-row:hover {
   text-align: left;
   margin-left: 0;
   margin-right: auto;
-  background-color: #1e1e1e;
+  /* background-color: #1e1e1e; */
 }
 
 /* Fixed row height */

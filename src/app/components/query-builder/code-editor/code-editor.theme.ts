@@ -1,4 +1,4 @@
-import { EditorView, gutter } from '@codemirror/view';
+import { EditorView, gutter, lineNumbers } from '@codemirror/view';
 import { foldGutter } from "@codemirror/language";
 
 /**
@@ -21,7 +21,7 @@ export const powerExplorerTheme = EditorView.theme({
     borderLeftWidth: '2px'
   },
   '.cm-activeLine': {
-    backgroundColor: 'rgba(0, 0, 0, 0.29) !important'
+    backgroundColor: 'rgba(255, 255, 255, 0.06) !important'
   },
   '.cm-gutters': {
     backgroundColor: '#1D1F21',
@@ -48,18 +48,18 @@ export const powerExplorerTheme = EditorView.theme({
   },
   '.cm-line .ͼe': {
     // color: '#86D39A',
-     color: '#D39A86',
+     color: '#c4d386',
     // color: '#D3869C',
   },
   '.cm-lineNumbers': {
-    color: '#636b8a',
+    color: 'rgba(255, 255, 255, 0.38)',
     fontSize: '13px',   
     paddingTop: '2px',
     fontFamily: 'JetBrains Mono, monospace',
   },
   '.cm-activeLineGutter': {
     backgroundColor: '#1D1F21',
-    color: '#7aa2f7'
+    color: 'rgba(255, 255, 255, 0.77)'
   },
   '.cm-selectionMatch': {
     backgroundColor: 'rgba(44, 109, 182, 0.4) !important'

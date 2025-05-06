@@ -7,15 +7,13 @@
   position: relative;
   width: 130px;
   height: 28px;
-  background-color: #2A2D35;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: inset 0 0px 10px rgba(0, 0, 0, 0.3);
   outline: 1px solid #31343b;
 }
 
 .toggle-button:hover {
-  background-color: #353841;
+  background-color: #17181a;
 }
 
 .toggle-slider {
@@ -23,8 +21,8 @@
   width: 62px;
   height: 24px;
   /* background-color: #1c1e1f; */
-  background-color: #5091F4;
-  border-radius: 6px;
+  background-color: #cccccc;
+  border-radius: 4px;
   top: 2px;
   left: 2px;
   transition: transform 0.3s ease;
@@ -62,6 +60,6 @@
 }
 
 .option.active {
-  color: #FFFFFF;
+  color: #2f2f2f;
   font-weight: 600;
 } 
