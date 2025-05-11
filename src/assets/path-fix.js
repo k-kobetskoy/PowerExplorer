@@ -7,22 +7,32 @@
 
   // Get application resources path
   const getAppPath = function() {
-    // Get the current script's path
-    const scripts = document.getElementsByTagName('script');
-    const currentScript = scripts[scripts.length - 1];
-    const currentPath = currentScript.src || '';
-    
-    // Extract the base path up to /dist/ or assets/
+    // Use the directory of the current HTML file as the base path.
+    // This is generally the most reliable approach for Electron apps where index.html is the entry point.
     let basePath = '';
-    if (currentPath.includes('/assets/')) {
-      basePath = currentPath.substring(0, currentPath.indexOf('/assets/'));
-    } else if (currentPath.includes('/dist/')) {
-      basePath = currentPath.substring(0, currentPath.indexOf('/dist/') + 5);
+    const href = window.location.href;
+    const lastSlashIndex = href.lastIndexOf('/');
+
+    if (lastSlashIndex > -1) {
+      basePath = href.substring(0, lastSlashIndex);
     } else {
-      // Fallback - use the directory of the current URL
-      basePath = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+      // This case is unlikely for typical file:/// or http:// URLs.
+      console.warn('[path-fix.js] Could not determine directory from window.location.href:', href, '. Attempting fallback.');
+      // Fallback to original logic if window.location.href is unusual
+      const scripts = document.getElementsByTagName('script');
+      const currentScript = scripts.length > 0 ? scripts[scripts.length - 1] : null;
+      const currentPath = currentScript ? (currentScript.src || '') : '';
+      if (currentPath.includes('/assets/')) {
+        basePath = currentPath.substring(0, currentPath.indexOf('/assets/'));
+      } else if (currentPath.includes('/dist/')) {
+        // Ensure '/dist/' itself is included if that's the intended base when currentPath is like '.../dist/foo.js'
+        basePath = currentPath.substring(0, currentPath.indexOf('/dist/') + '/dist/'.length -1 ); 
+      } else {
+        console.warn('[path-fix.js] Fallback logic also failed to determine a clear base path. Using "." as a last resort.');
+        basePath = '.'; // Last resort
+      }
     }
-    
+    console.log('[path-fix.js] Determined appPath:', basePath);
     return basePath;
   };
 
@@ -86,7 +96,10 @@
       baseTag = document.createElement('base');
       document.head.insertBefore(baseTag, document.head.firstChild);
     }
-    baseTag.setAttribute('href', appPath + '/');
+    // Ensure the baseHref always ends with a slash
+    const baseHref = appPath.endsWith('/') ? appPath : appPath + '/';
+    baseTag.setAttribute('href', baseHref);
+    console.log('[path-fix.js] Set base href to:', baseHref);
     
     // Try to inject a fetch polyfill
     const originalFetch = window.fetch;
