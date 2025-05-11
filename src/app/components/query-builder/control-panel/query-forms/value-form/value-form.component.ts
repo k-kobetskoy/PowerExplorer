@@ -95,7 +95,6 @@ export class ValueFormComponent extends BaseFormComponent implements OnInit, OnD
       )
       .subscribe(value => {
         if (value !== undefined) {
-          console.log('ValueForm: Updating attribute value to:', value);
           this.updateAttribute(AttributeData.Value.InnerText, this.selectedNode, value);
         }
       });

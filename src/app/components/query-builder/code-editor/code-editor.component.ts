@@ -129,6 +129,5 @@ export class CodeEditorComponent implements OnInit {
   }
 
   validateXml() {
-    console.log('XML validation requested');
   }
 }

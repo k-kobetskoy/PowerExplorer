@@ -34,7 +34,6 @@ export class DesktopAuthService {
 
     // Listen for active environment changes from electron side
     this.electronService.receive('environment-changed', (environment: EnvironmentModel) => {
-      console.log('[ELECTRON-AUTH] Environment changed from electron side:', environment);
       if (environment) {
         this.activeEnvironmentModel.next(environment);
       } else {
@@ -44,7 +43,6 @@ export class DesktopAuthService {
 
     // Listen for active account changes from electron side
     this.electronService.receive('account-changed', (account: AccountInfo) => {
-      console.log('[ELECTRON-AUTH] Account changed from electron side:', account);
       if (account) {
         this.activeAccount.next(account);
       } else {
@@ -55,7 +53,6 @@ export class DesktopAuthService {
 
     // Listen for auth success/failure messages
     this.electronService.receive('auth-success', (data: { account: AccountInfo }) => {
-      console.log('[ELECTRON-AUTH] Authentication successful:', data);
       if (data && data.account) {
         this.activeAccount.next(data.account);
         this.eventBus.emit(new EventData(AppEvents.LOGIN_SUCCESS, null));
@@ -72,7 +69,6 @@ export class DesktopAuthService {
 
     // Listen for app returned from auth event
     this.electronService.receive('app-returned-from-auth', () => {
-      console.log('[ELECTRON-AUTH] App returned from auth redirect');
       this.notificationService.showInfo('Welcome back to Power Explorer');
       // If we already have an active account, no need to do anything else
       if (this.activeAccount.value) {
@@ -92,7 +88,6 @@ export class DesktopAuthService {
 
     return from(this.electronService.auth.handleRedirect(params)).pipe(
       map(result => {
-        console.log('[ELECTRON-AUTH] Handle redirect result:', result);
         return result.success;
       }),
       catchError(error => {
@@ -107,11 +102,9 @@ export class DesktopAuthService {
       return of(false);
     }
 
-    console.log('[DESKTOP-AUTH] Setting active environment:', environmentModel);
 
     return from(this.electronService.environment.setActive(environmentModel)).pipe(
       map(result => {
-        console.log('[ELECTRON-AUTH] Set environment URL result:', result);
         
         if (result.success) {
           this.activeEnvironmentModel.next(environmentModel);
@@ -146,9 +139,7 @@ export class DesktopAuthService {
     if (!this.electronService.isElectronApp || !this.electronService.electron) {
       return;
     }
-
-    console.log('[DESKTOP-AUTH] Requesting active account from main process');
-    
+  
     // Try using the standard method
     from(this.electronService.auth.getActiveAccount())
       .pipe(
@@ -157,7 +148,6 @@ export class DesktopAuthService {
           
           // Try direct method if standard method fails
           if (typeof window['getActiveAccount'] === 'function') {
-            console.log('[DESKTOP-AUTH] Using direct window.getActiveAccount method');
             return from(window['getActiveAccount']());
           }
           
@@ -165,20 +155,17 @@ export class DesktopAuthService {
         })
       )
       .subscribe(account => {
-        console.log('[DESKTOP-AUTH] Active account updated:', account);
         this.activeAccount.next(account);
       });
   }
 
   updateActiveEnvironment(): void {
-    console.log('[DESKTOP-AUTH] Updating active environment');
     if (!this.electronService.isElectronApp || !this.electronService.electron) {
       return;
     }
 
     from(this.electronService.environment.getActive()).subscribe(result => {
       if (result.success && result.environment) {
-        console.log('[DESKTOP-AUTH] Active environment updated:', result.environment);
         this.activeEnvironmentModel.next(result.environment);
       }
     });
@@ -189,21 +176,17 @@ export class DesktopAuthService {
    */
   login(environmentModel: EnvironmentModel): Observable<boolean> {
     if (!this.electronService.isElectronApp || !this.electronService.electron) {
-      console.log('[DESKTOP-AUTH] Login failed, not an electron app');
       return of(false);
     }
 
     return from(this.electronService.auth.login(environmentModel)).pipe(
       tap(result => {
-        console.log('[ELECTRON-AUTH] Login result:', result);
         if (result.success) {
-          console.log('[ELECTRON-AUTH] Login successful, setting token');
           this.activeAccount.next(result.account);
           this.activeEnvironmentModel.next(environmentModel);
           this.eventBus.emit(new EventData(AppEvents.LOGIN_SUCCESS, null));
           this.notificationService.showSuccess(`Successfully logged in to ${environmentModel.friendlyName}`);
         } else {
-          console.log('[ELECTRON-AUTH] Login failed');
           this.activeAccount.next(null);
           this.activeEnvironmentModel.next(null);
           this.notificationService.showError('Login failed');
@@ -211,7 +194,6 @@ export class DesktopAuthService {
       }),
       map(result => result.success),
       catchError(error => {
-        console.error('[ELECTRON-AUTH] Login error:', error);
         this.activeAccount.next(null);
         this.activeEnvironmentModel.next(null);
         this.notificationService.showError('Login error: ' + (error.message || 'Unknown error'));
@@ -231,7 +213,6 @@ export class DesktopAuthService {
     return from(this.electronService.auth.getToken(environmentModel)).pipe(      
       map(result => result.success ? result.accessToken : null),
       catchError(error => {
-        console.error('[ELECTRON-AUTH] Get token error:', error);
         return of(null);
       })
     );
@@ -242,13 +223,11 @@ export class DesktopAuthService {
    */
   logout(): Observable<boolean> {
     if (!this.electronService.isElectronApp) {
-      console.log('[DESKTOP-AUTH] Logout failed, not an electron app');
       return of(false);
     }
 
     return from(this.electronService.auth.logout()).pipe(
       tap(result => {
-        console.log('[ELECTRON-AUTH] Logout result:', result);
         this.activeAccount.next(null);
         this.activeEnvironmentModel.next(null);
         this.eventBus.emitAndSaveLast(new EventData(AppEvents.USER_REMOVED, null));

@@ -117,7 +117,6 @@ export class OrderFormComponent extends BaseFormComponent implements OnInit, OnD
               distinctUntilChanged(),
               filter(entityName => !!entityName),
               switchMap(entityName => {
-                console.log(`[OrderFormComponent] Fetching attributes for entity: ${entityName}`);
                 return this.attributeService.getAttributes(entityName);
               }),
               catchError(error => {

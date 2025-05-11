@@ -97,7 +97,6 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
   }
 
   execute() {
-    console.log('Executing query...');
     
     // Render the XML query to ensure it's up to date
     this.queryRenderService.renderXmlRequest();
@@ -112,9 +111,7 @@ export class QueryTreeButtonBlockComponent implements OnInit, OnDestroy {
         console.error('Cannot execute query: XML or entity node is missing');
         return;
       }
-      
-      console.log('Query ready for execution, XML updated:', xml.substring(0, 100) + '...');
-      
+            
       // Emit the event to notify parent component to execute the query
       // The parent component will handle the actual execution
       this.executeXmlRequest.emit({ xml, entityNode });

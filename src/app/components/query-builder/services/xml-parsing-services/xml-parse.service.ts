@@ -185,7 +185,6 @@ export class XmlParseService {
 
   parseXmlManually(view: EditorView) {
     try {
-      console.log('Starting XML parsing...');
       this.resetParserState();
 
       this.nodeTreeService.clearNodeTree();
@@ -218,7 +217,6 @@ export class XmlParseService {
         });
       }, 100);
       
-      console.log('XML parsing complete');
       
       this.eventBus.emit({ name: AppEvents.XML_PARSED, value: true });
     }

@@ -24,11 +24,9 @@ export class ElectronHttpInterceptor implements HttpInterceptor {
     return this.electronAuthService.getToken(this.activeEnvironmentModel.value).pipe(
       switchMap(token => {
         if (!token) {
-          console.log('[ELECTRON-HTTP-INTERCEPTOR] No token available, proceeding without authentication');
           return next.handle(req);
         }
         
-        console.log('[ELECTRON-HTTP-INTERCEPTOR] Adding bearer token to request');
         
         // Clone the request and add the authorization header
         const authReq = req.clone({

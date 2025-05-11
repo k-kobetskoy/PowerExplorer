@@ -66,9 +66,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
   }
 
   onLogoutClick() {
-    console.log('Logout clicked');
     this.electronAuthService.logout().pipe(take(1)).subscribe(result => {
-      console.log('Logout result:', result);
     });
   }
 

@@ -120,7 +120,6 @@ export class QueryRenderService implements OnDestroy {
           textAttribute.value$
         ]).pipe(
           map(([attributesString, textValue]) => {
-            console.log('Value node content updated:', textValue);
             const indent = this.getIndent(node.level);
             const otherAttributes = attributesString
               .replace(new RegExp(`\\b${ValueAttributeData.InnerText.EditorName}="[^"]*"\\s*`, 'g'), '')

@@ -57,11 +57,9 @@ export enum ProcessingStrategyType {
  * @returns The appropriate strategy type
  */
 export function determineProcessingStrategy(entityAttributeMap: EntityAttributeMap): ProcessingStrategyType {
-  console.log('[determineProcessingStrategy] Analyzing entityAttributeMap:', JSON.stringify(entityAttributeMap));
   
   // If we don't have an entity attribute map, default to DEFINED_ATTRIBUTES
   if (!entityAttributeMap || Object.keys(entityAttributeMap).length === 0) {
-    console.log('[determineProcessingStrategy] No entityAttributeMap, defaulting to DEFINED_ATTRIBUTES');
     return ProcessingStrategyType.DEFINED_ATTRIBUTES;
   }
 
@@ -70,11 +68,9 @@ export function determineProcessingStrategy(entityAttributeMap: EntityAttributeM
   
   for (const entityName of Object.keys(entityAttributeMap)) {
     const entityData = entityAttributeMap[entityName];
-    console.log(`[determineProcessingStrategy] Checking entity ${entityName}, attributeData length: ${entityData.attributeData?.length || 0}`);
     
     if (entityData.attributeData && entityData.attributeData.length > 0) {
       hasDefinedAttributes = true;
-      console.log(`[determineProcessingStrategy] Found defined attributes in entity ${entityName}`);
       break;
     }
   }
@@ -83,6 +79,5 @@ export function determineProcessingStrategy(entityAttributeMap: EntityAttributeM
     ? ProcessingStrategyType.DEFINED_ATTRIBUTES 
     : ProcessingStrategyType.ALL_ATTRIBUTES;
     
-  console.log(`[determineProcessingStrategy] Determined strategy: ${ProcessingStrategyType[strategyType]}`);
   return strategyType;
 } 

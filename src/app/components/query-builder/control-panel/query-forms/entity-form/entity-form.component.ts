@@ -78,10 +78,6 @@ export class EntityFormComponent extends BaseFormComponent implements OnInit, On
 
     initializeIsLoading() {
        combineLatest([this.activeEnvironmentModel, this.activeAccount]).pipe(
-        tap(([environment, account]) => {
-            console.log('environment', environment);
-            console.log('account', account);
-        }),
         takeUntil(this.destroy$),
         filter(([environment, account]) => environment !== null && environment !== undefined && account !== null && account !== undefined),
         startWith(false)     

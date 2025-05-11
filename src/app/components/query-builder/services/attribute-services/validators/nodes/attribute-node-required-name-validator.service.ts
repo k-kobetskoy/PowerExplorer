@@ -28,7 +28,6 @@ export class AttributeNodeRequiredNameValidatorService implements INodeValidator
           errors: [`Attribute 'name' is required.`]
         } as ValidationResult;
       }),
-      tap(result => console.log('AttributeNodeRequiredNameValidator result:', result)),
       takeUntil(destroyed$ || NEVER),
     );
   }

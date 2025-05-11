@@ -58,13 +58,10 @@ export class DefinedAttributesStrategy implements IResultProcessingStrategy {
     environmentBrowserUrl: string): MatTableRawData {
 
     const linkedEntityMapping = findAllUnaliasedLinkedEntities(rawData, entityAttributeMap);
-    console.log(linkedEntityMapping);
 
     const fieldMapping = createFieldNameMapping(entityAttributeMap, attributeDefenitionsMaps, linkedEntityMapping);
-    console.log(fieldMapping);
 
     const rowData = convertResultsToRowData(rawData, entityAttributeMap, attributeDefenitionsMaps, environmentBrowserUrl, fieldMapping);
-    console.log(rowData);
 
     const header = createHeaderFromAttributeDefinitions(attributeDefenitionsMaps, rowData, entityAttributeMap);
 
@@ -77,23 +74,18 @@ export class DefinedAttributesStrategy implements IResultProcessingStrategy {
 }
 
 function findAllUnaliasedLinkedEntities(rawData: any[], entityAttributeMap: EntityAttributeMap): Map<string, string> {
-  console.warn("findAllUnaliasedLinkedEntities");
   const rawEntityNames: Set<string> = new Set();
 
   const linkedEntitiesWithoutAliases = new Set<string>();
   Object.keys(entityAttributeMap).forEach(entityKey => {
     const entity = entityAttributeMap[entityKey];
-    console.log("entity", entity);
     if (!entity.isPrimaryEntity && entity.entityAlias === null) {
-      console.log("linked entity without alias", entityKey);
       linkedEntitiesWithoutAliases.add(entityKey);
     }
   });
 
-  console.log("rawData", rawData);
 
   if (!rawData || rawData.length === 0) {
-    console.log("no raw data");
     return new Map<string, string>();
   }
 
@@ -102,7 +94,6 @@ function findAllUnaliasedLinkedEntities(rawData: any[], entityAttributeMap: Enti
     const baseName = key.split('@')[0];
     if (baseName.includes('.')) {
       const rawEntityName = baseName.split('.')[0];
-      console.log("rawEntityName", rawEntityName);
       rawEntityNames.add(rawEntityName);
     }
   });
@@ -325,8 +316,6 @@ function createHeaderFromAttributeDefinitions(
 
   rowData.forEach(row => {
     row.attributes.forEach((cell, key) => {
-
-      console.warn("cell", cell);
       const type = attributeDefenitionsMaps[cell.entityName]?.get(cell.attributeLogicalName)?.attributeType;
       const logicalName = entityAttributeMap[cell.entityName]?.attributeData.find(attr => attr.attributeLogicalName === cell.attributeLogicalName)?.alias || key;
       const displayName = getDisplayName(cell, entityAttributeMap, attributeDefenitionsMaps);

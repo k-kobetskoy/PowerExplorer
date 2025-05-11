@@ -48,7 +48,6 @@ export class AuthCallbackComponent implements OnInit {
   ngOnInit(): void {
     // Extract query parameters from the URL
     this.route.queryParams.subscribe(params => {
-      console.log('[AUTH-CALLBACK] Received callback with params:', params);
       
       // Convert params to a Record<string, string>
       const paramsRecord: Record<string, string> = {};
@@ -59,12 +58,10 @@ export class AuthCallbackComponent implements OnInit {
       // Handle the auth redirect
       this.authService.handleAuthRedirect(paramsRecord).subscribe(
         success => {
-          console.log('[AUTH-CALLBACK] Auth redirect handled, success:', success);
           // Navigate to home page after handling the redirect
           this.router.navigate(['/']);
         },
         error => {
-          console.error('[AUTH-CALLBACK] Error handling auth redirect:', error);
           this.notificationService.showError('Authentication failed. Please try again.');
           this.router.navigate(['/']);
         }

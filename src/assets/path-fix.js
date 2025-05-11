@@ -4,7 +4,6 @@
  * It's designed to be small and self-contained so it can be loaded even when other scripts fail
  */
 (function() {
-  console.log('[PATH-FIX] Path fixer script loaded');
 
   // Get application resources path
   const getAppPath = function() {
@@ -29,9 +28,7 @@
 
   // Fix resource paths
   const fixResourcePaths = function() {
-    console.log('[PATH-FIX] Fixing resource paths');
     const appPath = getAppPath();
-    console.log('[PATH-FIX] App path:', appPath);
     
     // Function to fix a specific file URL
     const fixPath = function(url) {
@@ -64,7 +61,6 @@
       const src = script.getAttribute('src');
       const newSrc = fixPath(src);
       if (src !== newSrc) {
-        console.log('[PATH-FIX] Fixed script src:', src, '→', newSrc);
         script.setAttribute('src', newSrc);
       }
     });
@@ -74,7 +70,6 @@
       const href = link.getAttribute('href');
       const newHref = fixPath(href);
       if (href !== newHref) {
-        console.log('[PATH-FIX] Fixed link href:', href, '→', newHref);
         link.setAttribute('href', newHref);
       }
     });
@@ -83,7 +78,6 @@
     document.querySelectorAll('link[href^="//"]').forEach(link => {
       const href = link.getAttribute('href');
       link.setAttribute('href', 'https:' + href);
-      console.log('[PATH-FIX] Fixed protocol-relative URL:', href, '→', 'https:' + href);
     });
     
     // Create a new base tag or update existing one
@@ -93,7 +87,6 @@
       document.head.insertBefore(baseTag, document.head.firstChild);
     }
     baseTag.setAttribute('href', appPath + '/');
-    console.log('[PATH-FIX] Set base href to:', appPath + '/');
     
     // Try to inject a fetch polyfill
     const originalFetch = window.fetch;
@@ -104,7 +97,6 @@
       return originalFetch(url, options);
     };
     
-    console.log('[PATH-FIX] Path fixing complete');
   };
   
   // Run the path fixer immediately

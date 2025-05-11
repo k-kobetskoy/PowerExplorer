@@ -26,8 +26,7 @@ export class EntityNodeRequiredNameValidatorService implements INodeValidator {
           isValid: !!nameAttribute,
           errors: nameAttribute ? [] : [`Entity name is required.`]
         };
-      }), 
-      tap(result=> console.log(result))
+      })
     );
   }
 }

@@ -62,12 +62,6 @@ export class ValidationService {
     }
 
     setupNodeValidation(node: QueryNode): Observable<ValidationResult> {
-        console.log(`Setting up validation for node: ${node.nodeName}`, {
-            oneTimeValidators: node.validatiors.oneTimeValidators.length,
-            validators: node.validatiors.validators.length,
-            attributesCount: node.attributes$.value?.length || 0
-        });
-        
         // Return the one time validation result if it has errors
         if (node.validatiors.oneTimeValidators.length > 0) {
             const oneTimeResults = node.validatiors.oneTimeValidators.map(validator => validator.validate(node));
@@ -78,7 +72,6 @@ export class ValidationService {
             }), VALID_RESULT);
 
             if (!combinedResult.isValid) {
-                console.log(`One-time validation failed for ${node.nodeName}:`, combinedResult);
                 return of(combinedResult);
             }
         }
@@ -86,12 +79,8 @@ export class ValidationService {
         // Skip setting up reactive validations if there are no validators
         if (node.validatiors.validators.length === 0 &&
             (!node.attributes$.value || node.attributes$.value.length === 0)) {
-            console.log(`No validators for ${node.nodeName}, returning VALID_RESULT`);
             return of(VALID_RESULT);
         }
-
-        console.log(`Setting up node validators for ${node.nodeName}:`, 
-            node.validatiors.validators.map(v => v.constructor.name));
 
         // Attributes validation observable
         const attributeValidationResults$ = node.attributes$.pipe(
@@ -119,7 +108,6 @@ export class ValidationService {
 
         // Return attribute validation results if there are no node validators
         if (node.validatiors.validators.length === 0) {
-            console.log(`No node validators for ${node.nodeName}, using only attribute validation`);
             return attributeValidationResults$.pipe(
                 shareReplay({ bufferSize: 1, refCount: true }),
                 takeUntil(node.destroyed$)
@@ -128,7 +116,6 @@ export class ValidationService {
 
         // Node validation observable
         const nodeValidatorResults$ = node.validatiors.validators.map(validator => {
-            console.log(`Setting up node validator: ${validator.constructor.name} for ${node.nodeName}`);
             return validator.validate(node).pipe(
                 catchError(error => {
                     console.error(`Error in validator ${validator.constructor.name}:`, error);
@@ -172,7 +159,6 @@ export class ValidationService {
     setupNodeTreeValidation(nodeTree: BehaviorSubject<QueryNodeTree>): Observable<ValidationResult> {
         // Handle null nodeTree case
         if (!nodeTree || !nodeTree.value) {
-            console.warn('setupNodeTreeValidation called with null/undefined nodeTree or nodeTree.value');
             return of({ isValid: false, errors: ['Tree structure is invalid'] });
         }
 

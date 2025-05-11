@@ -97,9 +97,7 @@ export class XmlExecutorService extends BaseRequestService {
     @Inject(ACTIVE_ENVIRONMENT_MODEL) private _activeEnvironmentModel: BehaviorSubject<EnvironmentModel>
   ) {
     super();
-    console.log('XmlExecutorService constructor, _activeEnvironmentModel:', this._activeEnvironmentModel);
     if (this._activeEnvironmentModel) {
-      console.log('Initial environment Model value:', this._activeEnvironmentModel.value);
       // Subscribe to changes in the environment Model
     } else {
       console.error('_activeEnvironmentModel is undefined in constructor');
@@ -281,7 +279,6 @@ export class XmlExecutorService extends BaseRequestService {
     
     let hasDefinedAttributes = false;
     Object.values(entityAttributeMap).forEach(entityData => {
-      console.log('[XML-EXECUTOR: PROCESS-DATA-WITH-STRATEGY] entityData', entityData);
       
       if (entityData.attributeData && entityData.attributeData.length > 0) {
         hasDefinedAttributes = true;

@@ -255,12 +255,6 @@ export class LinkEntityFormComponent extends BaseFormComponent implements OnInit
           OneToManyRelationships: filteredOneToMany,
           ManyToOneRelationships: filteredManyToOne
         };
-      }),
-      tap(filtered => {
-        console.log('Filtered link entities:', {
-          oneToManyCount: filtered.OneToManyRelationships?.length || 0,
-          manyToOneCount: filtered.ManyToOneRelationships?.length || 0
-        });
       })
     );
   }

@@ -90,7 +90,6 @@ export class PicklistFormComponent extends OperatorValueBaseFormComponent {
     this.isLoading$ = this.picklistService.getPicklistOptionsIsLoading$;
 
     this.valueFormControl.valueChanges.subscribe(value => {
-      console.log('Value changed:', value);            
     });
   }
 

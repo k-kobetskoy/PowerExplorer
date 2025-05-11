@@ -178,12 +178,10 @@ export class ResultTableComponent implements OnInit, OnDestroy {
             this.cdr.markForCheck();
           } else {
             // No error - if we have recent results, they should be in our local BehaviorSubject already
-            console.log('Execution completed');
             
             // The most recent result should already be in our local BehaviorSubject
             const currentResult = this.mostRecentResult.value;
             if (currentResult && currentResult.rows?.length > 0) {
-              console.log('Results available after execution');
               this.resultData = currentResult;
               this.processResultData();
             }
@@ -251,7 +249,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     
     // Check if we have a stored result already
     if (this.resultData && this.resultData.rows && this.resultData.rows.length > 0) {
-      console.log('Using existing result data without a new query');
       this.isLoading = false;
       this.processResultData();
       this.cdr.markForCheck();
@@ -295,7 +292,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           .subscribe(
             result => {
               
-              console.log('Result table direct execution completed successfully');
               // Store the result in our local BehaviorSubject for components to use
               this.mostRecentResult.next(result);
               
@@ -623,7 +619,6 @@ export class ResultTableComponent implements OnInit, OnDestroy {
 
   private refreshDataSource() {
     if (!this.resultData || !this.resultData.rows) {
-      console.log('No result data or rows available');
       this.dataSource = [];
       this.paginatedData = [];
       this.totalRows = 0;
@@ -631,21 +626,11 @@ export class ResultTableComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('RefreshDataSource called with:', {
-      rowCount: this.resultData.rows.length,
-      headerCount: Object.keys(this.resultData.header || {}).length,
-      sampleRowData: this.resultData.rows.length > 0 ? this.resultData.rows[0] : null
-    });
-
     try {
       // Check if rows have the expected structure
       if (this.resultData.rows.length > 0) {
         const firstRow = this.resultData.rows[0];
-        console.log('First row structure:', {
-          hasAttributesMap: !!firstRow.attributes && firstRow.attributes instanceof Map,
-          rowDataKeys: Object.keys(firstRow),
-          attributesSize: firstRow.attributes instanceof Map ? firstRow.attributes.size : 'not a Map'
-        });
+       
       }
 
       // Convert RowData to data source format
@@ -685,17 +670,12 @@ export class ResultTableComponent implements OnInit, OnDestroy {
           };
         }
         
-        // For debugging, log the first item
-        if (index === 0) {
-          console.log('First data source item:', newItem);
-        }
-        
+              
         return newItem;
       });
       
       // Update total rows
       this.totalRows = this.dataSource.length;
-      console.log(`Data source created with ${this.totalRows} rows`);
       
       // Reset to first page when data source changes
       this.pageIndex = 0;
@@ -744,14 +724,12 @@ export class ResultTableComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.cdr.markForCheck();
     
-    console.log('Executing query with provided data');
     
     // Execute the query directly with the provided data
     this.xmlExecutor.executeXmlRequest(xml, entityNode)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         result => {
-          console.log('Result table direct execution completed successfully with provided data');
           
           // Store the result in our local BehaviorSubject for components to use
           this.mostRecentResult.next(result);

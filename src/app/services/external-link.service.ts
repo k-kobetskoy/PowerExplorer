@@ -22,13 +22,11 @@ export class ExternalLinkService {
 
     // Check if we're in Electron
     if (window.electron?.isElectron) {
-      console.log('Opening external URL using Electron:', url);
       window.electron.openExternal(url).catch(err => {
         console.error('Failed to open external URL:', err);
       });
     } else {
       // Standard browser behavior - open in new tab/window
-      console.log('Opening external URL in browser:', url);
       const newWindow = this.document.defaultView?.open(url, '_blank');
       
       // Add security attributes

@@ -61,7 +61,6 @@ export class QueryBuilder implements OnInit {
     
     // If switching to result tab, only trigger query execution if we already have results
     if (tabIndex === 1 && this.resultTable) {
-      console.log('Switching to results tab - showing cached results only');
       // Don't automatically trigger a new query
     }
   }
@@ -71,7 +70,6 @@ export class QueryBuilder implements OnInit {
   }
 
   handleExecuteXmlRequest(event: XmlRequestEvent) {
-    console.log('QueryBuilder: handleExecuteXmlRequest called with XML data');
     
     // Switch to the results tab
     if (this.selectedTabIndex !== 1) {
@@ -83,7 +81,6 @@ export class QueryBuilder implements OnInit {
     // Need to use setTimeout to ensure ViewChild is initialized
     setTimeout(() => {
       if (this.resultTable) {
-        console.log('Triggering getResult on resultTable with provided XML data');
         this.resultTable.executeWithData(event.xml, event.entityNode);
       } else {
         console.error('ResultTable component not found');

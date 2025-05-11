@@ -32,7 +32,6 @@ export class QuickActionsComponent implements OnInit {
   ngOnInit() { }
 
   addNode(nodeName: string) {
-    console.log('Quick actions - Adding node with name:', nodeName);
     this.nodeTreeProcessor.addNode(nodeName);
   }
   

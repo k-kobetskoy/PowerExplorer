@@ -46,7 +46,6 @@ export class NodeTreeService {
   }
 
   public setupValidation() {
-    console.log('Setting up node tree validation');
 
     // Clean up any existing subscription
     if (this.validationSubscription) {
@@ -322,7 +321,6 @@ export class NodeTreeService {
   }
 
   clearNodeTree() {
-    console.log('Clearing node tree and resetting validation');
     const nodeTree = this._nodeTree$.value;
 
     // Cleanup current validation subscription

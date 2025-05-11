@@ -104,7 +104,6 @@ export class AttributeEntityService extends BaseRequestService {
           return this.inFlightRequests[cacheKey];
         }
         
-        console.log("cache miss", cacheKey);
         const url = API_ENDPOINTS.attributes.getResourceUrl(envUrl, entityLogicalName);
         
         // Create the API request observable
@@ -120,7 +119,6 @@ export class AttributeEntityService extends BaseRequestService {
           }))),
           tap(data => { 
             this.cacheService.setItem(data, cacheKey); 
-            console.log('AttributeEntityService: getAttributes()', data);
             // Remove from in-flight requests
             delete this.inFlightRequests[cacheKey];
           }),
@@ -136,7 +134,6 @@ export class AttributeEntityService extends BaseRequestService {
             }
           }),
           tap(attributes => {
-            console.log('AttributeEntityService: getAttributes()', attributes);
           }),
           // Use shareReplay to cache the result for the duration of the request
           // and share it with all subscribers
@@ -186,7 +183,6 @@ export class AttributeEntityService extends BaseRequestService {
       return of({});
     }
 
-    console.log(`AttributeEntityService: Getting all attributes for entities: ${entityLogicalNames.join(', ')}`);
 
     // Create a result map right away
     const resultMap: AttributeMapResult = {};
@@ -213,7 +209,6 @@ export class AttributeEntityService extends BaseRequestService {
                     attributeMap.set(attr.logicalName, attr);
                   });
 
-                  console.log(`AttributeEntityService: Got ${attributeMap.size} attributes for entity ${entityLogicalName}`);
 
                   // Store in result map
                   resultMap[entityLogicalName] = attributeMap;
@@ -244,7 +239,6 @@ export class AttributeEntityService extends BaseRequestService {
         // Use forkJoin to process all entities (it will wait for all to complete)
         return forkJoin(entityObservables).pipe(
           map(() => {
-            console.log(`AttributeEntityService: Completed fetching attributes for ${entityLogicalNames.length} entities`);
             return resultMap;
           }),
           catchError(error => {
@@ -283,7 +277,6 @@ export class AttributeEntityService extends BaseRequestService {
 
         // If attributeData is empty, get all attributes
         if (entityData.attributeData.length === 0) {
-          console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, getting all attributes`);
           return this.getAllAttributesForEntities([entityLogicalName]);
         }
 
@@ -293,7 +286,6 @@ export class AttributeEntityService extends BaseRequestService {
           .map(attr => attr.attributeLogicalName as string);
 
         if (attributeLogicalNames.length === 0) {
-          console.log(`AttributeEntityService: No valid attributes found for entity ${entityLogicalName}, getting all attributes`);
           return this.getAllAttributesForEntities([entityLogicalName]);
         }
 
@@ -353,7 +345,6 @@ export class AttributeEntityService extends BaseRequestService {
 
             // If attributeData is empty, return empty map
             if (entityData.attributeData.length === 0) {
-              console.log(`AttributeEntityService: attributeData is empty for entity ${entityLogicalName}, returning empty map`);
               resultMap[entityLogicalName] = new Map<string, AttributeModel>();
               subscriber.next();
               subscriber.complete();
@@ -367,7 +358,6 @@ export class AttributeEntityService extends BaseRequestService {
 
             if (attributeLogicalNames.length === 0) {
               // No valid attributes defined, return empty map
-              console.log(`AttributeEntityService: No valid attributes found for entity ${entityLogicalName}, returning empty map`);
               resultMap[entityLogicalName] = new Map<string, AttributeModel>();
               subscriber.next();
               subscriber.complete();
