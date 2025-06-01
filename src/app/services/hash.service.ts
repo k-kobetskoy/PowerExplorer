@@ -1,9 +1,5 @@
 import { Injectable } from '@angular/core';
 
-/**
- * Service for generating hash values from strings
- * Used for caching and other operations that need consistent key generation
- */
 @Injectable({
   providedIn: 'root'
 })
